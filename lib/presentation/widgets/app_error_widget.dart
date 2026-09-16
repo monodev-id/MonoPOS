@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/themes/app_sizes.dart';
-import '../../core/utilities/console_logger.dart';
 import '../../generated/app_localizations.dart';
 
 class AppErrorWidget extends StatelessWidget {
@@ -19,8 +18,6 @@ class AppErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ce(error);
-
     if (textOnly) {
       return Text(
         message ??

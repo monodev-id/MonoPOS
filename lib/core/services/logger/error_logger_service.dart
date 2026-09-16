@@ -12,6 +12,10 @@ class ErrorLoggerService {
     String? message,
     String? state,
   }) {
-    ce(error, title: title, message: message, state: state);
+    final StringBuffer buffer = StringBuffer(error.toString());
+    if (stackTrace != null) {
+      buffer.write('\n$stackTrace');
+    }
+    ce(buffer.toString(), title: title, message: message, state: state);
   }
 }

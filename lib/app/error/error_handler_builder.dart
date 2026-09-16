@@ -22,11 +22,12 @@ class ErrorHandlerBuilder extends ConsumerStatefulWidget {
 }
 
 class ErrorHandlerBuilderState extends ConsumerState<ErrorHandlerBuilder> {
-  ErrorLoggerService get _errorLoggerService => ref.read(errorLoggerServiceProvider);
+  late final ErrorLoggerService _errorLoggerService;
 
   @override
   void initState() {
     super.initState();
+    _errorLoggerService = ref.read(errorLoggerServiceProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Set up custom widget error
       ErrorWidget.builder = (error) => AppErrorWidget(error: error, textOnly: true);
@@ -41,11 +42,13 @@ class ErrorHandlerBuilderState extends ConsumerState<ErrorHandlerBuilder> {
 
   // Flutter error handling logic
   void onFlutterError(FlutterErrorDetails flutterError) {
-    ce(flutterError.exception);
+    final Object exception = flutterError.exception;
+    ce(exception);
 
-    _errorLoggerService.log(error: flutterError);
+    _errorLoggerService.log(error: exception, stackTrace: flutterError.stack);
 
     if (!mounted) return;
+    if (_isBenignUnmountedError(exception)) return;
 
     // Skip navigation to error screen for non-critical errors
     final library = flutterError.library?.toLowerCase() ?? '';
@@ -62,15 +65,28 @@ class ErrorHandlerBuilderState extends ConsumerState<ErrorHandlerBuilder> {
 
     _errorLoggerService.log(error: error, stackTrace: stackTrace);
 
-    if (!mounted) return false;
+    if (!mounted) return true;
+    if (_isBenignUnmountedError(error)) return true;
 
     _navigateToError(ErrorScreenParam(error: error, stackTrace: stackTrace));
 
     return true;
   }
 
+  /// Async gaps (navigation, timers, streams) often complete after a widget
+  /// was disposed. Those StateErrors are benign: just drop them instead of
+  /// pushing the global error screen, which would only cause more unmounted
+  /// errors in a loop.
+  bool _isBenignUnmountedError(Object error) {
+    final String message = error.toString().toLowerCase();
+
+    return message.contains('unmounted') || message.contains('defunct') || message.contains('mounted');
+  }
+
   void _navigateToError(ErrorScreenParam param) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
       final router = ref.read(goRouterProvider);
       if (router.routeInformationProvider.value.uri.path != '/error') {
         router.go('/error', extra: param);
