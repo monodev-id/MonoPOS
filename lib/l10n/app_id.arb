@@ -194,6 +194,68 @@
   "settings_indonesian": "Indonesia",
   "settings_noName": "(Tanpa Nama)",
   "settings_appUpdate": "Pembaruan Aplikasi",
+  "settings_printBarcodeLabels": "Cetak Barcode Barang",
+
+  "product_labelSearchHint": "Cari nama / kode...",
+  "product_labelFilterAll": "Semua",
+  "product_labelFilterWith": "Ada barcode",
+  "product_labelFilterWithout": "Tanpa barcode",
+  "product_labelGenerate": "Generate",
+  "product_labelSave": "Simpan",
+  "product_labelPrint": "Cetak",
+  "product_labelCopies": "Copy",
+  "product_labelSelectAll": "Pilih semua",
+  "product_labelClear": "Bersihkan",
+  "product_labelHasBarcode": "Sudah ada",
+  "product_labelNoBarcode": "Belum ada barcode",
+  "product_labelNewCode": "Baru: {code}",
+  "@product_labelNewCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "product_labelRegenerate": "Generate ulang",
+  "product_labelEmptySelection": "Pilih dulu produk yang mau diproses",
+  "product_labelEmptyGenerated": "Belum ada kode generate. Pilih produk lalu tekan Generate.",
+  "product_labelEmptyPrintable": "Tidak ada label valid untuk dicetak. Generate & simpan dulu.",
+  "product_labelMissingBarcode": "{name}: belum punya barcode",
+  "@product_labelMissingBarcode": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "product_labelInvalidBarcode": "{name}: barcode tidak valid (harus EAN-13)",
+  "@product_labelInvalidBarcode": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "product_labelSaved": "{count} barcode tersimpan",
+  "@product_labelSaved": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "product_labelPrinted": "Label terkirim ke printer",
+  "product_labelSkipped": "{count} produk dilewati (tanpa barcode valid)",
+  "@product_labelSkipped": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "product_labelNeedPrinter": "Printer belum terhubung. Hubungkan dulu di Pengaturan Printer.",
+  "product_labelGoPrinter": "Ke Printer",
+  "product_labelNewProduct": "Produk Baru",
+  "product_labelPreview": "Preview Barcode",
+  "product_labelTapGenerate": "Isi nama barang, lalu tekan Generate untuk buat kode batang.",
+  "product_labelSaveProduct": "Simpan Produk",
+  "product_labelPrintLabel": "Cetak Label",
+  "product_labelNewForm": "Nama barang wajib diisi dulu.",
+  "product_labelInvalidCode": "Barcode belum valid. Tekan Generate atau ketik 13 digit.",
+  "product_labelDuplicateName": "Produk dengan nama ini sudah ada",
+  "product_labelDuplicateBarcode": "Produk dengan barcode ini sudah ada",
+  "product_labelExistingTitle": "Produk Tanpa Barcode",
+  "product_labelSavedOne": "Produk tersimpan dengan barcode",
 
   "dataProduct_title": "Data Produk",
   "dataProduct_export": "Export Data",

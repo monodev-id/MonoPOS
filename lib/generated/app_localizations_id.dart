@@ -422,6 +422,131 @@ class AppLocalizationsId extends AppLocalizations {
   String get settings_appUpdate => 'Pembaruan Aplikasi';
 
   @override
+  String get settings_printBarcodeLabels => 'Cetak Barcode Barang';
+
+  @override
+  String get product_labelSearchHint => 'Cari nama / kode...';
+
+  @override
+  String get product_labelFilterAll => 'Semua';
+
+  @override
+  String get product_labelFilterWith => 'Ada barcode';
+
+  @override
+  String get product_labelFilterWithout => 'Tanpa barcode';
+
+  @override
+  String get product_labelGenerate => 'Generate';
+
+  @override
+  String get product_labelSave => 'Simpan';
+
+  @override
+  String get product_labelPrint => 'Cetak';
+
+  @override
+  String get product_labelCopies => 'Copy';
+
+  @override
+  String get product_labelSelectAll => 'Pilih semua';
+
+  @override
+  String get product_labelClear => 'Bersihkan';
+
+  @override
+  String get product_labelHasBarcode => 'Sudah ada';
+
+  @override
+  String get product_labelNoBarcode => 'Belum ada barcode';
+
+  @override
+  String product_labelNewCode(Object code) {
+    return 'Baru: $code';
+  }
+
+  @override
+  String get product_labelRegenerate => 'Generate ulang';
+
+  @override
+  String get product_labelEmptySelection =>
+      'Pilih dulu produk yang mau diproses';
+
+  @override
+  String get product_labelEmptyGenerated =>
+      'Belum ada kode generate. Pilih produk lalu tekan Generate.';
+
+  @override
+  String get product_labelEmptyPrintable =>
+      'Tidak ada label valid untuk dicetak. Generate & simpan dulu.';
+
+  @override
+  String product_labelMissingBarcode(Object name) {
+    return '$name: belum punya barcode';
+  }
+
+  @override
+  String product_labelInvalidBarcode(Object name) {
+    return '$name: barcode tidak valid (harus EAN-13)';
+  }
+
+  @override
+  String product_labelSaved(Object count) {
+    return '$count barcode tersimpan';
+  }
+
+  @override
+  String get product_labelPrinted => 'Label terkirim ke printer';
+
+  @override
+  String product_labelSkipped(Object count) {
+    return '$count produk dilewati (tanpa barcode valid)';
+  }
+
+  @override
+  String get product_labelNeedPrinter =>
+      'Printer belum terhubung. Hubungkan dulu di Pengaturan Printer.';
+
+  @override
+  String get product_labelGoPrinter => 'Ke Printer';
+
+  @override
+  String get product_labelNewProduct => 'Produk Baru';
+
+  @override
+  String get product_labelPreview => 'Preview Barcode';
+
+  @override
+  String get product_labelTapGenerate =>
+      'Isi nama barang, lalu tekan Generate untuk buat kode batang.';
+
+  @override
+  String get product_labelSaveProduct => 'Simpan Produk';
+
+  @override
+  String get product_labelPrintLabel => 'Cetak Label';
+
+  @override
+  String get product_labelNewForm => 'Nama barang wajib diisi dulu.';
+
+  @override
+  String get product_labelInvalidCode =>
+      'Barcode belum valid. Tekan Generate atau ketik 13 digit.';
+
+  @override
+  String get product_labelDuplicateName => 'Produk dengan nama ini sudah ada';
+
+  @override
+  String get product_labelDuplicateBarcode =>
+      'Produk dengan barcode ini sudah ada';
+
+  @override
+  String get product_labelExistingTitle => 'Produk Tanpa Barcode';
+
+  @override
+  String get product_labelSavedOne => 'Produk tersimpan dengan barcode';
+
+  @override
   String get dataProduct_title => 'Data Produk';
 
   @override

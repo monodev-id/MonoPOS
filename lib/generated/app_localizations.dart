@@ -872,6 +872,222 @@ abstract class AppLocalizations {
   /// **'App Updates'**
   String get settings_appUpdate;
 
+  /// No description provided for @settings_printBarcodeLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Print Product Barcodes'**
+  String get settings_printBarcodeLabels;
+
+  /// No description provided for @product_labelSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search name / code...'**
+  String get product_labelSearchHint;
+
+  /// No description provided for @product_labelFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get product_labelFilterAll;
+
+  /// No description provided for @product_labelFilterWith.
+  ///
+  /// In en, this message translates to:
+  /// **'With barcode'**
+  String get product_labelFilterWith;
+
+  /// No description provided for @product_labelFilterWithout.
+  ///
+  /// In en, this message translates to:
+  /// **'Without barcode'**
+  String get product_labelFilterWithout;
+
+  /// No description provided for @product_labelGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get product_labelGenerate;
+
+  /// No description provided for @product_labelSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get product_labelSave;
+
+  /// No description provided for @product_labelPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get product_labelPrint;
+
+  /// No description provided for @product_labelCopies.
+  ///
+  /// In en, this message translates to:
+  /// **'Copies'**
+  String get product_labelCopies;
+
+  /// No description provided for @product_labelSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get product_labelSelectAll;
+
+  /// No description provided for @product_labelClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get product_labelClear;
+
+  /// No description provided for @product_labelHasBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get product_labelHasBarcode;
+
+  /// No description provided for @product_labelNoBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'No barcode yet'**
+  String get product_labelNoBarcode;
+
+  /// No description provided for @product_labelNewCode.
+  ///
+  /// In en, this message translates to:
+  /// **'New: {code}'**
+  String product_labelNewCode(Object code);
+
+  /// No description provided for @product_labelRegenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get product_labelRegenerate;
+
+  /// No description provided for @product_labelEmptySelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Select products to process first'**
+  String get product_labelEmptySelection;
+
+  /// No description provided for @product_labelEmptyGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'No generated codes yet. Select products then tap Generate.'**
+  String get product_labelEmptyGenerated;
+
+  /// No description provided for @product_labelEmptyPrintable.
+  ///
+  /// In en, this message translates to:
+  /// **'No valid labels to print. Generate & save first.'**
+  String get product_labelEmptyPrintable;
+
+  /// No description provided for @product_labelMissingBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: has no barcode yet'**
+  String product_labelMissingBarcode(Object name);
+
+  /// No description provided for @product_labelInvalidBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: invalid barcode (must be EAN-13)'**
+  String product_labelInvalidBarcode(Object name);
+
+  /// No description provided for @product_labelSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} barcodes saved'**
+  String product_labelSaved(Object count);
+
+  /// No description provided for @product_labelPrinted.
+  ///
+  /// In en, this message translates to:
+  /// **'Labels sent to printer'**
+  String get product_labelPrinted;
+
+  /// No description provided for @product_labelSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} products skipped (no valid barcode)'**
+  String product_labelSkipped(Object count);
+
+  /// No description provided for @product_labelNeedPrinter.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer is not connected. Connect it in Printer Settings first.'**
+  String get product_labelNeedPrinter;
+
+  /// No description provided for @product_labelGoPrinter.
+  ///
+  /// In en, this message translates to:
+  /// **'To Printer'**
+  String get product_labelGoPrinter;
+
+  /// No description provided for @product_labelNewProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'New Product'**
+  String get product_labelNewProduct;
+
+  /// No description provided for @product_labelPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode Preview'**
+  String get product_labelPreview;
+
+  /// No description provided for @product_labelTapGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill the product name, then tap Generate to create the barcode.'**
+  String get product_labelTapGenerate;
+
+  /// No description provided for @product_labelSaveProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Product'**
+  String get product_labelSaveProduct;
+
+  /// No description provided for @product_labelPrintLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Print Label'**
+  String get product_labelPrintLabel;
+
+  /// No description provided for @product_labelNewForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Product name is required.'**
+  String get product_labelNewForm;
+
+  /// No description provided for @product_labelInvalidCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode is not valid yet. Tap Generate or type 13 digits.'**
+  String get product_labelInvalidCode;
+
+  /// No description provided for @product_labelDuplicateName.
+  ///
+  /// In en, this message translates to:
+  /// **'A product with this name already exists'**
+  String get product_labelDuplicateName;
+
+  /// No description provided for @product_labelDuplicateBarcode.
+  ///
+  /// In en, this message translates to:
+  /// **'A product with this barcode already exists'**
+  String get product_labelDuplicateBarcode;
+
+  /// No description provided for @product_labelExistingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Products Without Barcode'**
+  String get product_labelExistingTitle;
+
+  /// No description provided for @product_labelSavedOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Product saved with barcode'**
+  String get product_labelSavedOne;
+
   /// No description provided for @dataProduct_title.
   ///
   /// In en, this message translates to:

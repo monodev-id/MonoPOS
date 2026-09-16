@@ -425,6 +425,131 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_appUpdate => 'App Updates';
 
   @override
+  String get settings_printBarcodeLabels => 'Print Product Barcodes';
+
+  @override
+  String get product_labelSearchHint => 'Search name / code...';
+
+  @override
+  String get product_labelFilterAll => 'All';
+
+  @override
+  String get product_labelFilterWith => 'With barcode';
+
+  @override
+  String get product_labelFilterWithout => 'Without barcode';
+
+  @override
+  String get product_labelGenerate => 'Generate';
+
+  @override
+  String get product_labelSave => 'Save';
+
+  @override
+  String get product_labelPrint => 'Print';
+
+  @override
+  String get product_labelCopies => 'Copies';
+
+  @override
+  String get product_labelSelectAll => 'Select all';
+
+  @override
+  String get product_labelClear => 'Clear';
+
+  @override
+  String get product_labelHasBarcode => 'Set';
+
+  @override
+  String get product_labelNoBarcode => 'No barcode yet';
+
+  @override
+  String product_labelNewCode(Object code) {
+    return 'New: $code';
+  }
+
+  @override
+  String get product_labelRegenerate => 'Regenerate';
+
+  @override
+  String get product_labelEmptySelection => 'Select products to process first';
+
+  @override
+  String get product_labelEmptyGenerated =>
+      'No generated codes yet. Select products then tap Generate.';
+
+  @override
+  String get product_labelEmptyPrintable =>
+      'No valid labels to print. Generate & save first.';
+
+  @override
+  String product_labelMissingBarcode(Object name) {
+    return '$name: has no barcode yet';
+  }
+
+  @override
+  String product_labelInvalidBarcode(Object name) {
+    return '$name: invalid barcode (must be EAN-13)';
+  }
+
+  @override
+  String product_labelSaved(Object count) {
+    return '$count barcodes saved';
+  }
+
+  @override
+  String get product_labelPrinted => 'Labels sent to printer';
+
+  @override
+  String product_labelSkipped(Object count) {
+    return '$count products skipped (no valid barcode)';
+  }
+
+  @override
+  String get product_labelNeedPrinter =>
+      'Printer is not connected. Connect it in Printer Settings first.';
+
+  @override
+  String get product_labelGoPrinter => 'To Printer';
+
+  @override
+  String get product_labelNewProduct => 'New Product';
+
+  @override
+  String get product_labelPreview => 'Barcode Preview';
+
+  @override
+  String get product_labelTapGenerate =>
+      'Fill the product name, then tap Generate to create the barcode.';
+
+  @override
+  String get product_labelSaveProduct => 'Save Product';
+
+  @override
+  String get product_labelPrintLabel => 'Print Label';
+
+  @override
+  String get product_labelNewForm => 'Product name is required.';
+
+  @override
+  String get product_labelInvalidCode =>
+      'Barcode is not valid yet. Tap Generate or type 13 digits.';
+
+  @override
+  String get product_labelDuplicateName =>
+      'A product with this name already exists';
+
+  @override
+  String get product_labelDuplicateBarcode =>
+      'A product with this barcode already exists';
+
+  @override
+  String get product_labelExistingTitle => 'Products Without Barcode';
+
+  @override
+  String get product_labelSavedOne => 'Product saved with barcode';
+
+  @override
   String get dataProduct_title => 'Product Data';
 
   @override

@@ -9,7 +9,9 @@ import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../app/di/app_providers.dart';
 import '../../../core/themes/app_sizes.dart';
+import '../../../core/utilities/barcode_generator.dart';
 import '../../../core/utilities/currency_formatter.dart';
 import '../../../core/utilities/rupiah_input_formatter.dart';
 import '../../../domain/entities/product_tier_entity.dart';
@@ -304,7 +306,7 @@ class _NameField extends StatelessWidget {
   }
 }
 
-class _BarcodeField extends StatelessWidget {
+class _BarcodeField extends ConsumerWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
@@ -314,7 +316,7 @@ class _BarcodeField extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.only(top: AppSizes.padding),
       child: Row(
@@ -325,6 +327,37 @@ class _BarcodeField extends StatelessWidget {
               labelText: AppLocalizations.of(context)!.product_barcodeLabel,
               hintText: AppLocalizations.of(context)!.product_barcodeHint,
               onChanged: onChanged,
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 48,
+            child: Material(
+              color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppSizes.radius),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppSizes.radius),
+                onTap: () async {
+                  final productRepository = ref.read(productRepositoryProvider);
+
+                  final code = await BarcodeGenerator.generateUniqueEan13(
+                    exists: (c) async {
+                      final res = await productRepository.getProductByBarcode(c);
+                      return res.isSuccess && res.data != null;
+                    },
+                  );
+
+                  controller.text = code;
+                  onChanged(code);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Icon(
+                    Icons.autorenew_rounded,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 8),

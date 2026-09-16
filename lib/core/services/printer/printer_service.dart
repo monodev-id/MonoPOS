@@ -4,12 +4,14 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unified_esc_pos_printer/unified_esc_pos_printer.dart';
 
+import '../../../domain/entities/product_entity.dart';
 import '../../../domain/entities/transaction_entity.dart';
 import '../../../generated/app_localizations.dart';
 import '../../../generated/app_localizations_id.dart';
 import '../../../generated/app_localizations_en.dart';
 import '../../common/result.dart';
 import '../../constants/constants.dart';
+import '../../utilities/barcode_generator.dart';
 import '../../utilities/console_logger.dart';
 import '../../utilities/currency_formatter.dart';
 import '../../utilities/date_time_formatter.dart';
@@ -482,6 +484,63 @@ class PrinterService {
       UsbPrinterDevice d => d.identifier,
       _ => device.name,
     };
+  }
+
+  Future<Result<void>> printProductLabels(Map<ProductEntity, int> items) async {
+    if (items.isEmpty) {
+      return Result.failure(error: _l10n.product_labelEmptySelection);
+    }
+
+    try {
+      final ticket = await Ticket.create(paperSize);
+
+      for (final entry in items.entries) {
+        final product = entry.key;
+        final copies = entry.value < 1 ? 1 : entry.value;
+        final code = product.barcode?.trim() ?? '';
+
+        if (code.isEmpty) {
+          return Result.failure(error: _l10n.product_labelMissingBarcode(product.name));
+        }
+
+        if (!BarcodeGenerator.isValidEan13(code)) {
+          return Result.failure(error: _l10n.product_labelInvalidBarcode(product.name));
+        }
+
+        for (var i = 0; i < copies; i++) {
+          ticket.text(
+            product.name,
+            align: PrintAlign.center,
+            style: const PrintTextStyle(bold: true),
+          );
+          if (product.price > 0) {
+            ticket.text(
+              CurrencyFormatter.withoutSymbol(product.price, decimalDigits: 0),
+              align: PrintAlign.center,
+            );
+          }
+          ticket.emptyLines();
+          ticket.barcode(
+            code,
+            type: BarcodeType.ean13,
+            align: PrintAlign.center,
+            textPosition: BarcodeTextPosition.none,
+          );
+          ticket.emptyLines();
+          ticket.text(
+            BarcodeGenerator.formatDisplay(code),
+            align: PrintAlign.center,
+            style: const PrintTextStyle(bold: true),
+          );
+          ticket.emptyLines();
+          ticket.cut();
+        }
+      }
+
+      return await printTicket(ticket);
+    } catch (e) {
+      return Result.failure(error: e.toString());
+    }
   }
 
   Future<void> dispose() async {

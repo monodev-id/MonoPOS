@@ -72,6 +72,7 @@ dependencies:
   audioplayers: ^6.1.0
   open_filex: ^4.7.0
   flutter_markdown_plus: ^1.0.12
+  barcode_widget: ^2.0.4
 dev_dependencies:
   flutter_test:
     sdk: flutter

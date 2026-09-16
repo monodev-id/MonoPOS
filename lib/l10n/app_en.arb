@@ -194,6 +194,68 @@
   "settings_indonesian": "Indonesian",
   "settings_noName": "(No Name)",
   "settings_appUpdate": "App Updates",
+  "settings_printBarcodeLabels": "Print Product Barcodes",
+
+  "product_labelSearchHint": "Search name / code...",
+  "product_labelFilterAll": "All",
+  "product_labelFilterWith": "With barcode",
+  "product_labelFilterWithout": "Without barcode",
+  "product_labelGenerate": "Generate",
+  "product_labelSave": "Save",
+  "product_labelPrint": "Print",
+  "product_labelCopies": "Copies",
+  "product_labelSelectAll": "Select all",
+  "product_labelClear": "Clear",
+  "product_labelHasBarcode": "Set",
+  "product_labelNoBarcode": "No barcode yet",
+  "product_labelNewCode": "New: {code}",
+  "@product_labelNewCode": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "product_labelRegenerate": "Regenerate",
+  "product_labelEmptySelection": "Select products to process first",
+  "product_labelEmptyGenerated": "No generated codes yet. Select products then tap Generate.",
+  "product_labelEmptyPrintable": "No valid labels to print. Generate & save first.",
+  "product_labelMissingBarcode": "{name}: has no barcode yet",
+  "@product_labelMissingBarcode": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "product_labelInvalidBarcode": "{name}: invalid barcode (must be EAN-13)",
+  "@product_labelInvalidBarcode": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "product_labelSaved": "{count} barcodes saved",
+  "@product_labelSaved": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "product_labelPrinted": "Labels sent to printer",
+  "product_labelSkipped": "{count} products skipped (no valid barcode)",
+  "@product_labelSkipped": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "product_labelNeedPrinter": "Printer is not connected. Connect it in Printer Settings first.",
+  "product_labelGoPrinter": "To Printer",
+  "product_labelNewProduct": "New Product",
+  "product_labelPreview": "Barcode Preview",
+  "product_labelTapGenerate": "Fill the product name, then tap Generate to create the barcode.",
+  "product_labelSaveProduct": "Save Product",
+  "product_labelPrintLabel": "Print Label",
+  "product_labelNewForm": "Product name is required.",
+  "product_labelInvalidCode": "Barcode is not valid yet. Tap Generate or type 13 digits.",
+  "product_labelDuplicateName": "A product with this name already exists",
+  "product_labelDuplicateBarcode": "A product with this barcode already exists",
+  "product_labelExistingTitle": "Products Without Barcode",
+  "product_labelSavedOne": "Product saved with barcode",
 
   "dataProduct_title": "Product Data",
   "dataProduct_export": "Export Data",

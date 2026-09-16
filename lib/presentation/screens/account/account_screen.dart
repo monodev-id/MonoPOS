@@ -41,6 +41,7 @@ class AccountScreen extends StatelessWidget {
                 _ThemeButton(),
                 _LanguageButton(),
                 _PrinterSettingsButton(),
+                _BarcodeLabelButton(),
                 _PaymentSettingsButton(),
                 _ProductDataButton(),
                 _AppUpdateButton(),
@@ -441,6 +442,52 @@ class _PrinterSettingsButton extends StatelessWidget {
         ),
         onTap: () {
           context.go('/account/printer-settings');
+        },
+      ),
+    );
+  }
+}
+
+class _BarcodeLabelButton extends ConsumerWidget {
+  const _BarcodeLabelButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(authNotifierProvider.select((s) => s.user?.role?.value == 'admin'));
+
+    if (!isAdmin) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSizes.padding),
+      child: AppButton(
+        buttonColor: Theme.of(context).colorScheme.surface,
+        borderColor: Theme.of(context).colorScheme.surfaceContainer,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.qr_code_rounded,
+                  size: 18,
+                ),
+                const SizedBox(width: AppSizes.padding / 1.5),
+                Text(
+                  AppLocalizations.of(context)!.settings_printBarcodeLabels,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 18,
+            ),
+          ],
+        ),
+        onTap: () {
+          context.go('/account/barcode-labels');
         },
       ),
     );

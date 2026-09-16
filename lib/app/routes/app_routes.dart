@@ -10,6 +10,7 @@ import '../../presentation/screens/account/payment_settings_screen.dart';
 import '../../presentation/screens/account/product_data_screen.dart';
 
 import '../../presentation/screens/account/printer_settings_screen.dart';
+import '../../presentation/screens/account/product_barcode_label_screen.dart';
 import '../../presentation/screens/account/profile_form_screen.dart';
 import '../../presentation/screens/account/store_settings_screen.dart';
 import '../../presentation/screens/customer/customer_form_screen.dart';
@@ -48,6 +49,7 @@ class AppRoutes {
     '/account/revenue',
     '/account/payment-settings',
     '/account/product-data',
+    '/account/barcode-labels',
     '/account/app-update',
     '/products/product-create',
     '/products/product-edit',
@@ -191,6 +193,7 @@ class AppRoutes {
         _profileEdit(),
         _about(),
         _printerSettings(),
+        _barcodeLabels(),
         _storeSettings(),
         _paymentSettings(),
         _productData(),
@@ -280,6 +283,15 @@ class AppRoutes {
       path: 'printer-settings',
       builder: (context, state) {
         return const PrinterSettingsScreen();
+      },
+    );
+  }
+
+  GoRoute _barcodeLabels() {
+    return GoRoute(
+      path: 'barcode-labels',
+      builder: (context, state) {
+        return const ProductBarcodeLabelScreen();
       },
     );
   }
