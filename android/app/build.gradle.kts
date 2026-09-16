@@ -31,8 +31,8 @@ android {
         applicationId = "com.monodev.monopos"
         minSdk = 24
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.2.6"
+        versionCode = 17
+        versionName = "1.3.0"
         multiDexEnabled = true
     }
 
