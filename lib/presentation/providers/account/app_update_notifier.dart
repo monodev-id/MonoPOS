@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/di/app_providers.dart';
 import '../../../core/services/update/app_installer_service.dart';
+import '../../../core/utilities/console_logger.dart';
 import '../../../domain/entities/app_update_entity.dart';
 import '../../../domain/usecases/app_update_usecases.dart';
 import '../../../domain/usecases/params/no_param.dart';
@@ -82,14 +84,45 @@ class AppUpdateNotifier extends Notifier<AppUpdateState> {
 
     await result.when(
       success: (success) async {
-        state = state.copyWith(status: AppUpdateStatus.installing);
+        state = state.copyWith(status: AppUpdateStatus.installing, progress: 1);
+
+        cl(success.data, title: 'AppUpdate downloaded', message: info.latestVersion);
 
         try {
+          if (Platform.isAndroid) {
+            final installStatus = await Permission.requestInstallPackages.status;
+
+            cl(installStatus.toString(), title: 'AppUpdate install permission status');
+
+            if (!installStatus.isGranted) {
+              final requested = await Permission.requestInstallPackages.request();
+
+              cl(requested.toString(), title: 'AppUpdate install permission requested');
+
+              if (!requested.isGranted) {
+                if (_disposed) return;
+                state = state.copyWith(
+                  status: AppUpdateStatus.error,
+                  error: requested.isPermanentlyDenied
+                      ? 'Izin "Install aplikasi tak dikenal" ditolak. Aktifkan di Setelan > Aplikasi > Mono POS.'
+                      : 'Izin install ditolak. Ketuk Unduh & Install untuk coba lagi.',
+                );
+
+                if (requested.isPermanentlyDenied) await openAppSettings();
+
+                return;
+              }
+            }
+          }
+
           await AppInstallerService.installApk(success.data);
 
+          cl('installer intent terkirim', title: 'AppUpdate install dispatched');
+
           if (_disposed) return;
-          state = state.copyWith(status: AppUpdateStatus.available);
         } catch (e) {
+          ce(e, title: 'AppUpdate install gagal');
+
           if (_disposed) return;
           state = state.copyWith(status: AppUpdateStatus.error, error: e.toString());
         }
