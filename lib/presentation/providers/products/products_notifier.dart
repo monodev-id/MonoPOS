@@ -16,6 +16,8 @@ final berandaProductsNotifierProvider = NotifierProvider<ProductsNotifier, Produ
 );
 
 class ProductsNotifier extends Notifier<ProductsState> {
+  static const int pageSize = 10;
+
   @override
   ProductsState build() {
     return const ProductsState();
@@ -35,12 +37,13 @@ class ProductsNotifier extends Notifier<ProductsState> {
     final userId = _requireUserId();
 
     if (offset != null) {
-      if (state.isLoadingMore) return;
+      if (state.isLoadingMore || !state.hasMore) return;
       state = state.copyWith(isLoadingMore: true);
     }
 
     var params = BaseParams(
       param: userId,
+      limit: pageSize,
       offset: offset,
       contains: offset == null ? contains : state.contains,
     );
@@ -49,19 +52,25 @@ class ProductsNotifier extends Notifier<ProductsState> {
     var res = await GetUserProductsUsecase(productRepository).call(params);
 
     if (res.isSuccess) {
+      final fetched = res.data ?? [];
+
       if (offset == null) {
-        state = state.copyWith(allProducts: res.data ?? [], contains: contains, isLoadingMore: false);
+        state = ProductsState(
+          allProducts: fetched,
+          contains: contains,
+          isLoadingMore: false,
+          hasMore: fetched.length >= pageSize,
+        );
       } else {
         final current = state.allProducts ?? [];
-        final incoming = res.data ?? [];
         final merged = <ProductEntity>[];
         final seen = <String>{};
-        for (final p in [...current, ...incoming]) {
+        for (final p in [...current, ...fetched]) {
           final id = p.id?.toString() ?? '';
           if (id.isNotEmpty && !seen.add(id)) continue;
           merged.add(p);
         }
-        state = state.copyWith(allProducts: merged, isLoadingMore: false, contains: state.contains);
+        state = state.copyWith(allProducts: merged, isLoadingMore: false, hasMore: fetched.length >= pageSize);
       }
     } else {
       state = state.copyWith(isLoadingMore: false);

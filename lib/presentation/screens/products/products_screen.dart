@@ -43,18 +43,37 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   }
 
   void scrollListener() {
+    if (!scrollController.hasClients) return;
+
     final productsState = ref.read(productsNotifierProvider);
 
-    if (productsState.isLoadingMore) return;
+    if (productsState.isLoadingMore || !productsState.hasMore) return;
+
+    final position = scrollController.position;
 
     // Automatically load more data on end of scroll position
-    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 50) {
+    if (position.pixels >= position.maxScrollExtent - 50) {
+      ref.read(productsNotifierProvider.notifier).getAllProducts(offset: productsState.allProducts?.length);
+    }
+  }
+
+  void maybeLoadMore() {
+    if (!mounted || !scrollController.hasClients) return;
+
+    final productsState = ref.read(productsNotifierProvider);
+
+    if (productsState.isLoadingMore || !productsState.hasMore) return;
+    if (productsState.allProducts == null) return;
+
+    if (scrollController.position.maxScrollExtent <= 0) {
       ref.read(productsNotifierProvider.notifier).getAllProducts(offset: productsState.allProducts?.length);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => maybeLoadMore());
+
     final allProducts = ref.watch(productsNotifierProvider.select((s) => s.allProducts));
     final isLoadingMore = ref.watch(productsNotifierProvider.select((s) => s.isLoadingMore));
 

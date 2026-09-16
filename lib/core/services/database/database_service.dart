@@ -229,6 +229,8 @@ class DatabaseService {
     await _addColumnIfNotExists(db, 'OrderedProduct', 'isTieredPrice', 'INTEGER NOT NULL DEFAULT 0');
   }
 
+  static const int seedProductCount = 150;
+
   Future<void> _seedProducts() async {
     if (!kDebugMode) return;
 
@@ -238,7 +240,7 @@ class DatabaseService {
       where: 'createdById = ?',
       whereArgs: [userId],
     );
-    if (existing.length >= 50) return;
+    if (existing.length >= seedProductCount) return;
 
     final baseNames = [
       'Teh Botol',
@@ -263,55 +265,59 @@ class DatabaseService {
       'Keju',
     ];
 
-    for (int i = existing.length + 1; i <= 50; i++) {
-      final name = '${baseNames[i % baseNames.length]} $i';
-      final price = 2000 * ((i % 25) + 1);
-      final wholesale = (price * 0.9).toInt();
-      final stock = 10 + (i * 7) % 90;
-      final barcode = 'SEED${1000 + i}';
+    for (int i = existing.length + 1; i <= seedProductCount; i++) {
+      try {
+        final name = '${baseNames[i % baseNames.length]} $i';
+        final price = 2000 * ((i % 25) + 1);
+        final wholesale = (price * 0.9).toInt();
+        final stock = 10 + (i * 7) % 90;
+        final barcode = 'SEED${1000 + i}';
 
-      final productId = await database.insert(
-        DatabaseConfig.productTableName,
-        {
-          'createdById': userId,
-          'name': name,
-          'imageUrl': '',
-          'stock': stock,
-          'sold': i % 5,
+        final productId = await database.insert(
+          DatabaseConfig.productTableName,
+          {
+            'createdById': userId,
+            'name': name,
+            'imageUrl': '',
+            'stock': stock,
+            'sold': i % 5,
+            'price': price,
+            'wholesalePrice': wholesale,
+            'unit': 'pcs',
+            'barcode': barcode,
+            'description': 'Produk seed ke-$i',
+          },
+        );
+
+        await database.insert(DatabaseConfig.productUnitTableName, {
+          'productId': productId,
+          'unitName': 'pcs',
+          'conversionValue': 1,
           'price': price,
           'wholesalePrice': wholesale,
-          'unit': 'pcs',
-          'barcode': barcode,
-          'description': 'Produk seed ke-$i',
-        },
-      );
+          'isBase': 1,
+        });
 
-      await database.insert(DatabaseConfig.productUnitTableName, {
-        'productId': productId,
-        'unitName': 'pcs',
-        'conversionValue': 1,
-        'price': price,
-        'wholesalePrice': wholesale,
-        'isBase': 1,
-      });
-
-      if (i % 10 == 8) {
-        final unitRows = await database.query(
-          DatabaseConfig.productUnitTableName,
-          where: 'productId = ?',
-          whereArgs: [productId],
-          limit: 1,
-        );
-        if (unitRows.isNotEmpty) {
-          final unitId = unitRows.first['id'];
-          await database.insert(DatabaseConfig.productTieredPriceTableName, {
-            'productUnitId': unitId,
-            'minQty': 3,
-            'maxQty': null,
-            'price': 5000,
-          });
-          cw('Added tiered price for $name: 3pcs = 5000');
+        if (i % 10 == 8) {
+          final unitRows = await database.query(
+            DatabaseConfig.productUnitTableName,
+            where: 'productId = ?',
+            whereArgs: [productId],
+            limit: 1,
+          );
+          if (unitRows.isNotEmpty) {
+            final unitId = unitRows.first['id'];
+            await database.insert(DatabaseConfig.productTieredPriceTableName, {
+              'productUnitId': unitId,
+              'minQty': 3,
+              'maxQty': null,
+              'price': 5000,
+            });
+            cw('Added tiered price for $name: 3pcs = 5000');
+          }
         }
+      } catch (e) {
+        ce('Seed produk ke-$i gagal: $e');
       }
     }
 

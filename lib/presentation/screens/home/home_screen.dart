@@ -59,11 +59,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void scrollListener() {
+    if (!scrollController.hasClients) return;
+
     final productsState = ref.read(berandaProductsNotifierProvider);
 
-    if (productsState.isLoadingMore) return;
+    if (productsState.isLoadingMore || !productsState.hasMore) return;
 
-    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 50) {
+    final position = scrollController.position;
+
+    if (position.pixels >= position.maxScrollExtent - 50) {
+      ref.read(berandaProductsNotifierProvider.notifier).getAllProducts(offset: productsState.allProducts?.length);
+    }
+  }
+
+  void maybeLoadMore() {
+    if (!mounted || !scrollController.hasClients) return;
+
+    final productsState = ref.read(berandaProductsNotifierProvider);
+
+    if (productsState.isLoadingMore || !productsState.hasMore) return;
+    if (productsState.allProducts == null) return;
+
+    if (scrollController.position.maxScrollExtent <= 0) {
       ref.read(berandaProductsNotifierProvider.notifier).getAllProducts(offset: productsState.allProducts?.length);
     }
   }
@@ -74,6 +91,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => maybeLoadMore());
+
     final isWide = AppSizes.isTablet(context) || AppSizes.isDesktop(context);
 
     if (isWide) {
