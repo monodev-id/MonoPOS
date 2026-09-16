@@ -9,11 +9,11 @@ import '../../../domain/usecases/app_update_usecases.dart';
 import '../../../domain/usecases/params/no_param.dart';
 import 'app_update_state.dart';
 
-final appUpdateNotifierProvider = NotifierProvider.autoDispose<AppUpdateNotifier, AppUpdateState>(
+final appUpdateNotifierProvider = NotifierProvider<AppUpdateNotifier, AppUpdateState>(
   AppUpdateNotifier.new,
 );
 
-class AppUpdateNotifier extends AutoDisposeNotifier<AppUpdateState> {
+class AppUpdateNotifier extends Notifier<AppUpdateState> {
   var _disposed = false;
 
   @override

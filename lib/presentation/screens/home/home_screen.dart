@@ -8,10 +8,13 @@ import '../../../app/di/app_providers.dart';
 import '../../../core/services/supabase/supabase_config.dart';
 import '../../../core/services/sync/sync_service.dart';
 import '../../../core/themes/app_sizes.dart';
+import '../../../domain/entities/app_update_entity.dart';
 import '../../../domain/entities/product_entity.dart';
 import '../../../domain/entities/product_tier_entity.dart';
 import '../../../domain/entities/product_unit_entity.dart';
 import '../../../domain/usecases/product_usecases.dart';
+import '../../providers/account/app_update_notifier.dart';
+import '../../providers/auth/auth_notifier.dart';
 import '../../providers/home/home_notifier.dart';
 import '../../providers/main/main_notifier.dart';
 import '../../providers/products/products_notifier.dart';
@@ -46,7 +49,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     scrollController.addListener(scrollListener);
-    WidgetsBinding.instance.addPostFrameCallback((_) => onRefresh());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      onRefresh();
+      maybeCheckForUpdate();
+    });
     super.initState();
   }
 
@@ -89,6 +95,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     await ref.read(berandaProductsNotifierProvider.notifier).getAllProducts();
   }
 
+  void maybeCheckForUpdate() {
+    final authState = ref.read(authNotifierProvider);
+    final isAdmin = authState.user?.role?.value == 'admin';
+
+    if (!isAdmin) return;
+
+    final updateState = ref.read(appUpdateNotifierProvider);
+
+    if (updateState.status != AppUpdateStatus.idle) return;
+
+    ref.read(appUpdateNotifierProvider.notifier).checkForUpdate();
+  }
+
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) => maybeLoadMore());
@@ -100,6 +119,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         appBar: _AppBar(searchFieldController: searchFieldController),
         body: Column(
           children: [
+            const _UpdateBanner(),
             Expanded(
               child: Row(
                 children: [
@@ -150,10 +170,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               body: Scaffold(
                 appBar: _AppBar(searchFieldController: searchFieldController),
-                body: _ProductGrid(
-                  scrollController: scrollController,
-                  searchFieldController: searchFieldController,
-                  onRefresh: onRefresh,
+                body: Column(
+                  children: [
+                    const _UpdateBanner(),
+                    Expanded(
+                      child: _ProductGrid(
+                        scrollController: scrollController,
+                        searchFieldController: searchFieldController,
+                        onRefresh: onRefresh,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               header: CartPanelHeader(panelController: panelController),
@@ -189,6 +216,92 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
         _SyncButton(),
         _NetworkInfo(),
       ],
+    );
+  }
+}
+
+class _UpdateBanner extends ConsumerStatefulWidget {
+  const _UpdateBanner();
+
+  @override
+  ConsumerState<_UpdateBanner> createState() => _UpdateBannerState();
+}
+
+class _UpdateBannerState extends ConsumerState<_UpdateBanner> {
+  var _dismissed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+
+    final isAdmin = ref.watch(authNotifierProvider.select((s) => s.user?.role?.value == 'admin'));
+
+    if (!isAdmin) return const SizedBox.shrink();
+
+    final updateState = ref.watch(appUpdateNotifierProvider);
+    final info = updateState.info;
+
+    if (updateState.status != AppUpdateStatus.available || info == null || !info.isUpdateAvailable) {
+      return const SizedBox.shrink();
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSizes.padding, 8, AppSizes.padding, 0),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppSizes.radius + 8),
+        onTap: () => context.push('/account/app-update'),
+        child: Container(
+          padding: const EdgeInsets.all(AppSizes.padding / 1.5),
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(AppSizes.radius + 8),
+            border: Border.all(color: scheme.primary.withValues(alpha: 0.25)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: scheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Icon(Icons.system_update_rounded, color: scheme.onPrimary, size: 22),
+              ),
+              const SizedBox(width: AppSizes.padding / 1.5),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.update_available,
+                      style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      'v${info.currentVersion} → v${info.latestVersion}',
+                      style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded, size: 16, color: scheme.primary),
+              IconButton(
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                onPressed: () => setState(() => _dismissed = true),
+                icon: Icon(Icons.close_rounded, color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
