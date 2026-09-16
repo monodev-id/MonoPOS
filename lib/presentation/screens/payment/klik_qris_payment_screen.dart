@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,7 +11,6 @@ import '../../providers/payment/payment_notifier.dart';
 import '../../providers/payment/payment_state.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_progress_indicator.dart';
-import '../../widgets/app_snack_bar.dart';
 
 class KlikQrisPaymentScreen extends ConsumerStatefulWidget {
   const KlikQrisPaymentScreen({super.key});
@@ -212,48 +210,6 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
                   color: Theme.of(context).colorScheme.outline,
                 ),
               ),
-              if (state.signature.isNotEmpty) ...[
-                const SizedBox(height: AppSizes.padding * 2),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppSizes.padding),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(AppSizes.radius),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Sandbox: salin signature untuk Simulasi Pembayaran',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.padding / 2),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              state.signature,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontFamily: 'monospace',
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.copy, size: 18),
-                            tooltip: 'Salin signature',
-                            onPressed: () => _copySignature(state.signature),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               if (state.autoCheckDone) ...[
                 const SizedBox(height: AppSizes.padding * 2),
                 AppButton(
@@ -321,11 +277,6 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
         ],
       ),
     );
-  }
-
-  void _copySignature(String signature) {
-    Clipboard.setData(ClipboardData(text: signature));
-    AppSnackBar.show('Signature disalin');
   }
 }
 
