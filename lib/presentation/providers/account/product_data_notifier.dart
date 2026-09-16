@@ -65,7 +65,13 @@ class ProductDataNotifier extends Notifier<ProductDataState> {
         return;
       }
 
-      state = state.copyWith(isBusy: false, exportedCount: products.length);
+      state = state.copyWith(
+        isBusy: false,
+        exportedCount: products.length,
+        exportedProducts: products,
+        exportedFileName: fileName,
+        exportedAt: now,
+      );
     } catch (e) {
       state = state.copyWith(isBusy: false, error: e.toString());
     }
@@ -104,17 +110,33 @@ class ProductDataNotifier extends Notifier<ProductDataState> {
       final productRepository = ref.read(productRepositoryProvider);
 
       var imported = 0;
+      final importedNames = <String>[];
+      var parsed = 0;
       for (final item in decoded) {
         if (item is! Map<String, dynamic>) continue;
+
+        parsed++;
 
         final model = ProductModel.fromJson(item);
         model.createdById = userId;
 
         final res = await CreateProductUsecase(productRepository).call(model.toEntity());
-        if (res.isSuccess) imported++;
+        if (res.isSuccess) {
+          imported++;
+          importedNames.add(model.name);
+        }
       }
 
-      state = state.copyWith(isBusy: false, importedCount: imported);
+      final pickedName = result.files.single.name;
+
+      state = state.copyWith(
+        isBusy: false,
+        importedCount: imported,
+        importedNames: importedNames,
+        importedFileName: pickedName,
+        importedAt: DateTime.now(),
+        skippedCount: parsed - imported,
+      );
 
       if (imported > 0) {
         final productsNotifier = ref.read(productsNotifierProvider.notifier);
@@ -131,6 +153,6 @@ class ProductDataNotifier extends Notifier<ProductDataState> {
   }
 
   void clearResult() {
-    state = state.copyWith(exportedCount: null, importedCount: null, error: null);
+    state = const ProductDataState();
   }
 }
