@@ -15,6 +15,7 @@ import '../../core/services/supabase/supabase_config.dart';
 import '../../core/services/tts/tts_service.dart';
 import '../../core/services/supabase/supabase_service.dart';
 import '../../core/services/sync/sync_service.dart';
+import '../../data/datasources/interfaces/app_update_datasource.dart';
 import '../../data/datasources/interfaces/auth_datasource.dart';
 import '../../data/datasources/interfaces/customer_datasource.dart';
 import '../../data/datasources/interfaces/product_datasource.dart';
@@ -26,11 +27,13 @@ import '../../data/datasources/local/product_local_datasource_impl.dart';
 import '../../data/datasources/local/queued_action_local_datasource_impl.dart';
 import '../../data/datasources/local/transaction_local_datasource_impl.dart';
 import '../../data/datasources/local/user_local_datasource_impl.dart';
+import '../../data/datasources/remote/app_update_remote_datasource_impl.dart';
 import '../../data/datasources/remote/auth_remote_datasource_impl.dart';
 import '../../data/datasources/remote/customer_remote_datasource_impl.dart';
 import '../../data/datasources/remote/product_remote_datasource_impl.dart';
 import '../../data/datasources/remote/transaction_remote_datasource_impl.dart';
 import '../../data/datasources/remote/user_remote_datasource_impl.dart';
+import '../../data/repositories/app_update_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/customer_repository_impl.dart';
 import '../../data/repositories/product_repository_impl.dart';
@@ -38,6 +41,7 @@ import '../../data/repositories/queued_action_repository_impl.dart';
 import '../../data/repositories/storage_repository_impl.dart';
 import '../../data/repositories/transaction_repository_impl.dart';
 import '../../data/repositories/user_repository_impl.dart';
+import '../../domain/repositories/app_update_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/customer_repository.dart';
 import '../../domain/repositories/product_repository.dart';
@@ -207,4 +211,14 @@ final customerRepositoryProvider = Provider<CustomerRepository>(
 // Storage
 final storageRepositoryProvider = Provider<StorageRepository>(
   (ref) => StorageRepositoryImpl(),
+);
+
+// App Update
+final appUpdateDatasourceProvider = Provider<AppUpdateDatasource>(
+  (ref) => AppUpdateRemoteDatasourceImpl(),
+);
+final appUpdateRepositoryProvider = Provider<AppUpdateRepository>(
+  (ref) => AppUpdateRepositoryImpl(
+    appUpdateDatasource: ref.watch(appUpdateDatasourceProvider),
+  ),
 );

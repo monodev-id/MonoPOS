@@ -43,6 +43,7 @@ class AccountScreen extends StatelessWidget {
                 _PrinterSettingsButton(),
                 _PaymentSettingsButton(),
                 _ProductDataButton(),
+                _AppUpdateButton(),
                 _SupabaseConfigButton(),
                 _AboutButton(),
                 _LogoutButton(),
@@ -532,6 +533,52 @@ class _ProductDataButton extends ConsumerWidget {
         ),
         onTap: () {
           context.go('/account/product-data');
+        },
+      ),
+    );
+  }
+}
+
+class _AppUpdateButton extends ConsumerWidget {
+  const _AppUpdateButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(authNotifierProvider.select((s) => s.user?.role?.value == 'admin'));
+
+    if (!isAdmin) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSizes.padding),
+      child: AppButton(
+        buttonColor: Theme.of(context).colorScheme.surface,
+        borderColor: Theme.of(context).colorScheme.surfaceContainer,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.system_update_outlined,
+                  size: 18,
+                ),
+                const SizedBox(width: AppSizes.padding / 1.5),
+                Text(
+                  AppLocalizations.of(context)!.settings_appUpdate,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 18,
+            ),
+          ],
+        ),
+        onTap: () {
+          context.go('/account/app-update');
         },
       ),
     );

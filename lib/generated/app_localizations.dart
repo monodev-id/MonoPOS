@@ -866,6 +866,12 @@ abstract class AppLocalizations {
   /// **'(No Name)'**
   String get settings_noName;
 
+  /// No description provided for @settings_appUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'App Updates'**
+  String get settings_appUpdate;
+
   /// No description provided for @dataProduct_title.
   ///
   /// In en, this message translates to:
@@ -1141,6 +1147,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Website'**
   String get about_website;
+
+  /// No description provided for @update_title.
+  ///
+  /// In en, this message translates to:
+  /// **'App Updates'**
+  String get update_title;
+
+  /// No description provided for @update_currentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed version'**
+  String get update_currentVersion;
+
+  /// No description provided for @update_latestVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest version'**
+  String get update_latestVersion;
+
+  /// No description provided for @update_check.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for Updates'**
+  String get update_check;
+
+  /// No description provided for @update_checking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking...'**
+  String get update_checking;
+
+  /// No description provided for @update_downloadInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Download & Install'**
+  String get update_downloadInstall;
+
+  /// No description provided for @update_downloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading... {percent}%'**
+  String update_downloading(Object percent);
+
+  /// No description provided for @update_installing.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening installer...'**
+  String get update_installing;
+
+  /// No description provided for @update_upToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'App is already up to date'**
+  String get update_upToDate;
+
+  /// No description provided for @update_available.
+  ///
+  /// In en, this message translates to:
+  /// **'New version available'**
+  String get update_available;
+
+  /// No description provided for @update_changelogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new in {version}'**
+  String update_changelogTitle(Object version);
+
+  /// No description provided for @update_noChangelog.
+  ///
+  /// In en, this message translates to:
+  /// **'No release notes.'**
+  String get update_noChangelog;
+
+  /// No description provided for @update_noApk.
+  ///
+  /// In en, this message translates to:
+  /// **'This release does not include an APK file.'**
+  String get update_noApk;
+
+  /// No description provided for @update_releaseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Released {date}'**
+  String update_releaseDate(Object date);
+
+  /// No description provided for @update_retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get update_retry;
+
+  /// No description provided for @update_androidOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic install is only available on Android.'**
+  String get update_androidOnly;
 
   /// No description provided for @error_backToHome.
   ///

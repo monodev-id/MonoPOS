@@ -193,6 +193,7 @@
   "settings_english": "English",
   "settings_indonesian": "Indonesian",
   "settings_noName": "(No Name)",
+  "settings_appUpdate": "App Updates",
 
   "dataProduct_title": "Product Data",
   "dataProduct_export": "Export Data",
@@ -248,6 +249,38 @@
   "about_developerName": "Fakhri Aditia Rahman",
   "about_github": "GitHub",
   "about_website": "Website",
+
+  "update_title": "App Updates",
+  "update_currentVersion": "Installed version",
+  "update_latestVersion": "Latest version",
+  "update_check": "Check for Updates",
+  "update_checking": "Checking...",
+  "update_downloadInstall": "Download & Install",
+  "update_downloading": "Downloading... {percent}%",
+  "@update_downloading": {
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "update_installing": "Opening installer...",
+  "update_upToDate": "App is already up to date",
+  "update_available": "New version available",
+  "update_changelogTitle": "What's new in {version}",
+  "@update_changelogTitle": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "update_noChangelog": "No release notes.",
+  "update_noApk": "This release does not include an APK file.",
+  "update_releaseDate": "Released {date}",
+  "@update_releaseDate": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "update_retry": "Retry",
+  "update_androidOnly": "Automatic install is only available on Android.",
 
   "error_backToHome": "Back to home",
 

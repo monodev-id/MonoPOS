@@ -193,6 +193,7 @@
   "settings_english": "Inggris",
   "settings_indonesian": "Indonesia",
   "settings_noName": "(Tanpa Nama)",
+  "settings_appUpdate": "Pembaruan Aplikasi",
 
   "dataProduct_title": "Data Produk",
   "dataProduct_export": "Export Data",
@@ -248,6 +249,38 @@
   "about_developerName": "Fakhri Aditia Rahman",
   "about_github": "GitHub",
   "about_website": "Situs Web",
+
+  "update_title": "Pembaruan Aplikasi",
+  "update_currentVersion": "Versi terpasang",
+  "update_latestVersion": "Versi terbaru",
+  "update_check": "Periksa Pembaruan",
+  "update_checking": "Memeriksa...",
+  "update_downloadInstall": "Download & Install",
+  "update_downloading": "Mengunduh... {percent}%",
+  "@update_downloading": {
+    "placeholders": {
+      "percent": {}
+    }
+  },
+  "update_installing": "Membuka installer...",
+  "update_upToDate": "Aplikasi sudah versi terbaru",
+  "update_available": "Versi baru tersedia",
+  "update_changelogTitle": "Yang baru di {version}",
+  "@update_changelogTitle": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "update_noChangelog": "Tidak ada catatan rilis.",
+  "update_noApk": "Release ini tidak menyertakan file APK.",
+  "update_releaseDate": "Dirilis {date}",
+  "@update_releaseDate": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "update_retry": "Coba Lagi",
+  "update_androidOnly": "Instalasi otomatis hanya tersedia di Android.",
 
   "error_backToHome": "Kembali ke beranda",
 

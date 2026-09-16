@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../presentation/providers/auth/auth_notifier.dart';
 import '../../presentation/screens/account/about_screen.dart';
 import '../../presentation/screens/account/account_screen.dart';
+import '../../presentation/screens/account/app_update_screen.dart';
 import '../../presentation/screens/account/payment_settings_screen.dart';
 import '../../presentation/screens/account/product_data_screen.dart';
 
@@ -47,6 +48,7 @@ class AppRoutes {
     '/account/revenue',
     '/account/payment-settings',
     '/account/product-data',
+    '/account/app-update',
     '/products/product-create',
     '/products/product-edit',
   ];
@@ -192,6 +194,7 @@ class AppRoutes {
         _storeSettings(),
         _paymentSettings(),
         _productData(),
+        _appUpdate(),
         _revenue(),
         _customers(),
         _employees(),
@@ -304,6 +307,15 @@ class AppRoutes {
       path: 'product-data',
       builder: (context, state) {
         return const ProductDataScreen();
+      },
+    );
+  }
+
+  GoRoute _appUpdate() {
+    return GoRoute(
+      path: 'app-update',
+      builder: (context, state) {
+        return const AppUpdateScreen();
       },
     );
   }

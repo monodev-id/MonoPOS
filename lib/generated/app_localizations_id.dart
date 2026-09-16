@@ -419,6 +419,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get settings_noName => '(Tanpa Nama)';
 
   @override
+  String get settings_appUpdate => 'Pembaruan Aplikasi';
+
+  @override
   String get dataProduct_title => 'Data Produk';
 
   @override
@@ -563,6 +566,61 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get about_website => 'Situs Web';
+
+  @override
+  String get update_title => 'Pembaruan Aplikasi';
+
+  @override
+  String get update_currentVersion => 'Versi terpasang';
+
+  @override
+  String get update_latestVersion => 'Versi terbaru';
+
+  @override
+  String get update_check => 'Periksa Pembaruan';
+
+  @override
+  String get update_checking => 'Memeriksa...';
+
+  @override
+  String get update_downloadInstall => 'Download & Install';
+
+  @override
+  String update_downloading(Object percent) {
+    return 'Mengunduh... $percent%';
+  }
+
+  @override
+  String get update_installing => 'Membuka installer...';
+
+  @override
+  String get update_upToDate => 'Aplikasi sudah versi terbaru';
+
+  @override
+  String get update_available => 'Versi baru tersedia';
+
+  @override
+  String update_changelogTitle(Object version) {
+    return 'Yang baru di $version';
+  }
+
+  @override
+  String get update_noChangelog => 'Tidak ada catatan rilis.';
+
+  @override
+  String get update_noApk => 'Release ini tidak menyertakan file APK.';
+
+  @override
+  String update_releaseDate(Object date) {
+    return 'Dirilis $date';
+  }
+
+  @override
+  String get update_retry => 'Coba Lagi';
+
+  @override
+  String get update_androidOnly =>
+      'Instalasi otomatis hanya tersedia di Android.';
 
   @override
   String get error_backToHome => 'Kembali ke beranda';

@@ -422,6 +422,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_noName => '(No Name)';
 
   @override
+  String get settings_appUpdate => 'App Updates';
+
+  @override
   String get dataProduct_title => 'Product Data';
 
   @override
@@ -566,6 +569,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get about_website => 'Website';
+
+  @override
+  String get update_title => 'App Updates';
+
+  @override
+  String get update_currentVersion => 'Installed version';
+
+  @override
+  String get update_latestVersion => 'Latest version';
+
+  @override
+  String get update_check => 'Check for Updates';
+
+  @override
+  String get update_checking => 'Checking...';
+
+  @override
+  String get update_downloadInstall => 'Download & Install';
+
+  @override
+  String update_downloading(Object percent) {
+    return 'Downloading... $percent%';
+  }
+
+  @override
+  String get update_installing => 'Opening installer...';
+
+  @override
+  String get update_upToDate => 'App is already up to date';
+
+  @override
+  String get update_available => 'New version available';
+
+  @override
+  String update_changelogTitle(Object version) {
+    return 'What\'s new in $version';
+  }
+
+  @override
+  String get update_noChangelog => 'No release notes.';
+
+  @override
+  String get update_noApk => 'This release does not include an APK file.';
+
+  @override
+  String update_releaseDate(Object date) {
+    return 'Released $date';
+  }
+
+  @override
+  String get update_retry => 'Retry';
+
+  @override
+  String get update_androidOnly =>
+      'Automatic install is only available on Android.';
 
   @override
   String get error_backToHome => 'Back to home';
