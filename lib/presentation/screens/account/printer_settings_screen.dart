@@ -51,6 +51,8 @@ class _PrinterSettingsBody extends StatelessWidget {
         children: const [
           _SettingsRow(),
           SizedBox(height: AppSizes.padding * 1.5),
+          _ConnectionStatusBanner(),
+          SizedBox(height: AppSizes.padding * 1.5),
           _DevicesHeader(),
           SizedBox(height: AppSizes.padding),
           _PrinterList(),
@@ -180,6 +182,89 @@ class _ConnectionTypeDropDown extends ConsumerWidget {
   }
 }
 
+class _ConnectionStatusBanner extends ConsumerWidget {
+  const _ConnectionStatusBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    final isScanning = ref.watch(printerSettingsNotifierProvider.select((s) => s.isScanning));
+    final connectingDeviceId = ref.watch(printerSettingsNotifierProvider.select((s) => s.connectingDeviceId));
+    final isDisconnecting = ref.watch(printerSettingsNotifierProvider.select((s) => s.isDisconnecting));
+    final isConnected = ref.watch(printerSettingsNotifierProvider.select((s) => s.isConnected));
+    final connectedPrinterName = ref.watch(printerSettingsNotifierProvider.select((s) => s.connectedPrinterName));
+
+    final Color backgroundColor;
+    final Color foregroundColor;
+    final IconData icon;
+    final String text;
+    final bool showSpinner;
+
+    if (connectingDeviceId != null) {
+      final connectingName = ref.read(printerSettingsNotifierProvider.notifier).connectingPrinterName;
+
+      backgroundColor = theme.colorScheme.secondaryContainer;
+      foregroundColor = theme.colorScheme.onSecondaryContainer;
+      icon = Icons.bluetooth_searching;
+      text = l10n.printer_connectingTo(connectingName ?? connectingDeviceId);
+      showSpinner = true;
+    } else if (isScanning) {
+      backgroundColor = theme.colorScheme.secondaryContainer;
+      foregroundColor = theme.colorScheme.onSecondaryContainer;
+      icon = Icons.sync;
+      text = l10n.printer_scanning;
+      showSpinner = true;
+    } else if (isDisconnecting) {
+      backgroundColor = theme.colorScheme.secondaryContainer;
+      foregroundColor = theme.colorScheme.onSecondaryContainer;
+      icon = Icons.link_off;
+      text = l10n.printer_disconnecting;
+      showSpinner = true;
+    } else if (isConnected) {
+      backgroundColor = theme.colorScheme.tertiaryContainer;
+      foregroundColor = theme.colorScheme.onTertiaryContainer;
+      icon = Icons.check_circle;
+      text = l10n.printer_connected(connectedPrinterName ?? '-');
+      showSpinner = false;
+    } else {
+      backgroundColor = theme.colorScheme.errorContainer;
+      foregroundColor = theme.colorScheme.onErrorContainer;
+      icon = Icons.link_off;
+      text = l10n.printer_notConnected;
+      showSpinner = false;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding, vertical: AppSizes.padding / 1.25),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          if (showSpinner)
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: foregroundColor),
+            )
+          else
+            Icon(icon, size: 20, color: foregroundColor),
+          const SizedBox(width: AppSizes.padding / 1.5),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: foregroundColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DevicesHeader extends ConsumerWidget {
   const _DevicesHeader();
 
@@ -188,7 +273,7 @@ class _DevicesHeader extends ConsumerWidget {
     final isScanning = ref.watch(printerSettingsNotifierProvider.select((p) => p.isScanning));
     final isConnecting = ref.watch(printerSettingsNotifierProvider.select((s) => s.connectingDeviceId != null));
     final isDisconnecting = ref.watch(printerSettingsNotifierProvider.select((p) => p.isDisconnecting));
-    final hasSelectedPrinter = ref.read(printerSettingsNotifierProvider.notifier).selectedPrinterIndex != -1;
+    final isConnected = ref.watch(printerSettingsNotifierProvider.select((p) => p.isConnected));
 
     final isBusy = isScanning || isConnecting || isDisconnecting;
 
@@ -202,7 +287,7 @@ class _DevicesHeader extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: AppSizes.padding / 1.5),
-            if (isScanning || isDisconnecting)
+            if (isScanning || isConnecting || isDisconnecting)
               const SizedBox(
                 width: 16,
                 height: 16,
@@ -224,7 +309,7 @@ class _DevicesHeader extends ConsumerWidget {
             AppIconButton(
               icon: Icons.link_off,
               iconSize: 18,
-              enabled: hasSelectedPrinter && !isBusy,
+              enabled: isConnected && !isBusy,
               onTap: () {
                 ref.read(printerSettingsNotifierProvider.notifier).disconnectPrinter();
               },
@@ -233,7 +318,7 @@ class _DevicesHeader extends ConsumerWidget {
             AppIconButton(
               icon: Icons.print_outlined,
               iconSize: 18,
-              enabled: hasSelectedPrinter && !isConnecting,
+              enabled: isConnected && !isBusy,
               onTap: () async {
                 final result = await ref.read(printerServiceProvider).testPrint();
 
@@ -259,7 +344,8 @@ class _PrinterList extends ConsumerWidget {
     final printers = ref.watch(printerSettingsNotifierProvider.select((s) => s.printers));
     final isScanning = ref.watch(printerSettingsNotifierProvider.select((s) => s.isScanning));
     final isConnecting = ref.watch(printerSettingsNotifierProvider.select((s) => s.connectingDeviceId != null));
-    final selectedPrinterIndex = notifier.selectedPrinterIndex;
+    final isConnected = ref.watch(printerSettingsNotifierProvider.select((s) => s.isConnected));
+    final connectedDeviceId = ref.watch(printerSettingsNotifierProvider.select((s) => s.connectedDeviceId));
 
     if (printers.isEmpty) {
       return Padding(
@@ -285,11 +371,14 @@ class _PrinterList extends ConsumerWidget {
         (i) {
           final printer = printers[i];
           final isLoading = notifier.isConnectingPrinter(printer);
+          final isConnectedItem =
+              !isLoading && isConnected && connectedDeviceId != null && notifier.isConnectedPrinter(printer);
 
           return _PrinterButton(
             printer: printer,
-            isSelected: selectedPrinterIndex == i || isLoading,
+            isSelected: isConnectedItem,
             isLoading: isLoading,
+            isConnected: isConnectedItem,
             enabled: !isConnecting || isLoading,
             subtitle: notifier.getDeviceSubtitle(printer),
             onTap: () => notifier.onSelectPrinter(printer),
@@ -300,10 +389,64 @@ class _PrinterList extends ConsumerWidget {
   }
 }
 
+class _StatusBadge extends StatelessWidget {
+  final bool isLoading;
+  final bool isConnected;
+
+  const _StatusBadge({required this.isLoading, required this.isConnected});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    if (isLoading) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.secondary),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            l10n.printer_connectingBadge,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.secondary,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (isConnected) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, size: 14, color: theme.colorScheme.tertiary),
+          const SizedBox(width: 6),
+          Text(
+            l10n.printer_connectedBadge,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.tertiary,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+}
+
 class _PrinterButton extends StatelessWidget {
   final PrinterDevice printer;
   final bool isSelected;
   final bool isLoading;
+  final bool isConnected;
   final bool enabled;
   final String subtitle;
   final VoidCallback onTap;
@@ -312,6 +455,7 @@ class _PrinterButton extends StatelessWidget {
     required this.printer,
     required this.isSelected,
     required this.isLoading,
+    required this.isConnected,
     required this.enabled,
     required this.subtitle,
     required this.onTap,
@@ -358,6 +502,8 @@ class _PrinterButton extends StatelessWidget {
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  const SizedBox(height: 2),
+                  _StatusBadge(isLoading: isLoading, isConnected: isConnected),
                 ],
               ),
             ],

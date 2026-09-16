@@ -1100,6 +1100,42 @@ abstract class AppLocalizations {
   /// **'(No printer detected)'**
   String get printer_noDevice;
 
+  /// No description provided for @printer_connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {name}'**
+  String printer_connected(Object name);
+
+  /// No description provided for @printer_notConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected. Select a printer to connect.'**
+  String get printer_notConnected;
+
+  /// No description provided for @printer_connectingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {name}...'**
+  String printer_connectingTo(Object name);
+
+  /// No description provided for @printer_connectedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get printer_connectedBadge;
+
+  /// No description provided for @printer_connectingBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get printer_connectingBadge;
+
+  /// No description provided for @printer_disconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnecting...'**
+  String get printer_disconnecting;
+
   /// No description provided for @about_title.
   ///
   /// In en, this message translates to:

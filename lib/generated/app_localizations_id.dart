@@ -541,6 +541,29 @@ class AppLocalizationsId extends AppLocalizations {
   String get printer_noDevice => '(Tidak ada printer terdeteksi)';
 
   @override
+  String printer_connected(Object name) {
+    return 'Terhubung ke $name';
+  }
+
+  @override
+  String get printer_notConnected =>
+      'Tidak terhubung. Pilih printer untuk menghubungkan.';
+
+  @override
+  String printer_connectingTo(Object name) {
+    return 'Menghubungkan ke $name...';
+  }
+
+  @override
+  String get printer_connectedBadge => 'Terhubung';
+
+  @override
+  String get printer_connectingBadge => 'Menghubungkan...';
+
+  @override
+  String get printer_disconnecting => 'Memutuskan koneksi...';
+
+  @override
   String get about_title => 'Tentang';
 
   @override

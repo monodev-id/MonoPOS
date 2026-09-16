@@ -544,6 +544,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get printer_noDevice => '(No printer detected)';
 
   @override
+  String printer_connected(Object name) {
+    return 'Connected to $name';
+  }
+
+  @override
+  String get printer_notConnected =>
+      'Not connected. Select a printer to connect.';
+
+  @override
+  String printer_connectingTo(Object name) {
+    return 'Connecting to $name...';
+  }
+
+  @override
+  String get printer_connectedBadge => 'Connected';
+
+  @override
+  String get printer_connectingBadge => 'Connecting...';
+
+  @override
+  String get printer_disconnecting => 'Disconnecting...';
+
+  @override
   String get about_title => 'About';
 
   @override

@@ -235,6 +235,22 @@
   "printer_availableDevices": "Perangkat Tersedia",
   "printer_scanning": "Memindai printer...",
   "printer_noDevice": "(Tidak ada printer terdeteksi)",
+  "printer_connected": "Terhubung ke {name}",
+  "@printer_connected": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "printer_notConnected": "Tidak terhubung. Pilih printer untuk menghubungkan.",
+  "printer_connectingTo": "Menghubungkan ke {name}...",
+  "@printer_connectingTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "printer_connectedBadge": "Terhubung",
+  "printer_connectingBadge": "Menghubungkan...",
+  "printer_disconnecting": "Memutuskan koneksi...",
 
   "about_title": "Tentang",
   "about_appName": "Mono POS",

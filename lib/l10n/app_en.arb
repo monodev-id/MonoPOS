@@ -235,6 +235,22 @@
   "printer_availableDevices": "Available Devices",
   "printer_scanning": "Scanning for printers...",
   "printer_noDevice": "(No printer detected)",
+  "printer_connected": "Connected to {name}",
+  "@printer_connected": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "printer_notConnected": "Not connected. Select a printer to connect.",
+  "printer_connectingTo": "Connecting to {name}...",
+  "@printer_connectingTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "printer_connectedBadge": "Connected",
+  "printer_connectingBadge": "Connecting...",
+  "printer_disconnecting": "Disconnecting...",
 
   "about_title": "About",
   "about_appName": "Mono POS",
