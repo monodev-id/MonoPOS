@@ -5,6 +5,7 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 import '../../../../core/themes/app_sizes.dart';
 import '../../../../generated/app_localizations.dart';
 import '../../../providers/home/home_notifier.dart';
+import '../../../providers/products/products_notifier.dart';
 import '../../../widgets/app_empty_state.dart';
 import 'order_card.dart';
 
@@ -33,6 +34,7 @@ class _OrderList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeNotifierProvider);
+    final allProducts = ref.watch(berandaProductsNotifierProvider.select((p) => p.allProducts));
 
     if (homeState.orderedProducts.isEmpty) {
       return SizedBox(
@@ -51,18 +53,30 @@ class _OrderList extends ConsumerWidget {
           itemCount: homeState.orderedProducts.length,
           padding: const EdgeInsets.all(AppSizes.padding),
           itemBuilder: (context, i) {
+            final item = homeState.orderedProducts[i];
+            final product = allProducts?.where((p) => p.id == item.productId).firstOrNull;
+            final availableUnits = product != null && product.units.isNotEmpty
+                ? product.units.map((u) => u.unitName).toList()
+                : [item.unit];
+
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSizes.padding),
               child: OrderCard(
-                name: homeState.orderedProducts[i].name,
-                imageUrl: homeState.orderedProducts[i].imageUrl,
-                stock: homeState.orderedProducts[i].stock,
-                price: homeState.orderedProducts[i].price,
-                priceType: homeState.orderedProducts[i].priceType,
-                unit: homeState.orderedProducts[i].unit,
-                initialQuantity: homeState.orderedProducts[i].quantity,
-                conversionValue: homeState.orderedProducts[i].conversionValue,
-                isTieredPrice: homeState.orderedProducts[i].isTieredPrice,
+                name: item.name,
+                imageUrl: item.imageUrl,
+                stock: item.stock,
+                price: item.price,
+                priceType: item.priceType,
+                unit: item.unit,
+                initialQuantity: item.quantity,
+                selectedUnit: item.unit,
+                availableUnits: availableUnits,
+                conversionValue: item.conversionValue,
+                isTieredPrice: item.isTieredPrice,
+                onChangedUnit: (val) {
+                  if (val == null) return;
+                  ref.read(homeNotifierProvider.notifier).onChangedOrderedProductUnit(i, val);
+                },
                 onChangedQuantity: (val) {
                   ref.read(homeNotifierProvider.notifier).onChangedOrderedProductQuantity(i, val);
                 },

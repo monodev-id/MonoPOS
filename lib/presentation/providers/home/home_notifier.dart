@@ -130,6 +130,11 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     state = state.copyWith(isPanelExpanded: val);
   }
 
+  int _conversionFor(ProductEntity product, String unitName) {
+    if (product.units.isEmpty) return 1;
+    return product.units.where((u) => u.unitName == unitName).firstOrNull?.conversionValue ?? 1;
+  }
+
   Future<void> onAddOrderedProduct(
     ProductEntity product,
     double qty, {
@@ -139,12 +144,12 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     String? priceType,
   }) async {
     final orderedProducts = [...state.orderedProducts];
-    var currentIndex = orderedProducts.indexWhere((e) => e.productId == product.id);
     final finalPriceType = priceType ?? state.selectedPriceType;
     bool isGrosir = finalPriceType == 'grosir';
 
     String selectedUnit = unitName ?? product.unit;
-    int conversion = conversionValue ?? 1;
+    int conversion = conversionValue ?? _conversionFor(product, selectedUnit);
+    var currentIndex = orderedProducts.indexWhere((e) => e.productId == product.id && e.unit == selectedUnit);
 
     int basePrice =
         overridePrice ?? (isGrosir && product.wholesalePrice != null ? product.wholesalePrice! : product.price);
@@ -219,6 +224,57 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     final result = await _resolveTieredPrice(product, item.unit, item.quantity, newPrice);
 
     orderedProducts[index] = item.copyWith(price: result.price, priceType: priceType, isTieredPrice: result.isTiered);
+    state = state.copyWith(orderedProducts: orderedProducts);
+  }
+
+  Future<void> onChangedOrderedProductUnit(int index, String unitName) async {
+    final orderedProducts = [...state.orderedProducts];
+    if (index < 0 || index >= orderedProducts.length) return;
+
+    final item = orderedProducts[index];
+    if (item.unit == unitName) return;
+
+    final products = ref.read(berandaProductsNotifierProvider).allProducts;
+    final product = products?.where((p) => p.id == item.productId).firstOrNull;
+
+    if (product == null) {
+      orderedProducts[index] = item.copyWith(unit: unitName);
+      state = state.copyWith(orderedProducts: orderedProducts);
+      return;
+    }
+
+    final unit = product.units.where((u) => u.unitName == unitName).firstOrNull;
+    final conversion = unit?.conversionValue ?? 1;
+    final isGrosir = item.priceType == 'grosir';
+    final basePrice = unit != null
+        ? (isGrosir && unit.wholesalePrice != null ? unit.wholesalePrice! : unit.price)
+        : (isGrosir && product.wholesalePrice != null ? product.wholesalePrice! : product.price);
+
+    final clashIndex = orderedProducts.indexWhere(
+      (e) => e.productId == item.productId && e.unit == unitName,
+    );
+
+    if (clashIndex != -1 && clashIndex != index) {
+      final clash = orderedProducts[clashIndex];
+      final mergedQty = clash.quantity + item.quantity;
+      final result = await _resolveTieredPrice(product, unitName, mergedQty, basePrice);
+      orderedProducts[clashIndex] = clash.copyWith(
+        quantity: mergedQty,
+        price: result.price,
+        conversionValue: conversion,
+        isTieredPrice: result.isTiered,
+      );
+      orderedProducts.removeAt(index);
+    } else {
+      final result = await _resolveTieredPrice(product, unitName, item.quantity, basePrice);
+      orderedProducts[index] = item.copyWith(
+        unit: unitName,
+        conversionValue: conversion,
+        price: result.price,
+        isTieredPrice: result.isTiered,
+      );
+    }
+
     state = state.copyWith(orderedProducts: orderedProducts);
   }
 
