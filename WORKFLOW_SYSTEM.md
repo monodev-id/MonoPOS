@@ -1,5 +1,8 @@
 # WORKFLOW Sistem POS - MonoPOS
 
+> Last synced with code: v1.2.6 (Sep 2026). Payment = **KlikQRIS** (Doku retired),
+> Supabase via runtime Settings, admin-only routes enforced in `AppRoutes`.
+
 ## 1. Alur Autentikasi (Login / Logout)
 
 ```
@@ -98,12 +101,42 @@ User pilih satuan saat menambah ke keranjang
 Harga & konversi stok otomatis menyesuaikan
 ```
 
+### 2d. Tiered Pricing (Bundle) + Live Preview
+
+```
+ProductTieredPrice per ProductUnit: minQty–maxQty → price
+  ↓
+Dialog add-to-cart menampilkan harga live sesuai qty
+  ↓
+OrderedProduct.isTieredPrice = 1 jika tier terpakai
+  ↓
+Struk & cart menampilkan badge tier
+```
+
+### 2e. Input Barcode (Kamera + HID)
+
+```
+Kamera: barcode_scanner_screen (mobile_scanner) → cari produk → tambah
+HID: barcode_hid_listener (hardware scanner, fokus global) → tambah otomatis
+Produk tidak ditemukan → snackbar error
+```
+
+### 2f. Validasi Stok Rendah
+
+```
+Qty diminta > stok → AppLowStockDialog konfirmasi
+  ├── Lanjut → tambah dengan qty tersedia
+  └── Batal → kembali ke dialog
+```
+
 ---
 
 ## 3. Alur Checkout & Pembayaran
 
 ```
-User tap tombol Checkout
+User tap tombol Checkout (CartPanelFooter)
+  ↓
+Sheet checkout: quick amounts (Uang Pas / 50rb / 100rb) + input custom
   ↓
 Pilih metode pembayaran
   ├── Cash
@@ -114,22 +147,27 @@ Pilih metode pembayaran
   │     ↓
   │   Simpan transaksi
   │     ↓
-  │   Cetak struk (opsional)
+  │   Cetak struk manual dari detail (tidak auto-print)
   │     ↓
   │   Selesai ✅
   │
-  └── QRIS (Digital Payment)
+  └── QRIS (KlikQRIS)
         ↓
       ┌──────────────────────────────────────┐
-      │ QRIS Payment Screen (/payment/qris)  │
+      │ KlikQrisPaymentScreen (/payment/qris)│
       │                                       │
-      │ 1. Buat invoice via Interactive API   │
-      │ 2. Tampilkan QR Code                  │
-      │ 3. Polling status pembayaran          │
-      │    ├── Pending → Tunggu scan          │
-      │    ├── Paid ✅ → Update transaksi     │
-      │    └── Failed ❌ → Tampilkan error    │
-      │ 4. Selesai → Cetak struk (opsional)   │
+      │ 1. Simpan transaksi (status: pending) │
+      │ 2. generateQris(orderId=trxId) → QR   │
+      │ 3. Tampilkan QR + countdown (expiredMinutes) │
+      │ 4. Auto-poll 3x @15s + tombol manual  │
+      │    ├── Paid ✅ → suara kasir + TTS    │
+      │    │     → update paid → detail       │
+      │    ├── Pending → tombol Cek Pembayaran│
+      │    └── Expired/failed ❌ → error      │
+      │ 5. Back/close → dialog konfirmasi     │
+      │    (hindari batal tak sengaja)        │
+      │ 6. Webhook klikqris-notify (opsional) │
+      │    mempercepat paid via Supabase      │
       └──────────────────────────────────────┘
 ```
 
@@ -268,9 +306,11 @@ Saat KEMBALI ONLINE:
 ## 7. Alur Cetak Struk (Thermal Printer)
 
 ```
-User checkout / tap cetak ulang
+User checkout / tap cetak ulang (manual dari detail transaksi — tidak ada auto-print)
   ↓
 PrinterService.printReceipt()
+  ↓
+Banner + badge status koneksi (real-time dari PrinterManager) di layar printer settings
   ↓
 ┌───────────────────────────────────────┐
 │  Format Struk:                        │
@@ -330,10 +370,33 @@ PrinterService.printReceipt()
 - Scan & connect printer (USB/Bluetooth/BLE/Network)
 - Pilih ukuran kertas (58mm/72mm/80mm)
 - Test print
+### 8c. Pengaturan Pembayaran (KlikQRIS)
 
-### 8c. Pengaturan Pembayaran
-- API Key, Merchant ID, Merchant Name (Interactive QRIS)
-- Toggle mock mode untuk development
+- API Key, Merchant ID, toggle Sandbox, toggle suara/TTS (`klikqris_tts_enabled`)
+- Tombol **Save** eksplisit + `AppSuccessOverlay`; tidak ada write per ketikan
+- Kosong (API key/merchant) = **mock mode** untuk development (QR mock, paid ±30s)
+
+### 8d. Data Produk (Backup)
+
+- `Account → Product Data` (admin only): export JSON (produk + unit + tier) dengan rincian
+  per produk + progress; import dengan dialog konfirmasi, overwrite lokal
+- File dibagikan via file picker/share; simpan salinan di tempat aman
+
+### 8e. Pembaruan Aplikasi (App Update, Admin)
+
+```
+Account → App Update → checkForUpdate() (GitHub Releases API)
+  ├── Versi terbaru → tampilkan changelog (Markdown) + tombol Download
+  ├── Download APK (progress) → install via AppInstallerService/open_filex
+  └── Sudah terbaru → status "up to date"
+```
+
+### 8f. Supabase Sync (Runtime Config)
+
+- `Account → Supabase Sync` (admin only): input URL + anon key → simpan ke
+  `SharedPreferences` (`SupabaseCredentials`) → **restart app** untuk aktif
+- Indikator: `Aktif` / `Belum diatur`; tombol hapus konfigurasi tersedia
+- Tanpa kredensial: app full offline, write di-queue, indikator `Pending`
 
 ---
 
@@ -403,7 +466,10 @@ PrinterService.printReceipt()
 | Backend Remote | Supabase |
 | Autentikasi | Supabase Auth (Google + Email/Password) |
 | Storage | S3-compatible (AWS Signature V4) |
-| Pembayaran Digital | Interactive.co.id QRIS API |
+| Pembayaran Digital | KlikQRIS QRIS API (sandbox + production) + webhook `klikqris-notify` |
+| Suara & TTS | `flutter_tts` (id-ID) + `audioplayers` (`cashmasuk.mp3`, terbilang rupiah) |
+| App Update | GitHub Releases API + `open_filex` installer (`AppUpdate` clean-arch module) |
+| Scanner | `mobile_scanner` (kamera) + HID listener (hardware scanner) |
 | Printer | unified_esc_pos_printer (USB/BT/BLE/Network) |
 | Arsitektur | Clean Architecture (5 layer) |
 | Pattern | Result type, Usecase pattern, Offline-first |
@@ -462,24 +528,33 @@ PrinterService.printReceipt()
 /login                     → LoginScreen
 /error                     → ErrorScreen
 
-/payment/qris              → QrisPaymentScreen (full-screen overlay)
+/payment/qris              → KlikQrisPaymentScreen (full-screen overlay, PopScope confirm-cancel)
 
 ShellRoute (Bottom Navigation - MainScreen):
   /home                    → HomeScreen (POS kasir)
   /products                → ProductsScreen (daftar produk)
-    /products/product-create          → ProductFormScreen (tambah)
-    /products/product-edit/:id        → ProductFormScreen (edit)
+    /products/product-create          → ProductFormScreen (tambah, admin only)
+    /products/product-edit/:id        → ProductFormScreen (edit, admin only)
     /products/product-detail/:id      → ProductDetailScreen
   /transactions            → TransactionsScreen (riwayat)
-    /transactions/transaction-detail/:id → TransactionDetailScreen
+    /transactions/transaction-detail/:id → TransactionDetailScreen (cetak manual)
   /account                 → AccountScreen (pengaturan)
     /account/profile                  → ProfileFormScreen
-    /account/store-settings           → StoreSettingsScreen
+    /account/store-settings           → StoreSettingsScreen (admin only)
     /account/printer-settings         → PrinterSettingsScreen
-    /account/payment-settings         → PaymentSettingsScreen
-    /account/revenue                  → RevenueScreen
+    /account/payment-settings         → PaymentSettingsScreen (KlikQRIS, admin only)
+    /account/product-data             → ProductDataScreen (backup JSON, admin only)
+    /account/app-update               → AppUpdateScreen (admin only)
+    /account/revenue                  → RevenueScreen (admin only)
     /account/about                    → AboutScreen
+    /account/customers                → CustomerScreen (+ customer-form)
+    /account/employees                → EmployeesScreen (+ employee-form, admin only)
 ```
+
+Admin-only paths (`AppRoutes._adminOnlyPaths`, kasir di-redirect ke `/home`):
+`/account/employees`, `/account/store-settings`, `/account/revenue`,
+`/account/payment-settings`, `/account/product-data`, `/account/app-update`,
+`/products/product-create`, `/products/product-edit`.
 
 ---
 
@@ -500,8 +575,9 @@ ShellRoute (Bottom Navigation - MainScreen):
      ↓
 4. CHECKOUT
    - Pilih metode bayar
-     ├── CASH: Input nominal diterima → hitung kembalian
-     └── QRIS: Generate QR → pelanggan scan → polling status
+     ├── CASH: quick amount (Uang Pas/50rb/100rb) atau custom → hitung kembalian
+     └── QRIS: Generate QR → pelanggan scan → auto-poll 3x @15s / tombol manual /
+         webhook klikqris-notify → suara kasir + TTS → detail transaksi
      ↓
 5. TRANSAKSI TERSIMPAN
    - Local SQLite ✅

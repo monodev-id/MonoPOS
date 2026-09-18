@@ -1,5 +1,8 @@
 # Sinkronisasi Data (Online/Offline Mode)
 
+> Last synced with code: v1.2.6. Supabase credentials via **Account → Supabase Sync**
+> (runtime, `SupabaseCredentials` in SharedPreferences) — restart applies. No rebuild needed.
+
 ## Arsitektur
 
 ```
@@ -157,3 +160,7 @@ Disimpan di tabel SQLite `QueuedAction`:
 - **Auto-register user:** Saat login, jika user belum ada di Supabase Auth, otomatis di-register (di `AuthRemoteDataSourceImpl`)
 - **Auto-confirm:** Email otomatis terkonfirmasi (setting `mailer_autoconfirm: true` di Supabase)
 - **Upsert:** `UserRemoteDatasourceImpl` pakai `upsert` bukan `insert` biar idempotent
+- **Duplicate-key guard:** Replay antrian offline menahan error `23505`/`21000` agar tidak duplikat (fix `03a29ce`)
+- **Supabase Sync menu:** Hanya tampil untuk role **admin** (kasir disembunyikan)
+- **Tanpa Supabase:** App full offline; semua write ke SQLite + queue; indikator `Pending` sampai kredensial diisi
+- **KlikQRIS webhook:** `cloudflare/klikqris-notify` mempercepat `paymentStatus → paid` di Supabase; device melihat perubahan saat sync berikutnya (polling tetap sebagai fallback)

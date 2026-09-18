@@ -1,4 +1,9 @@
-# doku-notify
+# ⚠️ DEPRECATED — doku-notify (use `../klikqris-notify`)
+
+> Doku SNAP retired in v1.2.6. Active webhook: `cloudflare/klikqris-notify/`.
+> This worker is kept as archive only.
+
+# doku-notify (ARCHIVE)
 
 Cloudflare Worker that receives **Doku SNAP QRIS payment notifications** (webhook)
 and updates the matching Supabase `transactions` row so the POS app picks up the

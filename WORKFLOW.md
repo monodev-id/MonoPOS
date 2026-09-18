@@ -63,6 +63,7 @@ Use lowercase with hyphens for description.
 ## Environment
 
 - **Backend:** Supabase (auth, database, S3-compatible storage)
-- **Env vars:** Passed via `--dart-define` at build time (see `.env.example`)
+- **Env vars (recommended):** Runtime via **Account → Supabase Sync** (URL + anon key in `SharedPreferences`, restart to apply). One binary serves many stores.
+- **Env vars (legacy build-time):** Passed via `--dart-define` / `--dart-define-from-file config.json` (see `config.example.json`). Runtime credentials take precedence.
 - **Local DB:** SQLite via `sqflite` (runs on-device, no server needed)
-- **Secrets:** `.env` and `config.example.json` are gitignored; never commit credentials
+- **Secrets:** `.env`, `config.json`, and `config.example.json` values are gitignored; never commit credentials. `SUPABASE_SERVICE_ROLE_KEY` lives only in Cloudflare Workers, never in the app.
