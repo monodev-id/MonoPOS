@@ -70,7 +70,10 @@ class ProductRepositoryImpl extends ProductRepository {
   @override
   Future<Result<ProductEntity?>> getProductByBarcode(String barcode) async {
     try {
-      final local = await productLocalDatasource.getProductByBarcode(barcode);
+      final normalized = barcode.trim();
+      if (normalized.isEmpty) return Result.success(data: null);
+
+      final local = await productLocalDatasource.getProductByBarcode(normalized);
       if (local.isFailure) return Result.failure(error: local.error!);
 
       return Result.success(data: local.data?.toEntity());

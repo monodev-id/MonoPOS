@@ -69,34 +69,29 @@ class _BarcodeHidListenerState extends ConsumerState<BarcodeHidListener> {
 
     _isProcessing = true;
 
-    final products = ref.read(berandaProductsNotifierProvider).allProducts;
-    final product = products?.where((p) => p.barcode == trimmed).firstOrNull;
+    try {
+      final products = ref.read(berandaProductsNotifierProvider).allProducts;
+      final cached = products?.where((p) => p.barcode?.trim() == trimmed).firstOrNull;
 
-    if (product == null) {
+      if (cached != null) {
+        _addToCart(cached);
+        return;
+      }
+
       final repo = ref.read(productRepositoryProvider);
       final result = await GetProductByBarcodeUsecase(repo).call(trimmed);
 
-      if (result.isSuccess && result.data != null) {
-        if (mounted) {
-          await ref.read(berandaProductsNotifierProvider.notifier).getAllProducts();
-        }
-        final refreshedProducts = ref.read(berandaProductsNotifierProvider).allProducts;
-        final foundProduct = refreshedProducts?.where((p) => p.id == result.data!.id).firstOrNull;
+      if (!mounted) return;
 
-        if (foundProduct != null && mounted) {
-          _addToCart(foundProduct);
-        } else if (mounted) {
-          _onProductNotFound(trimmed);
-        }
-      } else if (mounted) {
+      if (result.isSuccess && result.data != null) {
+        _addToCart(result.data!);
+      } else {
         _onProductNotFound(trimmed);
       }
-    } else {
-      _addToCart(product);
+    } finally {
+      _isProcessing = false;
+      if (mounted) _focusNode.requestFocus();
     }
-
-    _isProcessing = false;
-    _focusNode.requestFocus();
   }
 
   void _addToCart(ProductEntity product) {

@@ -125,12 +125,16 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
         return Result.failure(error: 'Produk dengan nama "${state.name}" sudah ada');
       }
 
-      // Cek duplikat barcode (jika diisi)
-      if (state.barcode != null && state.barcode!.isNotEmpty) {
-        final barcodeCheck = await productRepository.getProductByBarcode(state.barcode!);
+      // Cek duplikat barcode (jika diisi, dinormalisasi trim)
+      final normalizedBarcode = state.barcode?.trim();
+      if (normalizedBarcode != null && normalizedBarcode.isNotEmpty) {
+        state = state.copyWith(barcode: normalizedBarcode);
+        final barcodeCheck = await productRepository.getProductByBarcode(normalizedBarcode);
         if (barcodeCheck.isSuccess && barcodeCheck.data != null) {
-          return Result.failure(error: 'Produk dengan barcode "${state.barcode}" sudah ada');
+          return Result.failure(error: 'Produk dengan barcode "$normalizedBarcode" sudah ada');
         }
+      } else {
+        state = state.copyWith(barcode: null);
       }
 
       var imageUrl = state.imageUrl;
@@ -186,6 +190,18 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
     try {
       final userId = _requireUserId();
       final productRepository = ref.read(productRepositoryProvider);
+
+      final normalizedBarcode = state.barcode?.trim();
+      state = state.copyWith(
+        barcode: normalizedBarcode == null || normalizedBarcode.isEmpty ? null : normalizedBarcode,
+      );
+
+      if (state.barcode != null && state.barcode!.isNotEmpty) {
+        final barcodeCheck = await productRepository.getProductByBarcode(state.barcode!);
+        if (barcodeCheck.isSuccess && barcodeCheck.data != null && barcodeCheck.data!.id != id) {
+          return Result.failure(error: 'Produk dengan barcode "${state.barcode}" sudah ada');
+        }
+      }
 
       var imageUrl = state.imageUrl;
 
@@ -368,7 +384,8 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
   }
 
   void onChangedBarcode(String value) {
-    state = state.copyWith(barcode: value.isEmpty ? null : value);
+    final normalized = value.trim();
+    state = state.copyWith(barcode: normalized.isEmpty ? null : normalized);
   }
 
   void onChangedDesc(String value) {

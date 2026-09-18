@@ -154,4 +154,6 @@ CREATE TABLE IF NOT EXISTS '$queuedActionTableName' (
     'createdAt' DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ''';
+
+  static const String createProductBarcodeIndex = 'CREATE INDEX IF NOT EXISTS idx_product_barcode ON Product(barcode)';
 }

@@ -160,10 +160,11 @@ class ProductLocalDatasourceImpl extends ProductDatasource {
     String? contains,
   }) async {
     try {
+      final keyword = contains?.trim() ?? '';
       var res = await _databaseService.database.query(
         DatabaseConfig.productTableName,
-        where: 'name LIKE ?',
-        whereArgs: ["%${contains ?? ''}%"],
+        where: '(name LIKE ? OR barcode LIKE ?)',
+        whereArgs: ['%$keyword%', '%$keyword%'],
         orderBy: '$orderBy $sortBy',
         limit: limit,
         offset: offset,
@@ -183,10 +184,13 @@ class ProductLocalDatasourceImpl extends ProductDatasource {
   @override
   Future<Result<ProductModel?>> getProductByBarcode(String barcode) async {
     try {
+      final normalized = barcode.trim();
+      if (normalized.isEmpty) return Result.success(data: null);
+
       var res = await _databaseService.database.query(
         DatabaseConfig.productTableName,
-        where: 'barcode = ?',
-        whereArgs: [barcode],
+        where: 'TRIM(barcode) = ?',
+        whereArgs: [normalized],
       );
 
       if (res.isEmpty) return Result.success(data: null);

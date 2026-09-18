@@ -50,6 +50,7 @@ class DatabaseService {
     await _applyMigrations(database);
     await _applyMigrationsV3(database);
     await _addProductNameUniqueConstraint(database);
+    await _addProductBarcodeIndex(database);
     await _seedUsers(database);
     await _migrateLegacyProductUnits();
     await _seedProducts();
@@ -362,6 +363,17 @@ class DatabaseService {
     }
   }
 
+  Future<void> _addProductBarcodeIndex(Database db) async {
+    try {
+      await db.rawUpdate("UPDATE Product SET barcode = TRIM(barcode) WHERE barcode IS NOT NULL");
+      await db.rawUpdate("UPDATE Product SET barcode = NULL WHERE barcode IS NOT NULL AND TRIM(barcode) = ''");
+      await db.execute(DatabaseConfig.createProductBarcodeIndex);
+      cw('Added INDEX on Product.barcode + normalized legacy barcodes');
+    } catch (e) {
+      ce('Migration add INDEX on Product.barcode failed: $e');
+    }
+  }
+
   Future<void> initTestDatabase({required Database testDatabase}) async {
     database = testDatabase;
 
@@ -376,6 +388,7 @@ class DatabaseService {
       database.execute(DatabaseConfig.createQueuedActionTable),
     ]);
 
+    await _addProductBarcodeIndex(database);
     await _seedUsers(database);
   }
 

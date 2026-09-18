@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
+import '../../../app/di/app_providers.dart';
 import '../../../core/services/supabase/supabase_config.dart';
 import '../../../core/services/sync/sync_service.dart';
 import '../../../core/themes/app_sizes.dart';
 import '../../../domain/entities/app_update_entity.dart';
 import '../../../domain/entities/product_entity.dart';
 import '../../../domain/entities/product_unit_entity.dart';
+import '../../../domain/usecases/product_usecases.dart';
 import '../../providers/account/app_update_notifier.dart';
 import '../../providers/auth/auth_notifier.dart';
 import '../../providers/home/home_notifier.dart';
@@ -503,38 +505,47 @@ class _ScanButton extends ConsumerWidget {
             ),
           );
 
-          if (barcode == null || barcode.isEmpty) return;
+          if (barcode == null || barcode.trim().isEmpty) return;
+          final normalizedBarcode = barcode.trim();
 
           final products = ref.read(berandaProductsNotifierProvider).allProducts;
-          final product = products?.where((p) => p.barcode == barcode).firstOrNull;
+          var product = products?.where((p) => p.barcode?.trim() == normalizedBarcode).firstOrNull;
+
+          product ??= await () async {
+            final repo = ref.read(productRepositoryProvider);
+            final result = await GetProductByBarcodeUsecase(repo).call(normalizedBarcode);
+            if (result.isSuccess) return result.data;
+            return null;
+          }();
 
           if (product == null) {
             if (!context.mounted) return;
-            AppSnackBar.showError('Produk dengan barcode "$barcode" tidak ditemukan');
+            AppSnackBar.showError('Produk dengan barcode "$normalizedBarcode" tidak ditemukan');
             return;
           }
+          final found = product;
 
           final homeState = ref.read(homeNotifierProvider);
           double currentQty =
               homeState.orderedProducts
-                  .where((e) => e.productId == product.id && e.unit == product.unit)
+                  .where((e) => e.productId == found.id && e.unit == found.unit)
                   .firstOrNull
                   ?.quantity ??
               0.0;
           bool isGrosir = homeState.selectedPriceType == 'grosir';
 
           List<ProductUnitEntity> scanEffectiveUnits;
-          if (product.units.isNotEmpty) {
-            scanEffectiveUnits = product.units;
+          if (found.units.isNotEmpty) {
+            scanEffectiveUnits = found.units;
           } else {
             scanEffectiveUnits = [
               ProductUnitEntity(
-                unitName: product.unit,
+                unitName: found.unit,
                 conversionValue: 1,
-                price: product.price,
-                wholesalePrice: product.wholesalePrice,
+                price: found.price,
+                wholesalePrice: found.wholesalePrice,
                 isBase: true,
-                productId: product.id ?? 0,
+                productId: found.id ?? 0,
               ),
             ];
           }
@@ -547,7 +558,7 @@ class _ScanButton extends ConsumerWidget {
             title: 'Enter Amount',
             child: AddToCartDialog(
               key: scanDialogKey,
-              product: product,
+              product: found,
               initialQuantity: currentQty,
               isGrosir: isGrosir,
               effectiveUnits: scanEffectiveUnits,
@@ -564,7 +575,7 @@ class _ScanButton extends ConsumerWidget {
               ref
                   .read(homeNotifierProvider.notifier)
                   .onAddOrderedProduct(
-                    product,
+                    found,
                     state.quantity == 0 ? 1.0 : state.quantity,
                     unitName: state.selectedUnit,
                     conversionValue: state.conversionValue,

@@ -129,7 +129,10 @@ class ProductRemoteDatasourceImpl extends ProductDatasource {
       final client = _client;
       if (client == null) return Result.success(data: null);
 
-      final res = await client.from(SupabaseConfig.productsTable).select().eq('barcode', barcode).maybeSingle();
+      final normalized = barcode.trim();
+      if (normalized.isEmpty) return Result.success(data: null);
+
+      final res = await client.from(SupabaseConfig.productsTable).select().eq('barcode', normalized).maybeSingle();
 
       if (res == null) return Result.success(data: null);
 
@@ -176,8 +179,9 @@ class ProductRemoteDatasourceImpl extends ProductDatasource {
 
       dynamic query = client.from(SupabaseConfig.productsTable).select();
 
-      if (contains != null && contains.isNotEmpty) {
-        query = query.ilike('name', '%$contains%');
+      final keyword = contains?.trim() ?? '';
+      if (keyword.isNotEmpty) {
+        query = query.or('name.ilike.%$keyword%,barcode.ilike.%$keyword%');
       }
 
       query = query.order(orderBy, ascending: sortBy == 'ASC').limit(limit);

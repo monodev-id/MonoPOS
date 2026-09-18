@@ -77,6 +77,7 @@ class ProductModel {
   }
 
   factory ProductModel.fromEntity(ProductEntity entity) {
+    final normalizedBarcode = entity.barcode?.trim();
     return ProductModel(
       id: entity.id ?? DateTime.now().millisecondsSinceEpoch,
       createdById: entity.createdById,
@@ -87,7 +88,7 @@ class ProductModel {
       price: entity.price,
       wholesalePrice: entity.wholesalePrice,
       unit: entity.unit,
-      barcode: entity.barcode,
+      barcode: normalizedBarcode == null || normalizedBarcode.isEmpty ? null : normalizedBarcode,
       description: entity.description,
       units: entity.units.map((e) => ProductUnitModel.fromEntity(e)).toList(),
       createdAt: entity.createdAt ?? DateTime.now().toIso8601String(),

@@ -39,8 +39,9 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
     if (_isProcessing) return;
 
     final detected = capture.barcodes.firstOrNull;
-    final barcode = detected?.rawValue;
-    if (barcode == null || barcode.isEmpty) return;
+    final rawBarcode = detected?.rawValue;
+    if (rawBarcode == null || rawBarcode.trim().isEmpty) return;
+    final barcode = rawBarcode.trim();
 
     if (!_linearFormats.contains(detected?.format) || !_digitsOnly.hasMatch(barcode)) {
       AppSnackBar.showError('Hanya kode batang angka');
@@ -57,6 +58,9 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
     if (result.isFailure) {
       _isProcessing = false;
       AppSnackBar.showError(result.error?.toString() ?? 'Gagal mencari produk');
+    } else if (result.data == null) {
+      _isProcessing = false;
+      AppSnackBar.showError('Produk dengan barcode "$barcode" tidak ditemukan');
     } else {
       Navigator.pop(context, barcode);
     }
