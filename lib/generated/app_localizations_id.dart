@@ -331,6 +331,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get transaction_notFound => 'Tidak Ditemukan';
 
   @override
+  String get transaction_printed => 'Struk terkirim ke printer';
+
+  @override
   String get revenue_title => 'Laporan Pendapatan';
 
   @override

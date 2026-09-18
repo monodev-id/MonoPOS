@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mono_pos/generated/app_localizations.dart';
 
 import '../../../app/di/app_providers.dart';
@@ -7,46 +8,118 @@ import '../../../core/constants/constants.dart';
 import '../../../core/extensions/string_casing_extension.dart';
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/app_sizes.dart';
+import '../../../core/utilities/console_logger.dart';
 import '../../../core/utilities/currency_formatter.dart';
 import '../../../core/utilities/date_time_formatter.dart';
 import '../../../domain/entities/ordered_product_entity.dart';
 import '../../../domain/entities/transaction_entity.dart';
 import '../../providers/transactions/transaction_detail_notifier.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/app_empty_state.dart';
 import '../../widgets/app_progress_indicator.dart';
 import '../../widgets/app_snack_bar.dart';
+import '../../widgets/app_success_overlay.dart';
 
-class TransactionDetailScreen extends ConsumerWidget {
+class TransactionDetailScreen extends ConsumerStatefulWidget {
   final int id;
 
   const TransactionDetailScreen({super.key, required this.id});
 
-  void _reprint(WidgetRef ref) async {
+  @override
+  ConsumerState<TransactionDetailScreen> createState() => _TransactionDetailScreenState();
+}
+
+class _TransactionDetailScreenState extends ConsumerState<TransactionDetailScreen> {
+  late final Future<TransactionEntity?> _detailFuture;
+  bool _isPrinting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _detailFuture = ref.read(transactionDetailNotifierProvider.notifier).getTransactionDetail(widget.id);
+  }
+
+  Future<void> _reprint(BuildContext context) async {
+    if (_isPrinting) {
+      cl('[Reprint] tap ignored: already printing');
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
     final transaction = ref.read(transactionDetailNotifierProvider);
-    if (transaction == null) return;
+    cl('[Reprint] tap: transaction=${transaction == null ? 'NULL' : 'id=${transaction.id}'}');
 
-    final result = await ref.read(printerServiceProvider).printTransaction(transaction);
+    if (transaction == null) {
+      AppSnackBar.showError(l10n.transaction_notFound);
+      return;
+    }
 
-    if (result.isFailure) {
-      AppSnackBar.showError(result.error.toString());
+    final printerService = ref.read(printerServiceProvider);
+    cl(
+      '[Reprint] printer: selected=${printerService.selectedPrinter?.name ?? 'NULL'} '
+      'isConnected=${printerService.isConnected} state=${printerService.connectionState}',
+    );
+
+    if (!printerService.isConnected || printerService.selectedPrinter == null) {
+      AppDialog.show(
+        title: l10n.transaction_reprint,
+        text: l10n.product_labelNeedPrinter,
+        leftButtonText: l10n.home_cancel,
+        rightButtonText: l10n.product_labelGoPrinter,
+        onTapRightButton: (ctx) {
+          ctx.pop();
+          context.go('/account/printer-settings');
+        },
+      );
+      return;
+    }
+
+    setState(() => _isPrinting = true);
+
+    try {
+      final result = await AppDialog.showProgress(() => printerService.printTransaction(transaction));
+
+      if (!mounted) return;
+
+      cl('[Reprint] print result: isFailure=${result.isFailure} error=${result.error}');
+
+      if (result.isFailure) {
+        AppSnackBar.showError(result.error.toString());
+      } else {
+        AppSuccessOverlay.show(l10n.transaction_printed);
+      }
+    } catch (e) {
+      ce('[Reprint] print exception: $e');
+      AppSnackBar.showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isPrinting = false);
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final transaction = ref.watch(transactionDetailNotifierProvider);
+    final canPrint = !_isPrinting && transaction != null;
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.print_outlined),
+            icon: _isPrinting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.print_outlined),
             tooltip: AppLocalizations.of(context)!.transaction_reprint,
-            onPressed: () => _reprint(ref),
+            onPressed: canPrint ? () => _reprint(context) : null,
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: ref.read(transactionDetailNotifierProvider.notifier).getTransactionDetail(id),
+      body: FutureBuilder<TransactionEntity?>(
+        future: _detailFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const AppProgressIndicator();

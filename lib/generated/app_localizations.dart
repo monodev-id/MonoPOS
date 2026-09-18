@@ -704,6 +704,12 @@ abstract class AppLocalizations {
   /// **'Not Found'**
   String get transaction_notFound;
 
+  /// No description provided for @transaction_printed.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt sent to printer'**
+  String get transaction_printed;
+
   /// No description provided for @revenue_title.
   ///
   /// In en, this message translates to:

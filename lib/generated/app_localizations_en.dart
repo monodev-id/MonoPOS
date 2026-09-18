@@ -334,6 +334,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transaction_notFound => 'Not Found';
 
   @override
+  String get transaction_printed => 'Receipt sent to printer';
+
+  @override
   String get revenue_title => 'Revenue Report';
 
   @override

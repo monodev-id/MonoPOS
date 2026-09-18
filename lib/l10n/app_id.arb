@@ -148,6 +148,7 @@
   "transaction_paymentReceived": "Pembayaran Diterima",
   "transaction_change": "Kembalian",
   "transaction_notFound": "Tidak Ditemukan",
+  "transaction_printed": "Struk terkirim ke printer",
   "revenue_title": "Laporan Pendapatan",
   "revenue_totalRevenue": "Total Pendapatan",
   "revenue_transactions": "{count} Transaksi",

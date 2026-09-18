@@ -148,6 +148,7 @@
   "transaction_paymentReceived": "Payment Received",
   "transaction_change": "Change",
   "transaction_notFound": "Not Found",
+  "transaction_printed": "Receipt sent to printer",
   "revenue_title": "Revenue Report",
   "revenue_totalRevenue": "Total Revenue",
   "revenue_transactions": "{count} Transactions",
