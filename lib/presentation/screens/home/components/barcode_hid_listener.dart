@@ -53,11 +53,19 @@ class _BarcodeHidListenerState extends ConsumerState<BarcodeHidListener> {
     ];
   }
 
+  static final _digitsOnly = RegExp(r'^[0-9]+$');
+
   void _onSubmitted(String value) async {
     final trimmed = value.trim();
     _controller.clear();
 
     if (trimmed.isEmpty || _isProcessing) return;
+
+    if (!_digitsOnly.hasMatch(trimmed)) {
+      _onProductNotFound('Bukan kode batang produk — hanya angka');
+      _focusNode.requestFocus();
+      return;
+    }
 
     _isProcessing = true;
 

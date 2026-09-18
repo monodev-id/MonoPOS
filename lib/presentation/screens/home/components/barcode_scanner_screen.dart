@@ -13,8 +13,20 @@ class BarcodeScannerScreen extends ConsumerStatefulWidget {
   ConsumerState<BarcodeScannerScreen> createState() => _BarcodeScannerScreenState();
 }
 
+const _linearFormats = {
+  BarcodeFormat.ean13,
+  BarcodeFormat.ean8,
+  BarcodeFormat.upcA,
+  BarcodeFormat.upcE,
+  BarcodeFormat.itf,
+};
+
+final _digitsOnly = RegExp(r'^[0-9]+$');
+
 class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
-  final MobileScannerController _scannerController = MobileScannerController();
+  final MobileScannerController _scannerController = MobileScannerController(
+    formats: _linearFormats.toList(),
+  );
   bool _isProcessing = false;
 
   @override
@@ -26,8 +38,14 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
 
-    final barcode = capture.barcodes.firstOrNull?.rawValue;
+    final detected = capture.barcodes.firstOrNull;
+    final barcode = detected?.rawValue;
     if (barcode == null || barcode.isEmpty) return;
+
+    if (!_linearFormats.contains(detected?.format) || !_digitsOnly.hasMatch(barcode)) {
+      AppSnackBar.showError('Hanya kode batang angka');
+      return;
+    }
 
     _isProcessing = true;
 
