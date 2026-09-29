@@ -1,3 +1,4 @@
+import 'package:mono_pos/core/services/database/database_config.dart';
 import 'package:mono_pos/core/services/database/database_service.dart';
 import 'package:mono_pos/data/datasources/local/transaction_local_datasource_impl.dart';
 import 'package:mono_pos/data/models/ordered_product_model.dart';
@@ -26,11 +27,42 @@ void main() {
   });
 
   const userId = "user123";
+  const seedProductId = 99;
+
+  Future<void> seedProduct() async {
+    await testDatabase.insert(
+      DatabaseConfig.productTableName,
+      {
+        'id': seedProductId,
+        'name': 'Seed Product',
+        'createdById': userId,
+        'imageUrl': '',
+        'stock': 10,
+        'sold': 0,
+        'price': 1000,
+        'unit': 'pcs',
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<(int stock, int sold)> seedProductStock() async {
+    final rows = await testDatabase.query(
+      DatabaseConfig.productTableName,
+      where: 'id = ?',
+      whereArgs: [seedProductId],
+    );
+
+    return ((rows.first['stock'] as num).toInt(), (rows.first['sold'] as num).toInt());
+  }
 
   TransactionModel createSampleTransaction({
     int id = 1,
     String createdById = userId,
     int totalAmount = 1,
+    int productId = 1,
+    double quantity = 1,
+    int conversionValue = 1,
   }) {
     return TransactionModel(
       id: id,
@@ -44,12 +76,13 @@ void main() {
         OrderedProductModel(
           id: 1,
           transactionId: id,
-          productId: 1,
-          quantity: 1,
+          productId: productId,
+          quantity: quantity,
           stock: 1,
           name: 'Sample Product',
           imageUrl: '',
           price: totalAmount,
+          conversionValue: conversionValue,
         ),
       ],
     );
@@ -226,6 +259,103 @@ void main() {
 
         final retrieved = await datasource.getTransaction(transaction.id);
         expect(retrieved.data, isNull);
+      });
+    });
+
+    group('stock deduction', () {
+      setUp(() async {
+        await seedProduct();
+      });
+
+      test('should deduct stock by quantity divided by conversionValue', () async {
+        final transaction = createSampleTransaction(
+          id: 500,
+          productId: seedProductId,
+          quantity: 4,
+          conversionValue: 2,
+        );
+
+        final result = await datasource.createTransaction(transaction);
+
+        expect(result.isFailure, isFalse, reason: '${result.error}');
+
+        final (stock, sold) = await seedProductStock();
+        expect(stock, equals(8));
+        expect(sold, equals(2));
+      });
+
+      test('should not fail when conversionValue is 0', () async {
+        final transaction = createSampleTransaction(
+          id: 501,
+          productId: seedProductId,
+          quantity: 3,
+          conversionValue: 0,
+        );
+
+        final result = await datasource.createTransaction(transaction);
+
+        expect(result.isFailure, isFalse, reason: '${result.error}');
+        expect(result.data, equals(501));
+
+        final (stock, sold) = await seedProductStock();
+        expect(stock, equals(10));
+        expect(sold, equals(0));
+      });
+
+      test('should not fail when quantity is not finite', () async {
+        final transaction = createSampleTransaction(
+          id: 502,
+          productId: seedProductId,
+          quantity: double.infinity,
+        );
+
+        final result = await datasource.createTransaction(transaction);
+
+        expect(result.isFailure, isFalse, reason: '${result.error}');
+
+        final (stock, sold) = await seedProductStock();
+        expect(stock, equals(10));
+        expect(sold, equals(0));
+      });
+
+      test('should not fail on updateTransaction when conversionValue is 0', () async {
+        final transaction = createSampleTransaction(
+          id: 503,
+          productId: seedProductId,
+          quantity: 3,
+          conversionValue: 0,
+        );
+        await datasource.createTransaction(transaction);
+
+        final updated = createSampleTransaction(
+          id: 503,
+          totalAmount: 100,
+          productId: seedProductId,
+          quantity: 3,
+          conversionValue: 0,
+        );
+
+        final result = await datasource.updateTransaction(updated);
+
+        expect(result.isSuccess, isTrue, reason: '${result.error}');
+      });
+
+      test('should not fail on deleteTransaction when conversionValue is 0', () async {
+        final transaction = createSampleTransaction(
+          id: 504,
+          productId: seedProductId,
+          quantity: 3,
+          conversionValue: 0,
+        );
+        await datasource.createTransaction(transaction);
+
+        final result = await datasource.deleteTransaction(transaction.id);
+
+        expect(result.isSuccess, isTrue, reason: '${result.error}');
+
+        final (stock, sold) = await seedProductStock();
+        expect(stock, equals(10));
+        expect(sold, equals(0));
       });
     });
   });

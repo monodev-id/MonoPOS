@@ -21,12 +21,20 @@ class ProductUnitModel {
     this.isBase = false,
   });
 
+  static int _normalizeConversion(dynamic value) {
+    if (value is! num) return 1;
+
+    final intValue = value.toInt();
+
+    return intValue < 1 ? 1 : intValue;
+  }
+
   factory ProductUnitModel.fromJson(Map<String, dynamic> json) {
     return ProductUnitModel(
       id: json['id'],
       productId: json['productId'],
       unitName: json['unitName'],
-      conversionValue: json['conversionValue'],
+      conversionValue: _normalizeConversion(json['conversionValue']),
       price: json['price'],
       wholesalePrice: json['wholesalePrice'],
       isBase: json['isBase'] == 1,
@@ -50,7 +58,7 @@ class ProductUnitModel {
       id: entity.id ?? DateTime.now().millisecondsSinceEpoch + (_fallbackCounter++),
       productId: entity.productId,
       unitName: entity.unitName,
-      conversionValue: entity.conversionValue,
+      conversionValue: _normalizeConversion(entity.conversionValue),
       price: entity.price,
       wholesalePrice: entity.wholesalePrice,
       isBase: entity.isBase,

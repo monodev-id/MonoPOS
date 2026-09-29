@@ -801,9 +801,16 @@ class _UnitManagementSection extends ConsumerWidget {
       onTapLeftButton: (ctx) => ctx.pop(),
       onTapRightButton: (ctx) {
         final notifier = ref.read(productFormNotifierProvider.notifier);
+        final conversion = int.tryParse(conversionController.text) ?? 1;
+
+        if (conversion < 1) {
+          AppSnackBar.showError('Nilai konversi minimal 1');
+          return;
+        }
+
         final unit = ProductUnitEntity(
           unitName: nameController.text,
-          conversionValue: int.tryParse(conversionController.text) ?? 1,
+          conversionValue: conversion,
           price: int.tryParse(priceController.text.replaceAll('.', '')) ?? 0,
           wholesalePrice: int.tryParse(wholesalePriceController.text.replaceAll('.', '')),
           isBase: isBase,

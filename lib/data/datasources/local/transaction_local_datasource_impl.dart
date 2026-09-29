@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../../../core/common/result.dart';
 import '../../../core/services/database/database_config.dart';
 import '../../../core/services/database/database_service.dart';
+import '../../../core/utilities/console_logger.dart';
 import '../../models/ordered_product_model.dart';
 import '../../models/product_model.dart';
 import '../../models/transaction_model.dart';
@@ -13,6 +14,25 @@ class TransactionLocalDatasourceImpl extends TransactionDatasource {
   final DatabaseService _databaseService;
 
   TransactionLocalDatasourceImpl(this._databaseService);
+
+  int _deductionOf(OrderedProductModel orderedProduct) {
+    final conversion = orderedProduct.conversionValue;
+    final quantity = orderedProduct.quantity;
+
+    if (conversion <= 0 || !quantity.isFinite) {
+      cw(
+        'Konversi atau qty tidak valid, potongan stok dilewati',
+        title: 'Data produk rusak',
+        message:
+            'productId=${orderedProduct.productId} name="${orderedProduct.name}" '
+            'unit=${orderedProduct.unit} qty=$quantity conversion=$conversion',
+      );
+
+      return 0;
+    }
+
+    return (quantity / conversion).round();
+  }
 
   @override
   Future<Result<int>> createTransaction(TransactionModel transaction) async {
@@ -53,7 +73,7 @@ class TransactionLocalDatasourceImpl extends TransactionDatasource {
             var product = ProductModel.fromJson(rawProduct.first);
 
             // Update product stock and sold
-            int deduction = (orderedProduct.quantity / orderedProduct.conversionValue).round();
+            int deduction = _deductionOf(orderedProduct);
             int stock = product.stock - deduction;
             int sold = product.sold + deduction;
 
@@ -120,7 +140,7 @@ class TransactionLocalDatasourceImpl extends TransactionDatasource {
             var product = ProductModel.fromJson(rawProduct.first);
 
             // Update product stock and sold
-            int deduction = (orderedProduct.quantity / orderedProduct.conversionValue).round();
+            int deduction = _deductionOf(orderedProduct);
             int stock = product.stock - deduction;
             int sold = product.sold + deduction;
 
@@ -194,7 +214,7 @@ class TransactionLocalDatasourceImpl extends TransactionDatasource {
           if (productResults.isNotEmpty) {
             var product = ProductModel.fromJson(productResults.first);
 
-            int revertDeduction = (orderedProduct.quantity / orderedProduct.conversionValue).round();
+            int revertDeduction = _deductionOf(orderedProduct);
             int revertedStock = product.stock + revertDeduction;
             int revertedSold = product.sold - revertDeduction;
 

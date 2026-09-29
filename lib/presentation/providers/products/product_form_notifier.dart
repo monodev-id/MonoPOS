@@ -400,7 +400,10 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
       }
     }
     final idx = units.indexWhere((u) => u.unitName == unit.unitName);
-    final newUnit = unit.copyWith(id: unit.id ?? _nextUnitId());
+    final newUnit = unit.copyWith(
+      id: unit.id ?? _nextUnitId(),
+      conversionValue: unit.conversionValue < 1 ? 1 : unit.conversionValue,
+    );
     if (idx >= 0) {
       units[idx] = newUnit;
     } else {
@@ -417,7 +420,9 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
         if (i != index && units[i].isBase) units[i] = units[i].copyWith(isBase: false);
       }
     }
-    final merged = unit.id != null ? unit : unit.copyWith(id: units[index].id);
+    final merged = (unit.id != null ? unit : unit.copyWith(id: units[index].id)).copyWith(
+      conversionValue: unit.conversionValue < 1 ? 1 : unit.conversionValue,
+    );
     units[index] = merged;
     state = state.copyWith(units: units);
     _syncManagedUnits();

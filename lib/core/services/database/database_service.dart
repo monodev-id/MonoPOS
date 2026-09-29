@@ -220,6 +220,14 @@ class DatabaseService {
 
     // Migration: add UNIQUE constraint on Product name
     await _addProductNameUniqueConstraint(db);
+
+    // Migration: normalize conversionValue <= 0, penyebut qty saat potong stok jadi division by zero
+    await db.rawUpdate(
+      "UPDATE '${DatabaseConfig.productUnitTableName}' SET conversionValue = 1 WHERE conversionValue <= 0",
+    );
+    await db.rawUpdate(
+      "UPDATE '${DatabaseConfig.orderedProductTableName}' SET conversionValue = 1 WHERE conversionValue <= 0",
+    );
   }
 
   Future<void> _applyMigrationsV3(Database db) async {
@@ -387,6 +395,16 @@ class DatabaseService {
       database.execute(DatabaseConfig.createOrderedProductTable),
       database.execute(DatabaseConfig.createQueuedActionTable),
     ]);
+
+    // Samakan kolom dengan schema produksi, yang ditambahkan lewat migrasi di init()
+    await _addColumnIfNotExists(database, 'Product', 'wholesalePrice', 'INTEGER');
+    await _addColumnIfNotExists(database, 'Product', 'unit', "TEXT DEFAULT 'pcs'");
+    await _addColumnIfNotExists(database, 'Product', 'barcode', 'TEXT');
+    await _addColumnIfNotExists(database, 'Product', 'isCustomPrice', 'INTEGER NOT NULL DEFAULT 0');
+    await _addColumnIfNotExists(database, 'Transaction', 'paymentType', "TEXT DEFAULT 'cash'");
+    await _addColumnIfNotExists(database, 'Transaction', 'customerId', 'TEXT');
+    await _addColumnIfNotExists(database, 'Transaction', 'dueDate', 'TEXT');
+    await _addColumnIfNotExists(database, 'OrderedProduct', 'isTieredPrice', 'INTEGER NOT NULL DEFAULT 0');
 
     await _addProductBarcodeIndex(database);
     await _seedUsers(database);
