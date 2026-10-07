@@ -153,23 +153,6 @@ class PrinterService {
         await _manager.disconnect();
       }
 
-      Future<Result<void>> reconnectSavedPrinter() async {
-        final selectedDeviceId = _sharedPreferences.getString(Constants.selectedDeviceIdKey);
-        if (selectedDeviceId == null || selectedDeviceId.isEmpty) {
-          return Result.success(data: null);
-        }
-
-        final selectedConnectionType = _sharedPreferences.getString(Constants.selectedConnectionTypeKey);
-        final connectionType = PrinterConnectionType.values.where((type) => type.name == selectedConnectionType).firstOrNull;
-
-        final reconnectTypes = connectionType == null ? _allConnectionTypes : {connectionType};
-
-        return scanPrinters(
-          types: reconnectTypes,
-          selectedDeviceId: selectedDeviceId,
-        );
-      }
-
       selectedPrinter = null;
       return Result.success(data: null);
     } on PrinterException catch (e) {
@@ -179,6 +162,25 @@ class PrinterService {
       cl('[PrinterService].disconnectPrinter error: $e');
       return Result.failure(error: e.toString());
     }
+  }
+
+  Future<Result<void>> reconnectSavedPrinter() async {
+    final selectedDeviceId = _sharedPreferences.getString(Constants.selectedDeviceIdKey);
+    if (selectedDeviceId == null || selectedDeviceId.isEmpty) {
+      return Result.success(data: null);
+    }
+
+    final selectedConnectionType = _sharedPreferences.getString(Constants.selectedConnectionTypeKey);
+    final connectionType = PrinterConnectionType.values
+        .where((type) => type.name == selectedConnectionType)
+        .firstOrNull;
+
+    final reconnectTypes = connectionType == null ? _allConnectionTypes : {connectionType};
+
+    return scanPrinters(
+      types: reconnectTypes,
+      selectedDeviceId: selectedDeviceId,
+    );
   }
 
   Future<Result<void>> printTicket(Ticket ticket) async {
