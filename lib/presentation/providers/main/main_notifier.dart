@@ -38,9 +38,15 @@ class MainNotifier extends Notifier<MainState> {
 
   Future<void> initMainProvider() async {
     _listenSyncMode();
+    unawaited(reconnectPrinterIfNeeded());
     await getUserData();
     _registerConnectivityListener();
     startPing();
+  }
+
+  Future<void> reconnectPrinterIfNeeded() async {
+    final printerService = ref.read(printerServiceProvider);
+    await printerService.reconnectSavedPrinter();
   }
 
   void _listenSyncMode() {

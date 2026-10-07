@@ -20,6 +20,12 @@ class PrinterService {
   final PrinterManager _manager = PrinterManager();
   final SharedPreferences _sharedPreferences;
   String _languageCode = 'id';
+  static const Set<PrinterConnectionType> _allConnectionTypes = {
+    PrinterConnectionType.usb,
+    PrinterConnectionType.bluetooth,
+    PrinterConnectionType.ble,
+    PrinterConnectionType.network,
+  };
 
   PrinterService(this._sharedPreferences);
 
@@ -58,12 +64,7 @@ class PrinterService {
   }
 
   Future<Result<void>> scanPrinters({
-    Set<PrinterConnectionType> types = const {
-      PrinterConnectionType.usb,
-      PrinterConnectionType.bluetooth,
-      PrinterConnectionType.ble,
-      PrinterConnectionType.network,
-    },
+    Set<PrinterConnectionType> types = _allConnectionTypes,
     String? selectedDeviceId,
     Function(List<PrinterDevice>)? onDeviceStream,
   }) async {
@@ -88,13 +89,17 @@ class PrinterService {
 
         if (selectedDeviceId != null && !(_manager.state == PrinterConnectionState.scanning)) {
           final match = printers.where((d) => getDeviceId(d) == selectedDeviceId).firstOrNull;
-          if (match != null && selectedPrinter == null) {
-            final result = await selectPrinter(match);
-            if (result.isFailure) {
-              return Result.failure(error: result.error!);
+          if (match != null) {
+            final currentSelectedDeviceId = selectedPrinter == null ? null : getDeviceId(selectedPrinter!);
+            final shouldReconnect = !_manager.isConnected || currentSelectedDeviceId != selectedDeviceId;
+
+            if (shouldReconnect) {
+              final result = await selectPrinter(match);
+              if (result.isFailure) {
+                return Result.failure(error: result.error!);
+              }
             }
-          } else if (match != null) {
-            // Update reference to the new scan instance without reconnecting
+
             selectedPrinter = match;
           }
         }
@@ -157,6 +162,25 @@ class PrinterService {
       cl('[PrinterService].disconnectPrinter error: $e');
       return Result.failure(error: e.toString());
     }
+  }
+
+  Future<Result<void>> reconnectSavedPrinter() async {
+    final selectedDeviceId = _sharedPreferences.getString(Constants.selectedDeviceIdKey);
+    if (selectedDeviceId == null || selectedDeviceId.isEmpty) {
+      return Result.success(data: null);
+    }
+
+    final selectedConnectionType = _sharedPreferences.getString(Constants.selectedConnectionTypeKey);
+    final connectionType = PrinterConnectionType.values
+        .where((type) => type.name == selectedConnectionType)
+        .firstOrNull;
+
+    final reconnectTypes = connectionType == null ? _allConnectionTypes : {connectionType};
+
+    return scanPrinters(
+      types: reconnectTypes,
+      selectedDeviceId: selectedDeviceId,
+    );
   }
 
   Future<Result<void>> printTicket(Ticket ticket) async {
