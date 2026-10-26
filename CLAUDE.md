@@ -1,6 +1,6 @@
 # CLAUDE.md - Flutter Project Conventions
 
-> Current release: `1.3.7` (`versionCode 24`). Keep this file, `README.md`, and the reference docs in sync when architecture or feature modules change.
+> Current release: `1.3.8` (`versionCode 25`). Keep this file, `README.md`, and the reference docs in sync when architecture or feature modules change.
 
 ## Architecture
 

@@ -1,6 +1,6 @@
 # UI.md - UI Reference
 
-> Last synced with code: v1.3.7 (Oct 2026). Covers direct QRIS, cart/unit snapshot, barcode label
+> Last synced with code: v1.3.8 (Oct 2026). Covers direct QRIS, cart/unit snapshot, barcode label
 > printing, KlikQRIS payment screen, product-data/app-update screens, printer status banner,
 > supplier/purchase screens, and revenue day detail.
 

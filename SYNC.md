@@ -1,6 +1,6 @@
 # Sinkronisasi Data (Online/Offline Mode)
 
-> Last synced with code: v1.3.7. Supabase credentials via **Account → Supabase Sync**
+> Last synced with code: v1.3.8. Supabase credentials via **Account → Supabase Sync**
 > (runtime, `SupabaseCredentials` in SharedPreferences) — restart applies. No rebuild needed.
 > Supplier/purchase/HPP data is local-only; direct QRIS transactions use the same queue as cart QRIS.
 

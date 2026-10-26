@@ -1,6 +1,6 @@
 # klikqris-notify
 
-> Last synced with app v1.3.7. Used by both cart checkout and **Direct QRIS** — both flows store
+> Last synced with app v1.3.8. Used by both cart checkout and **Direct QRIS** — both flows store
 > `paymentExternalId = order_id` so the worker can match either transaction type.
 
 Cloudflare Worker that receives **KlikQRIS QRIS payment notifications** (webhook)

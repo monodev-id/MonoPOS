@@ -1,6 +1,6 @@
 # DATABASE.md - Database Schema Reference
 
-> Last synced with code: v1.3.7 (`DatabaseConfig.version = 3`). Supplier, purchase, and product `costPrice`
+> Last synced with code: v1.3.8 (`DatabaseConfig.version = 3`). Supplier, purchase, and product `costPrice`
 > data are stored locally only and are not mirrored to Supabase yet.
 
 Database: SQLite (`app_database.db`) via `sqflite`
