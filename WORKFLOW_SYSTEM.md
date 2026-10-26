@@ -220,6 +220,10 @@ TransactionRepository.create()
                          └───────────────────────────┘
 ```
 
+> Form produk juga menyimpan **HPP** (`costPrice`, opsional). Nilai ini otomatis diperbarui dari nota
+> pembelian terbaru. Detail produk menampilkan HPP, estimasi untung, harga terakhir per supplier, dan
+> riwayat pembelian khusus admin.
+
 ### 4a. CRUD Produk
 
 ```
@@ -238,6 +242,65 @@ Delete:
   → DeleteProductUsecase → ProductRepository.delete()
   → Local + Remote / Queue
 ```
+
+### 4b. Alur Pembelian & Supplier (HPP)
+
+Fitur pembelian menyimpan nota pembelian multi-item dari supplier/grosir, mengingat harga terakhir
+per supplier, menambah stok (opsional per nota), dan memperbarui HPP produk. Semua data pembelian
+dan supplier saat ini **lokal (SQLite)** — belum disinkronkan ke Supabase.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│           PURCHASES SCREEN (/account/purchases)           │
+│                                                           │
+│  • Daftar nota pembelian (search, pull-to-refresh)        │
+│  • Tap → Detail Pembelian                                │
+│  • Long-press → Hapus nota                               │
+│  • Tombol (+ Catat) → Form Pembelian                     │
+│  • Ikon toko → Supplier / Grosir                         │
+└───────────┬───────────────────────────────┬───────────────┘
+            ▼                               ▼
+┌───────────────────────────┐   ┌──────────────────────────┐
+│ Purchase Form             │   │ Supplier Screen          │
+│ (/account/purchases/create)│  │ (/account/suppliers)     │
+│                           │   │                          │
+│ • Pilih supplier (+ baru) │   │ • Daftar supplier        │
+│ • Tanggal pembelian       │   │ • Search nama/telepon/   │
+│ • Switch tambah stok      │   │   alamat                 │
+│ • Tambah barang (picker)  │   │ • Tambah / edit          │
+│ • Satuan, qty, harga beli │   │ • Hapus (diblokir jika   │
+│ • Hint harga terakhir     │   │   masih dipakai nota)    │
+│ • Simpan → Detail         │   └──────────────────────────┘
+└───────────┬───────────────┘
+            ▼
+┌──────────────────────────────────────────────────────────┐
+│           PURCHASE DETAIL (/account/purchases/detail/:id) │
+│  • Supplier, tanggal, catatan, total, jumlah item         │
+│  • Rincian barang + HPP satuan dasar                     │
+│  • Hapus nota → stok & HPP dihitung ulang                │
+│  • "Catat Pembelian Lagi"                                 │
+└──────────────────────────────────────────────────────────┘
+```
+
+Aturan perhitungan:
+
+```
+Stok bertambah        = round(quantity / conversionValue)
+                        (sama dengan aturan pengurangan stok saat penjualan)
+HPP satuan dasar      = round(unitPrice / conversionValue)
+Product.costPrice     = baseUnitPrice dari PurchaseItem terbaru
+                        (purchaseDate DESC, Purchase.id DESC, PurchaseItem.id DESC)
+Hapus nota            = stok dikurangi hanya jika Purchase.addStock = 1,
+                        lalu HPP dihitung ulang dari nota yang tersisa (0 jika habis)
+Harga terakhir        = PurchaseItem terbaru untuk produk + supplier terpilih;
+                        jika belum ada, fallback ke supplier lain
+```
+
+Catatan:
+- Nama supplier unik case-insensitive; menghapus supplier ditolak selama masih ada nota yang memakai `supplierId`.
+- Satu nota tidak boleh berisi baris produk + satuan yang sama (ditambahkan sebagai baris terpisah).
+- Form produk menyimpan `costPrice`; sinkronisasi produk ke Supabase tetap membuang `costPrice` karena
+  kolom tersebut belum ada di tabel remote.
 
 ---
 
@@ -453,6 +516,22 @@ Account → App Update → checkForUpdate() (GitHub Releases API)
 └──────────────┘
 ```
 
+Relasi pembelian (lokal, belum disinkronkan):
+
+```
+┌────────────┐       ┌──────────────┐       ┌────────────────┐
+│  Supplier  │──1:N──│   Purchase   │──1:N──│  PurchaseItem  │
+│  (lokal)   │       │   (lokal)    │       │    (lokal)     │
+└────────────┘       └──────┬───────┘       └───────┬────────┘
+                            │ createdById           │ productId
+                            ▼                       ▼
+                          User                   Product
+                                                    │
+                                                    ▼
+                                              Product.costPrice
+                                              (HPP terbaru)
+```
+
 ---
 
 ## 11. Stack Teknologi
@@ -549,11 +628,16 @@ ShellRoute (Bottom Navigation - MainScreen):
     /account/about                    → AboutScreen
     /account/customers                → CustomerScreen (+ customer-form)
     /account/employees                → EmployeesScreen (+ employee-form, admin only)
+    /account/suppliers                → SupplierScreen (+ suppliers/create, suppliers/edit/:id, admin only)
+    /account/purchases                → PurchaseScreen (admin only)
+      /account/purchases/create?productId=...  → PurchaseFormScreen
+      /account/purchases/detail/:id            → PurchaseDetailScreen
 ```
 
 Admin-only paths (`AppRoutes._adminOnlyPaths`, kasir di-redirect ke `/home`):
 `/account/employees`, `/account/store-settings`, `/account/revenue`,
 `/account/payment-settings`, `/account/product-data`, `/account/app-update`,
+`/account/suppliers`, `/account/purchases`,
 `/products/product-create`, `/products/product-edit`.
 
 ---
@@ -603,26 +687,33 @@ Admin-only paths (`AppRoutes._adminOnlyPaths`, kasir di-redirect ke `/home`):
    - Edit produk yang sudah ada
    - Hapus produk
      ↓
-3. LIHAT TRANSAKSI
+3. CATAT PEMBELIAN & SUPPLIER
+   - Tambah supplier / grosir (nama unik)
+   - Catat nota pembelian multi-item (supplier, tanggal, satuan, qty, harga)
+   - Harga terakhir per supplier ditampilkan dan diisikan otomatis
+   - Stok bertambah (dapat dimatikan per nota) dan HPP produk diperbarui
+   - Hapus nota → stok & HPP dihitung ulang
+     ↓
+4. LIHAT TRANSAKSI
    - Riwayat transaksi (search, filter)
    - Detail transaksi
    - Cetak ulang struk
    - Hapus transaksi jika perlu
      ↓
-4. PENGATURAN
+5. PENGATURAN
    - Edit profil toko (nama, alamat, footer struk)
    - Setup printer thermal
    - Konfigurasi pembayaran QRIS
      ↓
-5. LAPORAN PENDAPATAN
+6. LAPORAN PENDAPATAN
    - Pilih rentang tanggal
    - Lihat rekap harian (total transaksi, total pendapatan)
      ↓
-6. KONTROL SINKRONISASI
+7. KONTROL SINKRONISASI
    - Cek status: Auto / Online / Offline
    - Lihat antrian yang pending
    - Trigger sinkronisasi manual jika perlu
      ↓
-7. LOGOUT
+8. LOGOUT
    - Hapus sesi → Kembali ke Login Screen
 ```

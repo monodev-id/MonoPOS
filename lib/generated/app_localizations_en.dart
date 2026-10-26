@@ -356,6 +356,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get revenue_noData => 'No revenue data available';
 
   @override
+  String get revenue_summary => 'Summary';
+
+  @override
+  String revenue_periodLastDays(Object count) {
+    return 'Last $count days';
+  }
+
+  @override
+  String get revenue_cash => 'Cash';
+
+  @override
+  String get revenue_qris => 'QRIS';
+
+  @override
+  String get revenue_other => 'Other';
+
+  @override
+  String get revenue_dayDetailTitle => 'Revenue Detail';
+
+  @override
+  String get revenue_dayNoTransactions => 'No transactions on this day';
+
+  @override
+  String get revenue_transactionsTitle => 'Transactions';
+
+  @override
   String transaction_products(Object count) {
     return '$count Products';
   }
@@ -429,6 +455,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_printBarcodeLabels => 'Print Product Barcodes';
+
+  @override
+  String get settings_suppliers => 'Suppliers / Wholesalers';
+
+  @override
+  String get settings_purchases => 'Purchases';
 
   @override
   String get product_labelSearchHint => 'Search name / code...';

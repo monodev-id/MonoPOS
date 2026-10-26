@@ -13,6 +13,9 @@ class DatabaseConfig {
   static const String transactionTableName = 'Transaction';
   static const String orderedProductTableName = 'OrderedProduct';
   static const String queuedActionTableName = 'QueuedAction';
+  static const String supplierTableName = 'Supplier';
+  static const String purchaseTableName = 'Purchase';
+  static const String purchaseItemTableName = 'PurchaseItem';
 
   static const String createUserTable =
       '''
@@ -44,6 +47,7 @@ CREATE TABLE IF NOT EXISTS '$productTableName' (
     'sold' INTEGER,
     'price' INTEGER,
     'wholesalePrice' INTEGER,
+    'costPrice' INTEGER NOT NULL DEFAULT 0,
     'unit' TEXT DEFAULT 'pcs',
     'barcode' TEXT,
     'description' TEXT,
@@ -155,5 +159,67 @@ CREATE TABLE IF NOT EXISTS '$queuedActionTableName' (
 );
 ''';
 
+  static const String createSupplierTable =
+      '''
+CREATE TABLE IF NOT EXISTS '$supplierTableName' (
+    'id' TEXT NOT NULL,
+    'name' TEXT NOT NULL,
+    'phone' TEXT,
+    'address' TEXT,
+    'note' TEXT,
+    'createdAt' DATETIME DEFAULT CURRENT_TIMESTAMP,
+    'updatedAt' DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY ('id')
+);
+''';
+
+  static const String createPurchaseTable =
+      '''
+CREATE TABLE IF NOT EXISTS '$purchaseTableName' (
+    'id' INTEGER NOT NULL,
+    'supplierId' TEXT,
+    'supplierName' TEXT,
+    'purchaseDate' TEXT NOT NULL,
+    'note' TEXT,
+    'totalAmount' INTEGER NOT NULL DEFAULT 0,
+    'totalItems' INTEGER NOT NULL DEFAULT 0,
+    'addStock' INTEGER NOT NULL DEFAULT 1,
+    'createdById' TEXT,
+    'createdAt' DATETIME DEFAULT CURRENT_TIMESTAMP,
+    'updatedAt' DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY ('id'),
+    FOREIGN KEY ('supplierId') REFERENCES 'Supplier' ('id'),
+    FOREIGN KEY ('createdById') REFERENCES 'User' ('id')
+);
+''';
+
+  static const String createPurchaseItemTable =
+      '''
+CREATE TABLE IF NOT EXISTS '$purchaseItemTableName' (
+    'id' INTEGER NOT NULL,
+    'purchaseId' INTEGER NOT NULL,
+    'productId' INTEGER NOT NULL,
+    'productName' TEXT,
+    'unitName' TEXT NOT NULL,
+    'conversionValue' INTEGER NOT NULL DEFAULT 1,
+    'quantity' REAL NOT NULL DEFAULT 1,
+    'unitPrice' INTEGER NOT NULL DEFAULT 0,
+    'totalPrice' INTEGER NOT NULL DEFAULT 0,
+    'baseUnitPrice' INTEGER NOT NULL DEFAULT 0,
+    'createdAt' DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY ('id'),
+    FOREIGN KEY ('purchaseId') REFERENCES 'Purchase' ('id'),
+    FOREIGN KEY ('productId') REFERENCES 'Product' ('id')
+);
+''';
+
   static const String createProductBarcodeIndex = 'CREATE INDEX IF NOT EXISTS idx_product_barcode ON Product(barcode)';
+  static const String createSupplierNameUniqueIndex =
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_supplier_name_unique ON Supplier(name COLLATE NOCASE)';
+  static const String createPurchaseDateIndex =
+      'CREATE INDEX IF NOT EXISTS idx_purchase_date ON Purchase(purchaseDate DESC, id DESC)';
+  static const String createPurchaseSupplierIndex =
+      'CREATE INDEX IF NOT EXISTS idx_purchase_supplier ON Purchase(supplierId)';
+  static const String createPurchaseItemProductIndex =
+      'CREATE INDEX IF NOT EXISTS idx_purchase_item_product ON PurchaseItem(productId, purchaseId)';
 }

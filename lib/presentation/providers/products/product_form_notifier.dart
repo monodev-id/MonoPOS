@@ -56,6 +56,7 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
         name: product?.name,
         price: product?.price,
         wholesalePrice: product?.wholesalePrice,
+        costPrice: product?.costPrice,
         stock: product?.stock,
         unit: defaultUnit,
         barcode: product?.barcode,
@@ -157,6 +158,7 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
         stock: state.stock ?? 0,
         price: state.price ?? 0,
         wholesalePrice: state.wholesalePrice,
+        costPrice: state.costPrice ?? 0,
         unit: state.unit ?? 'pcs',
         barcode: state.barcode,
         description: state.description ?? '',
@@ -222,6 +224,7 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
         stock: state.stock ?? 0,
         price: state.price ?? 0,
         wholesalePrice: state.wholesalePrice,
+        costPrice: state.costPrice ?? 0,
         unit: state.unit ?? 'pcs',
         barcode: state.barcode,
         description: state.description ?? '',
@@ -294,6 +297,10 @@ class ProductFormNotifier extends AutoDisposeNotifier<ProductFormState> {
   void onChangedWholesalePrice(String value) {
     state = state.copyWith(wholesalePrice: int.tryParse(value.replaceAll('.', '')));
     _syncManagedUnits();
+  }
+
+  void onChangedCostPrice(String value) {
+    state = state.copyWith(costPrice: int.tryParse(value.replaceAll('.', '')));
   }
 
   void onChangedStock(String value) {

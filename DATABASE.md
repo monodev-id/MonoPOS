@@ -1,6 +1,7 @@
 # DATABASE.md - Database Schema Reference
 
-> Last synced with code: v1.2.6 (`DatabaseConfig.version = 3`).
+> Last synced with code: v1.2.7 (`DatabaseConfig.version = 3`). Supplier, purchase, and product `costPrice`
+> data are stored locally only and are not mirrored to Supabase yet.
 
 Database: SQLite (`app_database.db`) via `sqflite`
 
@@ -41,6 +42,7 @@ Source of truth: `lib/core/services/database/database_config.dart`. Seed data: 1
 | sold           | INTEGER  |                                   |
 | price          | INTEGER  |                                   |
 | wholesalePrice | INTEGER  |                                   |
+| costPrice      | INTEGER  | NOT NULL, DEFAULT 0 (HPP satuan dasar, otomatis dari pembelian terakhir) |
 | unit           | TEXT     | DEFAULT 'pcs'                     |
 | barcode        | TEXT     |                                   |
 | description    | TEXT     |                                   |
@@ -125,6 +127,62 @@ Source of truth: `lib/core/services/database/database_config.dart`. Seed data: 1
 | createdAt | DATETIME | DEFAULT CURRENT_TIMESTAMP |
 | updatedAt | DATETIME | DEFAULT CURRENT_TIMESTAMP |
 
+### Supplier
+
+| Column    | Type     | Constraints               |
+| --------- | -------- | ------------------------- |
+| id        | TEXT     | PRIMARY KEY, NOT NULL     |
+| name      | TEXT     | NOT NULL                  |
+| phone     | TEXT     |                           |
+| address   | TEXT     |                           |
+| note      | TEXT     |                           |
+| createdAt | DATETIME | DEFAULT CURRENT_TIMESTAMP |
+| updatedAt | DATETIME | DEFAULT CURRENT_TIMESTAMP |
+
+Index: `idx_supplier_name_unique` — `UNIQUE (name COLLATE NOCASE)`, so supplier names are unique
+case-insensitively.
+
+### Purchase
+
+| Column       | Type     | Constraints                              |
+| ------------ | -------- | ---------------------------------------- |
+| id           | INTEGER  | PRIMARY KEY, NOT NULL                    |
+| supplierId   | TEXT     | FK → Supplier(id)                        |
+| supplierName | TEXT     | Snapshot of supplier name at purchase time |
+| purchaseDate | TEXT     | NOT NULL (`YYYY-MM-DD`)                  |
+| note         | TEXT     |                                          |
+| totalAmount  | INTEGER  | NOT NULL, DEFAULT 0                      |
+| totalItems   | INTEGER  | NOT NULL, DEFAULT 0                      |
+| addStock     | INTEGER  | NOT NULL, DEFAULT 1 (0 = jangan tambah stok) |
+| createdById  | TEXT     | FK → User(id)                            |
+| createdAt    | DATETIME | DEFAULT CURRENT_TIMESTAMP                |
+| updatedAt    | DATETIME | DEFAULT CURRENT_TIMESTAMP                |
+
+Indexes: `idx_purchase_date` (`purchaseDate DESC, id DESC`), `idx_purchase_supplier` (`supplierId`).
+
+### PurchaseItem
+
+| Column         | Type     | Constraints                     |
+| -------------- | -------- | ------------------------------- |
+| id             | INTEGER  | PRIMARY KEY, NOT NULL           |
+| purchaseId     | INTEGER  | FK → Purchase(id), NOT NULL     |
+| productId      | INTEGER  | FK → Product(id), NOT NULL      |
+| productName    | TEXT     | Snapshot of product name        |
+| unitName       | TEXT     | NOT NULL                        |
+| conversionValue| INTEGER  | NOT NULL, DEFAULT 1             |
+| quantity       | REAL     | NOT NULL, DEFAULT 1             |
+| unitPrice      | INTEGER  | NOT NULL, DEFAULT 0             |
+| totalPrice     | INTEGER  | NOT NULL, DEFAULT 0             |
+| baseUnitPrice  | INTEGER  | NOT NULL, DEFAULT 0 (HPP satuan dasar) |
+| createdAt      | DATETIME | DEFAULT CURRENT_TIMESTAMP       |
+
+Index: `idx_purchase_item_product` (`productId, purchaseId`).
+
+> Purchase behavior: stok bertambah sebesar `round(quantity / conversionValue)` — aturan yang sama
+> dengan pengurangan stok saat penjualan. `Product.costPrice` diisi `baseUnitPrice` dari
+> `PurchaseItem` terbaru (`purchaseDate DESC, Purchase.id DESC, PurchaseItem.id DESC`), dan dihitung
+> ulang saat nota pembelian dihapus. Hapus nota hanya mengurangi stok jika `Purchase.addStock = 1`.
+
 ### QueuedAction
 
 | Column     | Type     | Constraints               |
@@ -142,3 +200,7 @@ Local tables mirror remote tables defined in `docs/supabase/schema.sql` (snake_c
 quoted columns: `createdById`, `imageUrl`, `wholesalePrice`, ...). Remote adds `users`, `product_units`,
 `product_tiered_prices`, `ordered_products`, `customers`, `queued_actions` with matching FKs.
 Webhook matching: `transactions.paymentExternalId = orderId` (see KlikQRIS flow in `README.md`).
+
+`Product.costPrice`, `Supplier`, `Purchase`, and `PurchaseItem` are **local-only** for now. Product
+sync strips `costPrice` before create/update so existing Supabase `products` rows keep working until a
+remote column and supplier/purchase sync are added.

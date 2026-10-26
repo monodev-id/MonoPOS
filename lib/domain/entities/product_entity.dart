@@ -11,6 +11,7 @@ class ProductEntity extends Equatable {
   final int? sold;
   final int price;
   final int? wholesalePrice;
+  final int costPrice;
   final String unit;
   final String? barcode;
   final String? description;
@@ -28,6 +29,7 @@ class ProductEntity extends Equatable {
     this.sold,
     required this.price,
     this.wholesalePrice,
+    this.costPrice = 0,
     this.unit = 'pcs',
     this.barcode,
     this.description,
@@ -46,6 +48,7 @@ class ProductEntity extends Equatable {
     int? sold,
     int? price,
     int? wholesalePrice,
+    int? costPrice,
     String? unit,
     String? barcode,
     String? description,
@@ -63,6 +66,7 @@ class ProductEntity extends Equatable {
       sold: sold ?? this.sold,
       price: price ?? this.price,
       wholesalePrice: wholesalePrice ?? this.wholesalePrice,
+      costPrice: costPrice ?? this.costPrice,
       unit: unit ?? this.unit,
       barcode: barcode ?? this.barcode,
       description: description ?? this.description,
@@ -83,6 +87,7 @@ class ProductEntity extends Equatable {
     sold,
     price,
     wholesalePrice,
+    costPrice,
     unit,
     barcode,
     description,

@@ -43,6 +43,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final nameController = TextEditingController();
   final priceController = TextEditingController();
   final wholesalePriceController = TextEditingController();
+  final costPriceController = TextEditingController();
   final stockController = TextEditingController();
   final barcodeController = TextEditingController();
   final descController = TextEditingController();
@@ -67,6 +68,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             TextEditingValue(text: state.wholesalePrice?.toString() ?? ''),
           )
           .text;
+      costPriceController.text = RupiahInputFormatter()
+          .formatEditUpdate(
+            const TextEditingValue(text: ''),
+            TextEditingValue(text: state.costPrice?.toString() ?? ''),
+          )
+          .text;
       stockController.text = state.stock?.toString() ?? '';
       barcodeController.text = state.barcode ?? '';
       descController.text = state.description ?? '';
@@ -78,6 +85,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     nameController.dispose();
     priceController.dispose();
     wholesalePriceController.dispose();
+    costPriceController.dispose();
     stockController.dispose();
     barcodeController.dispose();
     descController.dispose();
@@ -188,6 +196,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       _WholesalePriceField(
                         controller: wholesalePriceController,
                         onChanged: notifier.onChangedWholesalePrice,
+                      ),
+                      _CostPriceField(
+                        controller: costPriceController,
+                        onChanged: notifier.onChangedCostPrice,
                       ),
                       _StockField(
                         controller: stockController,
@@ -439,6 +451,43 @@ class _WholesalePriceField extends StatelessWidget {
         hintText: AppLocalizations.of(context)!.product_wholesalePriceHint,
         type: AppTextFieldType.currency,
         onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class _CostPriceField extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  const _CostPriceField({
+    required this.controller,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSizes.padding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppTextField(
+            controller: controller,
+            labelText: 'Harga Beli / HPP (Opsional)',
+            hintText: 'Harga modal per satuan dasar...',
+            type: AppTextFieldType.currency,
+            onChanged: onChanged,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Otomatis diperbarui dari pembelian terakhir.',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontSize: 10,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ],
       ),
     );
   }

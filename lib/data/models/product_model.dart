@@ -10,6 +10,7 @@ class ProductModel {
   int sold;
   int price;
   int? wholesalePrice;
+  int costPrice;
   String unit;
   String? barcode;
   String? description;
@@ -27,6 +28,7 @@ class ProductModel {
     required this.sold,
     required this.price,
     this.wholesalePrice,
+    this.costPrice = 0,
     this.unit = 'pcs',
     this.barcode,
     this.description,
@@ -46,6 +48,7 @@ class ProductModel {
       sold: json['sold'],
       price: json['price'],
       wholesalePrice: json['wholesalePrice'],
+      costPrice: json['costPrice'] ?? 0,
       unit: json['unit'] ?? 'pcs',
       barcode: json['barcode'],
       description: json['description'],
@@ -66,6 +69,7 @@ class ProductModel {
       'sold': sold,
       'price': price,
       'wholesalePrice': wholesalePrice,
+      'costPrice': costPrice,
       'unit': unit,
       'barcode': barcode,
       'description': description,
@@ -87,6 +91,7 @@ class ProductModel {
       sold: entity.sold ?? 0,
       price: entity.price,
       wholesalePrice: entity.wholesalePrice,
+      costPrice: entity.costPrice,
       unit: entity.unit,
       barcode: normalizedBarcode == null || normalizedBarcode.isEmpty ? null : normalizedBarcode,
       description: entity.description,
@@ -107,6 +112,7 @@ class ProductModel {
       sold: sold,
       price: price,
       wholesalePrice: wholesalePrice,
+      costPrice: costPrice,
       unit: unit,
       barcode: barcode,
       description: description,

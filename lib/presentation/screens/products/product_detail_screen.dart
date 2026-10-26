@@ -16,6 +16,7 @@ import '../../widgets/app_dialog.dart';
 import '../../widgets/app_empty_state.dart';
 import '../../widgets/app_progress_indicator.dart';
 import '../../widgets/app_success_overlay.dart';
+import 'components/product_purchase_info.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
   final int id;
@@ -82,6 +83,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           _ProductSold(sold: product.sold),
                           if (product.units.length > 1) _ProductUnits(product: product),
                           _ProductDescription(description: product.description),
+                          ProductPurchaseInfo(product: product),
                         ],
                       ),
                     ),

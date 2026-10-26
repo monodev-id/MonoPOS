@@ -164,6 +164,19 @@
     }
   },
   "revenue_noData": "No revenue data available",
+  "revenue_summary": "Summary",
+  "revenue_periodLastDays": "Last {count} days",
+  "@revenue_periodLastDays": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "revenue_cash": "Cash",
+  "revenue_qris": "QRIS",
+  "revenue_other": "Other",
+  "revenue_dayDetailTitle": "Revenue Detail",
+  "revenue_dayNoTransactions": "No transactions on this day",
+  "revenue_transactionsTitle": "Transactions",
 
   "transaction_products": "{count} Products",
   "@transaction_products": {
@@ -196,6 +209,8 @@
   "settings_noName": "(No Name)",
   "settings_appUpdate": "App Updates",
   "settings_printBarcodeLabels": "Print Product Barcodes",
+  "settings_suppliers": "Suppliers / Wholesalers",
+  "settings_purchases": "Purchases",
 
   "product_labelSearchHint": "Search name / code...",
   "product_labelFilterAll": "All",

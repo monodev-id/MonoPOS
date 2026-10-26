@@ -17,6 +17,12 @@ import '../../presentation/screens/customer/customer_form_screen.dart';
 import '../../presentation/screens/customer/customer_screen.dart';
 import '../../presentation/screens/employees/employee_form_screen.dart';
 import '../../presentation/screens/employees/employees_screen.dart';
+import '../../presentation/screens/purchases/purchase_detail_screen.dart';
+import '../../presentation/screens/purchases/purchase_form_screen.dart';
+import '../../presentation/screens/purchases/purchase_screen.dart';
+import '../../presentation/screens/suppliers/supplier_form_screen.dart';
+import '../../presentation/screens/suppliers/supplier_screen.dart';
+import '../../presentation/screens/revenue/revenue_day_screen.dart';
 import '../../presentation/screens/revenue/revenue_screen.dart';
 import '../../presentation/screens/error/error_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
@@ -51,6 +57,8 @@ class AppRoutes {
     '/account/product-data',
     '/account/barcode-labels',
     '/account/app-update',
+    '/account/suppliers',
+    '/account/purchases',
     '/products/product-create',
     '/products/product-edit',
   ];
@@ -201,6 +209,8 @@ class AppRoutes {
         _revenue(),
         _customers(),
         _employees(),
+        _purchases(),
+        _suppliers(),
       ],
     );
   }
@@ -338,6 +348,23 @@ class AppRoutes {
       builder: (context, state) {
         return const RevenueScreen();
       },
+      routes: [
+        _revenueDay(),
+      ],
+    );
+  }
+
+  GoRoute _revenueDay() {
+    return GoRoute(
+      path: 'day/:date',
+      builder: (context, state) {
+        var date = state.pathParameters['date'] ?? '';
+        if (DateTime.tryParse(date) == null) {
+          throw 'Required valid date is not provided!';
+        }
+
+        return RevenueDayScreen(date: date);
+      },
     );
   }
 
@@ -406,6 +433,78 @@ class AppRoutes {
         if (id == null) throw 'Required customerId is not provided!';
 
         return CustomerFormScreen(id: id);
+      },
+    );
+  }
+
+  GoRoute _purchases() {
+    return GoRoute(
+      path: 'purchases',
+      builder: (context, state) {
+        return const PurchaseScreen();
+      },
+      routes: [
+        _purchaseCreate(),
+        _purchaseDetail(),
+      ],
+    );
+  }
+
+  GoRoute _purchaseCreate() {
+    return GoRoute(
+      path: 'create',
+      parentNavigatorKey: navNavigatorKey,
+      builder: (context, state) {
+        final productId = int.tryParse(state.uri.queryParameters['productId'] ?? '');
+        return PurchaseFormScreen(initialProductId: productId);
+      },
+    );
+  }
+
+  GoRoute _purchaseDetail() {
+    return GoRoute(
+      path: 'detail/:id',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['id'] ?? '');
+        if (id == null) throw 'Required purchaseId is not provided!';
+
+        return PurchaseDetailScreen(id: id);
+      },
+    );
+  }
+
+  GoRoute _suppliers() {
+    return GoRoute(
+      path: 'suppliers',
+      builder: (context, state) {
+        return const SupplierScreen();
+      },
+      routes: [
+        _supplierCreate(),
+        _supplierEdit(),
+      ],
+    );
+  }
+
+  GoRoute _supplierCreate() {
+    return GoRoute(
+      path: 'create',
+      parentNavigatorKey: navNavigatorKey,
+      builder: (context, state) {
+        return const SupplierFormScreen();
+      },
+    );
+  }
+
+  GoRoute _supplierEdit() {
+    return GoRoute(
+      path: 'edit/:id',
+      parentNavigatorKey: navNavigatorKey,
+      builder: (context, state) {
+        final id = state.pathParameters['id'];
+        if (id == null) throw 'Required supplierId is not provided!';
+
+        return SupplierFormScreen(id: id);
       },
     );
   }

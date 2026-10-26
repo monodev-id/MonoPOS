@@ -23,6 +23,8 @@ class ProductRemoteDatasourceImpl extends ProductDatasource {
 
       final json = product.toJson();
       final units = json.remove('units') as List<dynamic>?;
+      // costPrice hanya dipakai lokal (fitur pembelian belum disinkronkan)
+      json.remove('costPrice');
 
       await client.from(SupabaseConfig.productsTable).upsert(json, onConflict: 'id');
 
@@ -48,6 +50,8 @@ class ProductRemoteDatasourceImpl extends ProductDatasource {
 
       final json = product.toJson();
       final units = json.remove('units') as List<dynamic>?;
+      // costPrice hanya dipakai lokal (fitur pembelian belum disinkronkan)
+      json.remove('costPrice');
 
       await client.from(SupabaseConfig.productsTable).update(json).eq('id', product.id);
 

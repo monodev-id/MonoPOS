@@ -740,6 +740,54 @@ abstract class AppLocalizations {
   /// **'No revenue data available'**
   String get revenue_noData;
 
+  /// No description provided for @revenue_summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get revenue_summary;
+
+  /// No description provided for @revenue_periodLastDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {count} days'**
+  String revenue_periodLastDays(Object count);
+
+  /// No description provided for @revenue_cash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get revenue_cash;
+
+  /// No description provided for @revenue_qris.
+  ///
+  /// In en, this message translates to:
+  /// **'QRIS'**
+  String get revenue_qris;
+
+  /// No description provided for @revenue_other.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get revenue_other;
+
+  /// No description provided for @revenue_dayDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue Detail'**
+  String get revenue_dayDetailTitle;
+
+  /// No description provided for @revenue_dayNoTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions on this day'**
+  String get revenue_dayNoTransactions;
+
+  /// No description provided for @revenue_transactionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get revenue_transactionsTitle;
+
   /// No description provided for @transaction_products.
   ///
   /// In en, this message translates to:
@@ -883,6 +931,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Print Product Barcodes'**
   String get settings_printBarcodeLabels;
+
+  /// No description provided for @settings_suppliers.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers / Wholesalers'**
+  String get settings_suppliers;
+
+  /// No description provided for @settings_purchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases'**
+  String get settings_purchases;
 
   /// No description provided for @product_labelSearchHint.
   ///

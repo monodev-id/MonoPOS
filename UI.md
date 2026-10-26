@@ -1,7 +1,7 @@
 # UI.md - UI Reference
 
-> Last synced with code: v1.2.6 (Sep 2026). Covers KlikQRIS payment screen, product-data/app-update
-> screens, printer status banner, and new shared widgets.
+> Last synced with code: v1.2.7 (Oct 2026). Covers KlikQRIS payment screen, product-data/app-update
+> screens, printer status banner, supplier/purchase screens, and new shared widgets.
 
 ## Reusable Widgets (`lib/presentation/widgets/`)
 
@@ -62,8 +62,9 @@ screens/
         └── barcode_hid_listener.dart   # HID hardware-scanner listener
 ```
 
-Other screen-scoped components: `products/components/` (product cards, tiered-price editor),
-`transactions/components/`, `revenue/components/`.
+Other screen-scoped components: `products/components/` (product cards, tiered-price editor,
+purchase info), `transactions/components/`, `revenue/components/`, `purchases/components/`
+(purchase card, item editor, product picker sheet), `suppliers/` (list + form screens).
 
 ## Key Screens (implemented)
 
@@ -76,6 +77,10 @@ Other screen-scoped components: `products/components/` (product cards, tiered-pr
 | `/account/printer-settings` | `PrinterSettingsScreen` | Scan/connect, paper size, test print, live status banner + badge |
 | `/account/store-settings` | `StoreSettingsScreen` | Store name/address/receipt footer, Save button with caret fix |
 | `/home` | `HomeScreen` | POS grid with auto-fill pagination, `_NetworkInfo` sync-mode toggle + `_SyncButton` status |
+| `/account/suppliers` | `SupplierScreen` | Supplier/grosir list + search, create/edit form (admin only) |
+| `/account/purchases` | `PurchaseScreen` | Purchase history, search, long-press delete (admin only) |
+| `/account/purchases/create` | `PurchaseFormScreen` | Supplier, date, stock toggle, multi-item entry, last-price hints, quick-add supplier (admin only) |
+| `/account/purchases/detail/:id` | `PurchaseDetailScreen` | Header totals, item list with HPP, delete + "catat lagi" (admin only) |
 
 ## Sizing & Spacing (`AppSizes`)
 
@@ -123,3 +128,8 @@ Text styles via `Theme.of(context).textTheme`: `bodySmall`, `bodyMedium`, `bodyL
 - **Animations**: `AnimatedContainer`, `AnimatedSwitcher` for state transitions
 - **Performance**: `RepaintBoundary` on repeated list/grid items
 - **Pagination**: `hasMore` + auto-fill — if first page doesn't fill viewport, next page loads automatically (home + products)
+- **Purchase entry**: supplier dropdown + inline quick-add, date picker, "tambah stok otomatis" switch, product picker
+  bottom sheet, per-item unit/qty/price with subtotal; the last price from the selected supplier (or another
+  supplier as fallback) is shown and auto-filled, and HPP is updated from the latest purchase
+- **Product purchase info**: admin-only section on product detail showing HPP, estimated profit, last purchase,
+  latest price per supplier, and recent purchase history

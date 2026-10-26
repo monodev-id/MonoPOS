@@ -39,7 +39,15 @@ class DatabaseService {
           db.execute(DatabaseConfig.createTransactionTable),
           db.execute(DatabaseConfig.createOrderedProductTable),
           db.execute(DatabaseConfig.createQueuedActionTable),
+          db.execute(DatabaseConfig.createSupplierTable),
+          db.execute(DatabaseConfig.createPurchaseTable),
+          db.execute(DatabaseConfig.createPurchaseItemTable),
         ]);
+
+        await db.execute(DatabaseConfig.createSupplierNameUniqueIndex);
+        await db.execute(DatabaseConfig.createPurchaseDateIndex);
+        await db.execute(DatabaseConfig.createPurchaseSupplierIndex);
+        await db.execute(DatabaseConfig.createPurchaseItemProductIndex);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _applyMigrations(db);
@@ -51,6 +59,7 @@ class DatabaseService {
     await _applyMigrationsV3(database);
     await _addProductNameUniqueConstraint(database);
     await _addProductBarcodeIndex(database);
+    await _applyPurchaseMigrations(database);
     await _seedUsers(database);
     await _migrateLegacyProductUnits();
     await _seedProducts();
@@ -382,6 +391,23 @@ class DatabaseService {
     }
   }
 
+  Future<void> _applyPurchaseMigrations(Database db) async {
+    try {
+      await _addColumnIfNotExists(db, 'Product', 'costPrice', 'INTEGER NOT NULL DEFAULT 0');
+
+      await db.execute(DatabaseConfig.createSupplierTable);
+      await db.execute(DatabaseConfig.createPurchaseTable);
+      await db.execute(DatabaseConfig.createPurchaseItemTable);
+
+      await db.execute(DatabaseConfig.createSupplierNameUniqueIndex);
+      await db.execute(DatabaseConfig.createPurchaseDateIndex);
+      await db.execute(DatabaseConfig.createPurchaseSupplierIndex);
+      await db.execute(DatabaseConfig.createPurchaseItemProductIndex);
+    } catch (e) {
+      ce('Migration supplier/purchase failed: $e');
+    }
+  }
+
   Future<void> initTestDatabase({required Database testDatabase}) async {
     database = testDatabase;
 
@@ -394,12 +420,16 @@ class DatabaseService {
       database.execute(DatabaseConfig.createTransactionTable),
       database.execute(DatabaseConfig.createOrderedProductTable),
       database.execute(DatabaseConfig.createQueuedActionTable),
+      database.execute(DatabaseConfig.createSupplierTable),
+      database.execute(DatabaseConfig.createPurchaseTable),
+      database.execute(DatabaseConfig.createPurchaseItemTable),
     ]);
 
     // Samakan kolom dengan schema produksi, yang ditambahkan lewat migrasi di init()
     await _addColumnIfNotExists(database, 'Product', 'wholesalePrice', 'INTEGER');
     await _addColumnIfNotExists(database, 'Product', 'unit', "TEXT DEFAULT 'pcs'");
     await _addColumnIfNotExists(database, 'Product', 'barcode', 'TEXT');
+    await _addColumnIfNotExists(database, 'Product', 'costPrice', 'INTEGER NOT NULL DEFAULT 0');
     await _addColumnIfNotExists(database, 'Product', 'isCustomPrice', 'INTEGER NOT NULL DEFAULT 0');
     await _addColumnIfNotExists(database, 'Transaction', 'paymentType', "TEXT DEFAULT 'cash'");
     await _addColumnIfNotExists(database, 'Transaction', 'customerId', 'TEXT');
@@ -407,6 +437,10 @@ class DatabaseService {
     await _addColumnIfNotExists(database, 'OrderedProduct', 'isTieredPrice', 'INTEGER NOT NULL DEFAULT 0');
 
     await _addProductBarcodeIndex(database);
+    await database.execute(DatabaseConfig.createSupplierNameUniqueIndex);
+    await database.execute(DatabaseConfig.createPurchaseDateIndex);
+    await database.execute(DatabaseConfig.createPurchaseSupplierIndex);
+    await database.execute(DatabaseConfig.createPurchaseItemProductIndex);
     await _seedUsers(database);
   }
 

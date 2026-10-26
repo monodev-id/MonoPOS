@@ -9,6 +9,7 @@ class ProductFormState {
   final String? name;
   final int? price;
   final int? wholesalePrice;
+  final int? costPrice;
   final int? stock;
   final String? unit;
   final String? barcode;
@@ -25,6 +26,7 @@ class ProductFormState {
     this.name,
     this.price,
     this.wholesalePrice,
+    this.costPrice,
     this.stock,
     this.unit,
     this.barcode,
@@ -44,6 +46,7 @@ class ProductFormState {
     Object? name = _sentinel,
     Object? price = _sentinel,
     Object? wholesalePrice = _sentinel,
+    Object? costPrice = _sentinel,
     Object? stock = _sentinel,
     Object? unit = _sentinel,
     Object? barcode = _sentinel,
@@ -60,6 +63,7 @@ class ProductFormState {
       name: name == _sentinel ? this.name : name as String?,
       price: price == _sentinel ? this.price : price as int?,
       wholesalePrice: wholesalePrice == _sentinel ? this.wholesalePrice : wholesalePrice as int?,
+      costPrice: costPrice == _sentinel ? this.costPrice : costPrice as int?,
       stock: stock == _sentinel ? this.stock : stock as int?,
       unit: unit == _sentinel ? this.unit : unit as String?,
       barcode: barcode == _sentinel ? this.barcode : barcode as String?,

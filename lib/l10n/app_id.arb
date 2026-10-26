@@ -164,6 +164,19 @@
     }
   },
   "revenue_noData": "Belum ada data pendapatan",
+  "revenue_summary": "Ringkasan",
+  "revenue_periodLastDays": "{count} hari terakhir",
+  "@revenue_periodLastDays": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "revenue_cash": "Tunai",
+  "revenue_qris": "QRIS",
+  "revenue_other": "Lainnya",
+  "revenue_dayDetailTitle": "Detail Pendapatan",
+  "revenue_dayNoTransactions": "Tidak ada transaksi pada hari ini",
+  "revenue_transactionsTitle": "Daftar Transaksi",
 
   "transaction_products": "{count} Produk",
   "@transaction_products": {
@@ -196,6 +209,8 @@
   "settings_noName": "(Tanpa Nama)",
   "settings_appUpdate": "Pembaruan Aplikasi",
   "settings_printBarcodeLabels": "Cetak Barcode Barang",
+  "settings_suppliers": "Supplier / Grosir",
+  "settings_purchases": "Pembelian",
 
   "product_labelSearchHint": "Cari nama / kode...",
   "product_labelFilterAll": "Semua",

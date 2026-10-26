@@ -197,7 +197,7 @@ void main() {
 
     group('getLowStockProducts', () {
       setUpAll(() async {
-        await testDatabase.delete('products');
+        await testDatabase.delete('Product');
 
         await datasource.createProduct(
           ProductModel(

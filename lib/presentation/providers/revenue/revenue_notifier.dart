@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/di/app_providers.dart';
 import '../../../domain/entities/daily_revenue_entity.dart';
+import '../../../domain/entities/transaction_entity.dart';
 import '../../../domain/usecases/revenue_usecases.dart';
 import '../auth/auth_notifier.dart';
 import 'revenue_state.dart';
@@ -15,7 +16,7 @@ class RevenueNotifier extends Notifier<RevenueState> {
   RevenueState build() => const RevenueState();
 
   Future<void> loadRevenue({int days = 7}) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, periodDays: days);
 
     var now = DateTime.now();
     var endDate = _formatDate(now);
@@ -25,7 +26,11 @@ class RevenueNotifier extends Notifier<RevenueState> {
     var userId = authState.user?.id ?? '';
     var isAdmin = authState.user?.role?.value == 'admin';
     if (userId.isEmpty) {
-      state = state.copyWith(isLoading: false, revenues: []);
+      state = state.copyWith(
+        isLoading: false,
+        revenues: [],
+        periodDays: days,
+      );
       return;
     }
 
@@ -41,56 +46,48 @@ class RevenueNotifier extends Notifier<RevenueState> {
     );
 
     if (res.isSuccess) {
-      var dailyMap = <String, DailyRevenueEntity>{};
-
-      for (var i = 0; i < days; i++) {
-        var date = _formatDate(now.subtract(Duration(days: i)));
-        dailyMap[date] = DailyRevenueEntity(
-          date: date,
-          totalAmount: 0,
-          transactionCount: 0,
-          totalProducts: 0,
-        );
-      }
-
       var transactions = res.data;
       if (transactions == null) {
-        state = state.copyWith(isLoading: false, revenues: []);
+        state = state.copyWith(
+          isLoading: false,
+          revenues: [],
+          periodDays: days,
+        );
         return;
       }
 
-      for (var tx in transactions) {
-        var date = _extractDate(tx.createdAt ?? '');
+      var transactionsByDate = <String, List<TransactionEntity>>{};
+      for (var transaction in transactions) {
+        var date = _extractDate(transaction.createdAt ?? '');
         if (date.isEmpty) continue;
 
-        var existing = dailyMap[date];
-        if (existing == null) continue;
+        transactionsByDate.putIfAbsent(date, () => []).add(transaction);
+      }
 
-        int quantitySum = 0;
-        var orderedProducts = tx.orderedProducts;
-        if (orderedProducts != null) {
-          for (var op in orderedProducts) {
-            quantitySum = quantitySum + op.quantity.round();
-          }
-        }
-
-        var newTotalAmount = existing.totalAmount + tx.totalAmount;
-        var newTxCount = existing.transactionCount + 1;
-        var newProductCount = existing.totalProducts + quantitySum;
-
-        dailyMap[date] = DailyRevenueEntity(
-          date: date,
-          totalAmount: newTotalAmount,
-          transactionCount: newTxCount,
-          totalProducts: newProductCount,
+      var dailyRevenues = <DailyRevenueEntity>[];
+      for (var i = 0; i < days; i++) {
+        var date = _formatDate(now.subtract(Duration(days: i)));
+        dailyRevenues.add(
+          DailyRevenueEntity.fromTransactions(
+            date,
+            transactionsByDate[date] ?? const [],
+          ),
         );
       }
 
-      var sorted = dailyMap.values.toList()..sort((a, b) => b.date.compareTo(a.date));
+      dailyRevenues.sort((a, b) => b.date.compareTo(a.date));
 
-      state = state.copyWith(isLoading: false, revenues: sorted);
+      state = state.copyWith(
+        isLoading: false,
+        revenues: dailyRevenues,
+        periodDays: days,
+      );
     } else {
-      state = state.copyWith(isLoading: false, revenues: []);
+      state = state.copyWith(
+        isLoading: false,
+        revenues: [],
+        periodDays: days,
+      );
     }
   }
 

@@ -24,7 +24,9 @@ import '../../data/datasources/interfaces/user_datasource.dart';
 import '../../data/datasources/local/auth_local_datasource_impl.dart';
 import '../../data/datasources/local/customer_local_datasource_impl.dart';
 import '../../data/datasources/local/product_local_datasource_impl.dart';
+import '../../data/datasources/local/purchase_local_datasource_impl.dart';
 import '../../data/datasources/local/queued_action_local_datasource_impl.dart';
+import '../../data/datasources/local/supplier_local_datasource_impl.dart';
 import '../../data/datasources/local/transaction_local_datasource_impl.dart';
 import '../../data/datasources/local/user_local_datasource_impl.dart';
 import '../../data/datasources/remote/app_update_remote_datasource_impl.dart';
@@ -37,16 +39,20 @@ import '../../data/repositories/app_update_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/customer_repository_impl.dart';
 import '../../data/repositories/product_repository_impl.dart';
+import '../../data/repositories/purchase_repository_impl.dart';
 import '../../data/repositories/queued_action_repository_impl.dart';
 import '../../data/repositories/storage_repository_impl.dart';
+import '../../data/repositories/supplier_repository_impl.dart';
 import '../../data/repositories/transaction_repository_impl.dart';
 import '../../data/repositories/user_repository_impl.dart';
 import '../../domain/repositories/app_update_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/customer_repository.dart';
 import '../../domain/repositories/product_repository.dart';
+import '../../domain/repositories/purchase_repository.dart';
 import '../../domain/repositories/queued_action_repository.dart';
 import '../../domain/repositories/storage_repository.dart';
+import '../../domain/repositories/supplier_repository.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../../presentation/providers/auth/auth_notifier.dart';
@@ -205,6 +211,26 @@ final customerRepositoryProvider = Provider<CustomerRepository>(
     customerRemoteDatasource: ref.watch(customerRemoteDatasourceProvider),
     syncService: ref.watch(syncServiceProvider),
     queuedActionRepository: ref.watch(queuedActionRepositoryProvider),
+  ),
+);
+
+// Supplier (lokal)
+final supplierLocalDatasourceProvider = Provider<SupplierLocalDatasourceImpl>(
+  (ref) => SupplierLocalDatasourceImpl(ref.watch(databaseServiceProvider)),
+);
+final supplierRepositoryProvider = Provider<SupplierRepository>(
+  (ref) => SupplierRepositoryImpl(
+    supplierLocalDatasource: ref.watch(supplierLocalDatasourceProvider),
+  ),
+);
+
+// Purchase (lokal)
+final purchaseLocalDatasourceProvider = Provider<PurchaseLocalDatasourceImpl>(
+  (ref) => PurchaseLocalDatasourceImpl(ref.watch(databaseServiceProvider)),
+);
+final purchaseRepositoryProvider = Provider<PurchaseRepository>(
+  (ref) => PurchaseRepositoryImpl(
+    purchaseLocalDatasource: ref.watch(purchaseLocalDatasourceProvider),
   ),
 );
 

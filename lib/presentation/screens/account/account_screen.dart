@@ -38,6 +38,8 @@ class AccountScreen extends StatelessWidget {
                 _StoreSettingsButton(),
                 _RevenueButton(),
                 _CustomerButton(),
+                _SupplierButton(),
+                _PurchaseButton(),
                 _ThemeButton(),
                 _LanguageButton(),
                 _PrinterSettingsButton(),
@@ -263,6 +265,86 @@ class _CustomerButton extends StatelessWidget {
         ),
         onTap: () {
           context.go('/account/customers');
+        },
+      ),
+    );
+  }
+}
+
+class _SupplierButton extends ConsumerWidget {
+  const _SupplierButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(authNotifierProvider.select((s) => s.user?.role?.value == 'admin'));
+
+    if (!isAdmin) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSizes.padding),
+      child: AppButton(
+        buttonColor: Theme.of(context).colorScheme.surface,
+        borderColor: Theme.of(context).colorScheme.surfaceContainer,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.storefront_outlined, size: 18),
+                const SizedBox(width: AppSizes.padding / 1.5),
+                Text(
+                  AppLocalizations.of(context)!.settings_suppliers,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+          ],
+        ),
+        onTap: () {
+          context.go('/account/suppliers');
+        },
+      ),
+    );
+  }
+}
+
+class _PurchaseButton extends ConsumerWidget {
+  const _PurchaseButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(authNotifierProvider.select((s) => s.user?.role?.value == 'admin'));
+
+    if (!isAdmin) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSizes.padding),
+      child: AppButton(
+        buttonColor: Theme.of(context).colorScheme.surface,
+        borderColor: Theme.of(context).colorScheme.surfaceContainer,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.inventory_2_outlined, size: 18),
+                const SizedBox(width: AppSizes.padding / 1.5),
+                Text(
+                  AppLocalizations.of(context)!.settings_purchases,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+          ],
+        ),
+        onTap: () {
+          context.go('/account/purchases');
         },
       ),
     );

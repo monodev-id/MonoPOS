@@ -353,6 +353,32 @@ class AppLocalizationsId extends AppLocalizations {
   String get revenue_noData => 'Belum ada data pendapatan';
 
   @override
+  String get revenue_summary => 'Ringkasan';
+
+  @override
+  String revenue_periodLastDays(Object count) {
+    return '$count hari terakhir';
+  }
+
+  @override
+  String get revenue_cash => 'Tunai';
+
+  @override
+  String get revenue_qris => 'QRIS';
+
+  @override
+  String get revenue_other => 'Lainnya';
+
+  @override
+  String get revenue_dayDetailTitle => 'Detail Pendapatan';
+
+  @override
+  String get revenue_dayNoTransactions => 'Tidak ada transaksi pada hari ini';
+
+  @override
+  String get revenue_transactionsTitle => 'Daftar Transaksi';
+
+  @override
   String transaction_products(Object count) {
     return '$count Produk';
   }
@@ -426,6 +452,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get settings_printBarcodeLabels => 'Cetak Barcode Barang';
+
+  @override
+  String get settings_suppliers => 'Supplier / Grosir';
+
+  @override
+  String get settings_purchases => 'Pembelian';
 
   @override
   String get product_labelSearchHint => 'Cari nama / kode...';
