@@ -27,6 +27,7 @@ import '../../presentation/screens/revenue/revenue_screen.dart';
 import '../../presentation/screens/error/error_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/main/main_screen.dart';
+import '../../presentation/screens/payment/direct_qris_screen.dart';
 import '../../presentation/screens/payment/klik_qris_payment_screen.dart';
 import '../../presentation/screens/products/product_detail_screen.dart';
 import '../../presentation/screens/products/product_form_screen.dart';
@@ -93,6 +94,7 @@ class AppRoutes {
         _login(),
         _main(),
         _klikQrisPayment(),
+        _directQris(),
         _error(),
       ],
     );
@@ -117,6 +119,14 @@ class AppRoutes {
       path: '/payment/qris',
       parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const KlikQrisPaymentScreen(),
+    );
+  }
+
+  GoRoute _directQris() {
+    return GoRoute(
+      path: '/payment/direct',
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const DirectQrisScreen(),
     );
   }
 
@@ -318,6 +328,7 @@ class AppRoutes {
   GoRoute _paymentSettings() {
     return GoRoute(
       path: 'payment-settings',
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) {
         return const PaymentSettingsScreen();
       },

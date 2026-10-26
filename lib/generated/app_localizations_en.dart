@@ -918,4 +918,121 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receipt_qrisNote => '* Payment will be detected automatically *';
+
+  @override
+  String get directQris_title => 'Direct QRIS';
+
+  @override
+  String get directQris_subtitle =>
+      'Create a QRIS payment from an amount without adding products to the cart.';
+
+  @override
+  String get directQris_amountLabel => 'Amount';
+
+  @override
+  String get directQris_amountHint => 'Enter payment amount';
+
+  @override
+  String get directQris_descriptionLabel => 'Description';
+
+  @override
+  String get directQris_descriptionHint => 'Payment description (optional)';
+
+  @override
+  String get directQris_customerLabel => 'Customer Name';
+
+  @override
+  String get directQris_customerHint => 'Customer name (optional)';
+
+  @override
+  String get directQris_uniqueCodeNote =>
+      'KlikQRIS may add a unique code automatically. The recorded transaction still uses the amount you entered.';
+
+  @override
+  String get directQris_createButton => 'Create QRIS';
+
+  @override
+  String get directQris_notConfiguredTitle => 'KlikQRIS is not configured';
+
+  @override
+  String get directQris_notConfiguredMessage =>
+      'Set the API Key and Merchant ID before creating a QRIS payment.';
+
+  @override
+  String get directQris_openSettings => 'Open Settings';
+
+  @override
+  String get directQris_contactAdmin =>
+      'Contact an admin to enable QRIS payments.';
+
+  @override
+  String get directQris_sandbox => 'Sandbox';
+
+  @override
+  String get directQris_production => 'Production';
+
+  @override
+  String get qris_title => 'QRIS Payment';
+
+  @override
+  String get qris_directTitle => 'Direct QRIS';
+
+  @override
+  String get qris_totalPayment => 'Total Payment';
+
+  @override
+  String get qris_nominal => 'Amount';
+
+  @override
+  String get qris_uniqueCode => 'Unique code';
+
+  @override
+  String get qris_scanInstruction => 'Scan the QRIS above to pay';
+
+  @override
+  String get qris_waiting => 'Waiting for payment...';
+
+  @override
+  String get qris_checkInstruction =>
+      'Press the button below once the customer has paid';
+
+  @override
+  String get qris_checkPayment => 'Check Payment';
+
+  @override
+  String get qris_checking => 'Checking...';
+
+  @override
+  String get qris_expiredTitle => 'QRIS Expired';
+
+  @override
+  String get qris_expiredMessage =>
+      'This QR code has expired and can no longer be paid.';
+
+  @override
+  String get qris_createNew => 'Create New QRIS';
+
+  @override
+  String get qris_close => 'Close';
+
+  @override
+  String get qris_cancelTitle => 'Cancel Payment?';
+
+  @override
+  String get qris_cancelMessage => 'The KlikQRIS payment will be cancelled.';
+
+  @override
+  String get qris_cancelConfirm => 'Yes, Cancel';
+
+  @override
+  String get qris_failedTitle => 'Failed to process payment';
+
+  @override
+  String get qris_genericError => 'Something went wrong';
+
+  @override
+  String get qris_codeAvailable => 'QR Code available';
+
+  @override
+  String get qris_openImage => 'Open QR image';
 }

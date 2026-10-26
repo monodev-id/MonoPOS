@@ -6,6 +6,7 @@ import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/app_sizes.dart';
 import '../../../core/utilities/console_logger.dart';
 import '../../../core/utilities/currency_formatter.dart';
+import '../../../core/utilities/external_launcher.dart';
 import '../../../generated/app_localizations.dart';
 import '../../providers/payment/payment_notifier.dart';
 import '../../providers/payment/payment_state.dart';
@@ -38,6 +39,7 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(klikQrisPaymentNotifierProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     if (state.isPaid && !_navigated) {
       _navigated = true;
@@ -49,14 +51,15 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _showCancelDialog();
+        if (didPop) return;
+        _onBackPressed(state);
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.home_pay),
+          title: Text(state.isDirect ? l10n.qris_directTitle : l10n.qris_title),
           leading: IconButton(
             icon: const Icon(Icons.close),
-            onPressed: () => _showCancelDialog(),
+            onPressed: () => _onBackPressed(state),
           ),
         ),
         body: state.isPolling ? const Center(child: AppProgressIndicator()) : _buildContent(state),
@@ -64,73 +67,75 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
     );
   }
 
+  void _onBackPressed(KlikQrisPaymentState state) {
+    if (state.isExpired) {
+      _notifier.reset();
+      context.pop();
+      return;
+    }
+
+    _showCancelDialog();
+  }
+
   Widget _buildContent(KlikQrisPaymentState state) {
+    if (state.isExpired) {
+      return _StatusView(
+        icon: Icons.timer_off_outlined,
+        iconColor: AppColors.red,
+        title: AppLocalizations.of(context)!.qris_expiredTitle,
+        message: AppLocalizations.of(context)!.qris_expiredMessage,
+        primaryButtonText: AppLocalizations.of(context)!.qris_createNew,
+        onTapPrimary: () {
+          _notifier.reset();
+          context.pop();
+        },
+        secondaryButtonText: AppLocalizations.of(context)!.qris_close,
+        onTapSecondary: () {
+          _notifier.reset();
+          context.pop();
+        },
+      );
+    }
+
     if (state.errorMessage != null && state.qrCode.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.padding),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: AppColors.red),
-              const SizedBox(height: AppSizes.padding),
-              Text(
-                'Gagal memproses pembayaran',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: AppSizes.padding / 2),
-              Text(
-                state.errorMessage!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: AppSizes.padding * 2),
-              AppButton(
-                text: AppLocalizations.of(context)!.home_cancel,
-                onTap: () {
-                  _notifier.reset();
-                  context.pop();
-                },
-              ),
-            ],
-          ),
-        ),
+      return _StatusView(
+        icon: Icons.error_outline,
+        iconColor: AppColors.red,
+        title: AppLocalizations.of(context)!.qris_failedTitle,
+        message: state.errorMessage!,
+        primaryButtonText: AppLocalizations.of(context)!.qris_close,
+        onTapPrimary: () {
+          _notifier.reset();
+          context.pop();
+        },
       );
     }
 
     if (state.paymentStatus == 'failed') {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.padding),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.cancel_outlined, size: 64, color: AppColors.red),
-              const SizedBox(height: AppSizes.padding),
-              Text(
-                'Pembayaran Gagal',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: AppSizes.padding / 2),
-              Text(
-                state.errorMessage ?? 'Terjadi kesalahan',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
+      return _StatusView(
+        icon: Icons.cancel_outlined,
+        iconColor: AppColors.red,
+        title: AppLocalizations.of(context)!.qris_failedTitle,
+        message: state.errorMessage ?? AppLocalizations.of(context)!.qris_genericError,
+        primaryButtonText: AppLocalizations.of(context)!.qris_close,
+        onTapPrimary: () {
+          _notifier.reset();
+          context.pop();
+        },
       );
     }
 
+    return _buildPaymentContent(state);
+  }
+
+  Widget _buildPaymentContent(KlikQrisPaymentState state) {
+    final l10n = AppLocalizations.of(context)!;
     final minutes = (state.elapsedSeconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (state.elapsedSeconds % 60).toString().padLeft(2, '0');
 
-    final displayAmount = state.totalAmount > 0 ? state.totalAmount : state.transaction?.totalAmount ?? 0;
+    final paidAmount = state.totalAmount > 0 ? state.totalAmount : state.transaction?.totalAmount ?? 0;
+    final baseAmount = state.transaction?.totalAmount ?? paidAmount;
+    final uniqueCode = paidAmount - baseAmount;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSizes.padding),
@@ -141,18 +146,26 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
             children: [
               const SizedBox(height: AppSizes.padding),
               Text(
-                'Total Pembayaran',
+                l10n.qris_totalPayment,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: AppSizes.padding / 2),
               Text(
-                CurrencyFormatter.withoutSymbol(displayAmount, decimalDigits: 0),
+                CurrencyFormatter.withoutSymbol(paidAmount, decimalDigits: 0),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              if (uniqueCode > 0) ...[
+                const SizedBox(height: AppSizes.padding / 2),
+                _AmountBreakdown(
+                  baseAmount: baseAmount,
+                  uniqueCode: uniqueCode,
+                  totalAmount: paidAmount,
+                ),
+              ],
               const SizedBox(height: AppSizes.padding * 2),
               Container(
                 width: 260,
@@ -171,7 +184,7 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
               ),
               const SizedBox(height: AppSizes.padding),
               Text(
-                'Scan QRIS di atas untuk membayar',
+                l10n.qris_scanInstruction,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.primary,
@@ -204,7 +217,7 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
               ),
               const SizedBox(height: AppSizes.padding),
               Text(
-                state.autoCheckDone ? 'Tekan tombol di bawah setelah pelanggan membayar' : 'Menunggu pembayaran...',
+                state.autoCheckDone ? l10n.qris_checkInstruction : l10n.qris_waiting,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.outline,
@@ -213,7 +226,7 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
               if (state.autoCheckDone) ...[
                 const SizedBox(height: AppSizes.padding * 2),
                 AppButton(
-                  text: state.isManualChecking ? 'Memeriksa...' : 'Cek Pembayaran',
+                  text: state.isManualChecking ? l10n.qris_checking : l10n.qris_checkPayment,
                   enabled: !state.isManualChecking,
                   onTap: () {
                     _notifier.checkPaymentManually();
@@ -256,15 +269,17 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
   }
 
   void _showCancelDialog() {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Batalkan Pembayaran?'),
-        content: const Text('Pembayaran KlikQRIS akan dibatalkan.'),
+        title: Text(l10n.qris_cancelTitle),
+        content: Text(l10n.qris_cancelMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(AppLocalizations.of(context)!.home_cancel),
+            child: Text(l10n.home_cancel),
           ),
           TextButton(
             onPressed: () {
@@ -272,9 +287,142 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
               _notifier.cancelPolling();
               context.pop();
             },
-            child: const Text('Ya, Batalkan'),
+            child: Text(l10n.qris_cancelConfirm),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AmountBreakdown extends StatelessWidget {
+  final int baseAmount;
+  final int uniqueCode;
+  final int totalAmount;
+
+  const _AmountBreakdown({
+    required this.baseAmount,
+    required this.uniqueCode,
+    required this.totalAmount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.padding,
+        vertical: AppSizes.padding / 2,
+      ),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppSizes.radius),
+      ),
+      child: Column(
+        children: [
+          _row(
+            context,
+            l10n.qris_nominal,
+            CurrencyFormatter.withoutSymbol(baseAmount, decimalDigits: 0),
+            textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 2),
+          _row(
+            context,
+            l10n.qris_uniqueCode,
+            '+ ${CurrencyFormatter.withoutSymbol(uniqueCode, decimalDigits: 0)}',
+            textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const Divider(height: 12),
+          _row(
+            context,
+            l10n.qris_totalPayment,
+            CurrencyFormatter.withoutSymbol(totalAmount, decimalDigits: 0),
+            textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, String label, String value, TextStyle? style) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: style),
+        Text(value, style: style),
+      ],
+    );
+  }
+}
+
+class _StatusView extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String message;
+  final String primaryButtonText;
+  final VoidCallback onTapPrimary;
+  final String? secondaryButtonText;
+  final VoidCallback? onTapSecondary;
+
+  const _StatusView({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.message,
+    required this.primaryButtonText,
+    required this.onTapPrimary,
+    this.secondaryButtonText,
+    this.onTapSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSizes.padding),
+        child: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 64, color: iconColor),
+              const SizedBox(height: AppSizes.padding),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppSizes.padding / 2),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: AppSizes.padding * 2),
+              AppButton(
+                text: primaryButtonText,
+                onTap: onTapPrimary,
+              ),
+              if (secondaryButtonText != null) ...[
+                const SizedBox(height: AppSizes.padding / 2),
+                AppButton(
+                  text: secondaryButtonText!,
+                  buttonColor: Theme.of(context).colorScheme.surface,
+                  borderColor: Theme.of(context).colorScheme.primary,
+                  textColor: Theme.of(context).colorScheme.primary,
+                  onTap: onTapSecondary,
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -287,24 +435,27 @@ class _FallbackQrDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isUrl = qrData.startsWith('http://') || qrData.startsWith('https://');
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Icon(Icons.qr_code_2, size: 80, color: Colors.black54),
         const SizedBox(height: AppSizes.padding / 2),
         Text(
-          'QR Code tersedia',
+          l10n.qris_codeAvailable,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Colors.black54,
           ),
         ),
-        const SizedBox(height: AppSizes.padding / 2),
-        Text(
-          'QR sudah terkirim ke printer',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.black45,
+        if (isUrl) ...[
+          const SizedBox(height: AppSizes.padding / 2),
+          TextButton(
+            onPressed: () => ExternalLauncher.openUrl(qrData),
+            child: Text(l10n.qris_openImage),
           ),
-        ),
+        ],
       ],
     );
   }

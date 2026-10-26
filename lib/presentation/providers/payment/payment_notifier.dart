@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/di/app_providers.dart';
 import '../../../core/common/result.dart';
+import '../../../core/services/payment/klik_qris_payment_service.dart';
 import '../../../core/utilities/console_logger.dart';
 import '../../../domain/entities/transaction_entity.dart';
 import '../../../domain/usecases/transaction_usecases.dart';
@@ -29,8 +30,24 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
   Future<Result<int>> startKlikQrisPayment({
     required TransactionEntity transaction,
     required int totalAmount,
+    String? description,
+    bool isDirect = false,
   }) async {
-    state = state.copyWith(isPolling: true);
+    final klikQrisService = ref.read(klikQrisPaymentServiceProvider);
+
+    if (!klikQrisService.isConfigured) {
+      const message = 'KlikQRIS belum dikonfigurasi. Atur API Key dan ID Merchant terlebih dahulu.';
+      state = state.copyWith(isPolling: false, errorMessage: message);
+      return Result.failure(error: message);
+    }
+
+    if (totalAmount <= 0) {
+      const message = 'Nominal pembayaran tidak valid.';
+      state = state.copyWith(isPolling: false, errorMessage: message);
+      return Result.failure(error: message);
+    }
+
+    state = state.copyWith(isPolling: true, isDirect: isDirect);
 
     try {
       final transactionRepo = ref.read(transactionRepositoryProvider);
@@ -45,10 +62,10 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
       final transactionId = saveResult.data!;
       final orderId = transactionId.toString();
 
-      final klikQrisService = ref.read(klikQrisPaymentServiceProvider);
       final qrisResult = await klikQrisService.generateQris(
         orderId: orderId,
         grossAmount: totalAmount,
+        description: description ?? transaction.description,
       );
 
       if (qrisResult.isFailure) {
@@ -86,6 +103,7 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
         orderId: qrisData.orderId,
         signature: qrisData.signature,
         totalAmount: qrisData.totalAmount,
+        isDirect: isDirect,
       );
 
       _startPolling(transactionId, paymentTimeout);
@@ -103,7 +121,7 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
 
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (state.elapsedSeconds >= timeoutSeconds) {
-        _onPaymentFailed('Waktu pembayaran habis');
+        _onPaymentExpired(transactionId, message: 'Waktu pembayaran habis');
         return;
       }
       state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
@@ -124,11 +142,15 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
 
       if (result.isFailure) continue;
 
-      final status = result.data!;
-
-      if (status == 'paid') {
-        _onPaymentSuccess(transactionId);
-        return;
+      switch (result.data!) {
+        case KlikQrisPaymentStatus.paid:
+          await _onPaymentSuccess(transactionId);
+          return;
+        case KlikQrisPaymentStatus.expired:
+          await _onPaymentExpired(transactionId);
+          return;
+        case KlikQrisPaymentStatus.pending:
+          break;
       }
     }
 
@@ -145,10 +167,18 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
     final klikQrisService = ref.read(klikQrisPaymentServiceProvider);
     final result = await klikQrisService.queryQrisStatus(orderId: state.orderId);
 
-    if (result.isSuccess && result.data == 'paid') {
-      _onPaymentSuccess(state.transaction!.id!);
-    } else {
+    if (result.isFailure) {
       state = state.copyWith(isManualChecking: false);
+      return;
+    }
+
+    switch (result.data!) {
+      case KlikQrisPaymentStatus.paid:
+        await _onPaymentSuccess(state.transaction!.id!);
+      case KlikQrisPaymentStatus.expired:
+        await _onPaymentExpired(state.transaction!.id!);
+      case KlikQrisPaymentStatus.pending:
+        state = state.copyWith(isManualChecking: false);
     }
   }
 
@@ -165,17 +195,23 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
     if (transactionResult.isSuccess && transactionResult.data != null) {
       final tts = ref.read(ttsServiceProvider);
       await tts.playCashRegister();
-      final spokenAmount = transactionResult.data!.totalAmount > 0
-          ? transactionResult.data!.totalAmount
-          : state.totalAmount;
+      final spokenAmount = state.totalAmount > 0 ? state.totalAmount : transactionResult.data!.totalAmount;
       await tts.speakAmount(spokenAmount);
     }
   }
 
-  void _onPaymentFailed(String message) {
+  Future<void> _onPaymentExpired(int transactionId, {String? message}) async {
     _pollTimer?.cancel();
     _elapsedTimer?.cancel();
-    state = state.copyWith(paymentStatus: 'failed', errorMessage: message);
+
+    state = state.copyWith(
+      paymentStatus: 'expired',
+      errorMessage: message ?? 'Pembayaran kedaluwarsa',
+      isManualChecking: false,
+    );
+
+    final transactionRepo = ref.read(transactionRepositoryProvider);
+    await UpdatePaymentStatusUsecase(transactionRepo).call(transactionId, 'expired');
   }
 
   void cancelPolling() {

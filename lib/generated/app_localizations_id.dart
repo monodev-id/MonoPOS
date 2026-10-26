@@ -915,4 +915,121 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get receipt_qrisNote => '* Pembayaran akan terdeteksi otomatis *';
+
+  @override
+  String get directQris_title => 'QRIS Langsung';
+
+  @override
+  String get directQris_subtitle =>
+      'Buat pembayaran QRIS dari nominal tanpa menambahkan produk ke keranjang.';
+
+  @override
+  String get directQris_amountLabel => 'Nominal';
+
+  @override
+  String get directQris_amountHint => 'Masukkan nominal pembayaran';
+
+  @override
+  String get directQris_descriptionLabel => 'Keterangan';
+
+  @override
+  String get directQris_descriptionHint => 'Keterangan pembayaran (opsional)';
+
+  @override
+  String get directQris_customerLabel => 'Nama Pelanggan';
+
+  @override
+  String get directQris_customerHint => 'Nama pelanggan (opsional)';
+
+  @override
+  String get directQris_uniqueCodeNote =>
+      'KlikQRIS dapat menambahkan kode unik otomatis. Transaksi tetap dicatat sesuai nominal yang Anda masukkan.';
+
+  @override
+  String get directQris_createButton => 'Buat QRIS';
+
+  @override
+  String get directQris_notConfiguredTitle => 'KlikQRIS belum dikonfigurasi';
+
+  @override
+  String get directQris_notConfiguredMessage =>
+      'Atur API Key dan ID Merchant terlebih dahulu sebelum membuat pembayaran QRIS.';
+
+  @override
+  String get directQris_openSettings => 'Buka Pengaturan';
+
+  @override
+  String get directQris_contactAdmin =>
+      'Hubungi admin untuk mengaktifkan pembayaran QRIS.';
+
+  @override
+  String get directQris_sandbox => 'Sandbox';
+
+  @override
+  String get directQris_production => 'Production';
+
+  @override
+  String get qris_title => 'Pembayaran QRIS';
+
+  @override
+  String get qris_directTitle => 'QRIS Langsung';
+
+  @override
+  String get qris_totalPayment => 'Total Pembayaran';
+
+  @override
+  String get qris_nominal => 'Nominal';
+
+  @override
+  String get qris_uniqueCode => 'Kode unik';
+
+  @override
+  String get qris_scanInstruction => 'Scan QRIS di atas untuk membayar';
+
+  @override
+  String get qris_waiting => 'Menunggu pembayaran...';
+
+  @override
+  String get qris_checkInstruction =>
+      'Tekan tombol di bawah setelah pelanggan membayar';
+
+  @override
+  String get qris_checkPayment => 'Cek Pembayaran';
+
+  @override
+  String get qris_checking => 'Memeriksa...';
+
+  @override
+  String get qris_expiredTitle => 'QRIS Kedaluwarsa';
+
+  @override
+  String get qris_expiredMessage =>
+      'QR ini sudah kedaluwarsa dan tidak dapat dibayar lagi.';
+
+  @override
+  String get qris_createNew => 'Buat QRIS Baru';
+
+  @override
+  String get qris_close => 'Tutup';
+
+  @override
+  String get qris_cancelTitle => 'Batalkan Pembayaran?';
+
+  @override
+  String get qris_cancelMessage => 'Pembayaran KlikQRIS akan dibatalkan.';
+
+  @override
+  String get qris_cancelConfirm => 'Ya, Batalkan';
+
+  @override
+  String get qris_failedTitle => 'Gagal memproses pembayaran';
+
+  @override
+  String get qris_genericError => 'Terjadi kesalahan';
+
+  @override
+  String get qris_codeAvailable => 'QR Code tersedia';
+
+  @override
+  String get qris_openImage => 'Buka gambar QR';
 }

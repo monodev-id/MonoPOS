@@ -70,7 +70,8 @@ purchase info), `transactions/components/`, `revenue/components/`, `purchases/co
 
 | Route | Screen | Notes |
 | ----- | ------ | ----- |
-| `/payment/qris` | `KlikQrisPaymentScreen` | QR display, expiry countdown, auto-poll 3× @15s + manual check, cancel-confirm `PopScope`, TTS section hidden in prod |
+| `/payment/direct` | `DirectQrisScreen` | Amount-first QRIS (no cart), quick amounts, optional description/customer, config guard + sandbox badge; entry points in Home/Transactions app bars |
+| `/payment/qris` | `KlikQrisPaymentScreen` | QR display (base64/url), total + unique-code breakdown, expiry countdown, auto-poll 3× @15s + manual check, expired view with retry/close, cancel-confirm `PopScope`, TTS on paid |
 | `/account/product-data` | `ProductDataScreen` | JSON export/import with per-product breakdown + progress |
 | `/account/app-update` | `AppUpdateScreen` | GitHub release check, Markdown changelog, download progress, install (admin only) |
 | `/account/payment-settings` | `PaymentSettingsScreen` | KlikQRIS API key / merchant ID / sandbox toggle / TTS toggle, Save button |
@@ -122,6 +123,7 @@ Text styles via `Theme.of(context).textTheme`: `bodySmall`, `bodyMedium`, `bodyL
 - **Success feedback**: `AppSuccessOverlay.show()` after save/export/import (not just snackbar)
 - **Currency**: Display via `CurrencyFormatter.withoutSymbol(...)` (no `Rp` prefix, no decimals); inputs use thousand-separator formatter
 - **Checkout sheet**: Quick amount buttons (`Uang Pas`, 50rb, 100rb) + custom amount field; Pay button label shows item count + total
+- **Direct QRIS**: Amount-only payment from the Home/Transactions app bar; records a `qris` transaction at the entered amount (unique code from KlikQRIS is display-only), blocked with an admin shortcut when KlikQRIS is not configured
 - **Tiered pricing**: Add-to-cart dialog shows live price per qty break; cart line shows tier badge
 - **Printer status**: Banner in printer settings + badge on printer menu; state synced from `PrinterManager` (not cached prefs)
 - **Adaptive layout**: `AppSizes.isTablet/isDesktop` → centered `maxWidth: 600` columns, nav rail on wide screens; dialogs use constrained width to avoid overflow

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/themes/app_sizes.dart';
 import '../../../generated/app_localizations.dart';
@@ -61,6 +62,13 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         title: Text(AppLocalizations.of(context)!.transactions),
         elevation: 0,
         shadowColor: Colors.transparent,
+        actions: [
+          IconButton(
+            tooltip: AppLocalizations.of(context)!.directQris_title,
+            icon: const Icon(Icons.qr_code_2_rounded),
+            onPressed: () => context.push('/payment/direct'),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(transactionsNotifierProvider.notifier).getAllTransactions(),

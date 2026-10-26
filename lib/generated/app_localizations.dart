@@ -1771,6 +1771,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'* Payment will be detected automatically *'**
   String get receipt_qrisNote;
+
+  /// No description provided for @directQris_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct QRIS'**
+  String get directQris_title;
+
+  /// No description provided for @directQris_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a QRIS payment from an amount without adding products to the cart.'**
+  String get directQris_subtitle;
+
+  /// No description provided for @directQris_amountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get directQris_amountLabel;
+
+  /// No description provided for @directQris_amountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter payment amount'**
+  String get directQris_amountHint;
+
+  /// No description provided for @directQris_descriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get directQris_descriptionLabel;
+
+  /// No description provided for @directQris_descriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment description (optional)'**
+  String get directQris_descriptionHint;
+
+  /// No description provided for @directQris_customerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Name'**
+  String get directQris_customerLabel;
+
+  /// No description provided for @directQris_customerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer name (optional)'**
+  String get directQris_customerHint;
+
+  /// No description provided for @directQris_uniqueCodeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'KlikQRIS may add a unique code automatically. The recorded transaction still uses the amount you entered.'**
+  String get directQris_uniqueCodeNote;
+
+  /// No description provided for @directQris_createButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create QRIS'**
+  String get directQris_createButton;
+
+  /// No description provided for @directQris_notConfiguredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'KlikQRIS is not configured'**
+  String get directQris_notConfiguredTitle;
+
+  /// No description provided for @directQris_notConfiguredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the API Key and Merchant ID before creating a QRIS payment.'**
+  String get directQris_notConfiguredMessage;
+
+  /// No description provided for @directQris_openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get directQris_openSettings;
+
+  /// No description provided for @directQris_contactAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact an admin to enable QRIS payments.'**
+  String get directQris_contactAdmin;
+
+  /// No description provided for @directQris_sandbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Sandbox'**
+  String get directQris_sandbox;
+
+  /// No description provided for @directQris_production.
+  ///
+  /// In en, this message translates to:
+  /// **'Production'**
+  String get directQris_production;
+
+  /// No description provided for @qris_title.
+  ///
+  /// In en, this message translates to:
+  /// **'QRIS Payment'**
+  String get qris_title;
+
+  /// No description provided for @qris_directTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct QRIS'**
+  String get qris_directTitle;
+
+  /// No description provided for @qris_totalPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Payment'**
+  String get qris_totalPayment;
+
+  /// No description provided for @qris_nominal.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get qris_nominal;
+
+  /// No description provided for @qris_uniqueCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Unique code'**
+  String get qris_uniqueCode;
+
+  /// No description provided for @qris_scanInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the QRIS above to pay'**
+  String get qris_scanInstruction;
+
+  /// No description provided for @qris_waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for payment...'**
+  String get qris_waiting;
+
+  /// No description provided for @qris_checkInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Press the button below once the customer has paid'**
+  String get qris_checkInstruction;
+
+  /// No description provided for @qris_checkPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Payment'**
+  String get qris_checkPayment;
+
+  /// No description provided for @qris_checking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking...'**
+  String get qris_checking;
+
+  /// No description provided for @qris_expiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'QRIS Expired'**
+  String get qris_expiredTitle;
+
+  /// No description provided for @qris_expiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code has expired and can no longer be paid.'**
+  String get qris_expiredMessage;
+
+  /// No description provided for @qris_createNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New QRIS'**
+  String get qris_createNew;
+
+  /// No description provided for @qris_close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get qris_close;
+
+  /// No description provided for @qris_cancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Payment?'**
+  String get qris_cancelTitle;
+
+  /// No description provided for @qris_cancelMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The KlikQRIS payment will be cancelled.'**
+  String get qris_cancelMessage;
+
+  /// No description provided for @qris_cancelConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, Cancel'**
+  String get qris_cancelConfirm;
+
+  /// No description provided for @qris_failedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to process payment'**
+  String get qris_failedTitle;
+
+  /// No description provided for @qris_genericError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get qris_genericError;
+
+  /// No description provided for @qris_codeAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Code available'**
+  String get qris_codeAvailable;
+
+  /// No description provided for @qris_openImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open QR image'**
+  String get qris_openImage;
 }
 
 class _AppLocalizationsDelegate

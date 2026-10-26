@@ -8,6 +8,8 @@ import '../../common/result.dart';
 import '../../constants/constants.dart';
 import '../../utilities/console_logger.dart';
 
+enum KlikQrisPaymentStatus { paid, pending, expired }
+
 class KlikQrisQrisResponse {
   final String orderId;
   final String qrUrl;
@@ -45,6 +47,8 @@ class KlikQrisPaymentService {
 
   bool get isConfigured => _apiKey != null && _apiKey!.isNotEmpty && _merchantId != null && _merchantId!.isNotEmpty;
 
+  bool get isSandbox => _isSandbox;
+
   bool get isMockMode => !isConfigured;
 
   Map<String, String> get _headers => {
@@ -56,24 +60,28 @@ class KlikQrisPaymentService {
   Future<Result<KlikQrisQrisResponse>> generateQris({
     required String orderId,
     required int grossAmount,
+    String? description,
   }) async {
     if (isMockMode) {
       return _mockGenerateQris(orderId, grossAmount);
     }
 
     try {
+      final trimmedDescription = description?.trim();
       final body = {
         'order_id': orderId,
         'id_merchant': _merchantId,
         'amount': grossAmount,
-        'keterangan': 'Pembayaran QRIS MonoPOS',
+        'keterangan': trimmedDescription == null || trimmedDescription.isEmpty
+            ? 'Pembayaran QRIS MonoPOS'
+            : trimmedDescription,
       };
 
       final uri = Uri.parse('$_envBaseUrl/qris/create');
       final response = await http.post(uri, headers: _headers, body: jsonEncode(body));
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        return Result.failure(error: 'KlikQRIS error (${response.statusCode}): ${response.body}');
+        return Result.failure(error: 'KlikQRIS error (${response.statusCode}): ${_extractErrorMessage(response)}');
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -89,8 +97,8 @@ class KlikQrisPaymentService {
         return Result.failure(error: 'Respons KlikQRIS tidak valid');
       }
 
-      final totalAmount = double.tryParse(data['total_amount'] as String? ?? '0')?.round() ?? grossAmount;
-      final expiredMinutes = int.tryParse(data['expired_menit'] as String? ?? '') ?? 60;
+      final totalAmount = _parseAmount(data['total_amount'], fallback: grossAmount);
+      final expiredMinutes = int.tryParse(data['expired_menit']?.toString() ?? '') ?? 60;
 
       final result = KlikQrisQrisResponse(
         orderId: data['order_id'] as String? ?? orderId,
@@ -115,7 +123,7 @@ class KlikQrisPaymentService {
     }
   }
 
-  Future<Result<String>> queryQrisStatus({
+  Future<Result<KlikQrisPaymentStatus>> queryQrisStatus({
     required String orderId,
   }) async {
     if (isMockMode) {
@@ -127,7 +135,9 @@ class KlikQrisPaymentService {
       final response = await http.get(uri, headers: _headers);
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        return Result.failure(error: 'KlikQRIS status error (${response.statusCode}): ${response.body}');
+        return Result.failure(
+          error: 'KlikQRIS status error (${response.statusCode}): ${_extractErrorMessage(response)}',
+        );
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -138,19 +148,45 @@ class KlikQrisPaymentService {
       }
 
       final data = json['data'] as Map<String, dynamic>?;
-      final transactionStatus = data?['status'] as String? ?? 'PENDING';
+      final transactionStatus = (data?['status'] as String? ?? 'PENDING').toUpperCase();
 
       switch (transactionStatus) {
         case 'SUCCESS':
-          return Result.success(data: 'paid');
+        case 'PAID':
+          return Result.success(data: KlikQrisPaymentStatus.paid);
         case 'EXPIRED':
-          return Result.failure(error: data?['message'] as String? ?? 'Pembayaran kedaluwarsa');
+          return Result.success(data: KlikQrisPaymentStatus.expired);
         default:
-          return Result.success(data: 'pending');
+          return Result.success(data: KlikQrisPaymentStatus.pending);
       }
     } catch (e) {
       return Result.failure(error: e.toString());
     }
+  }
+
+  int _parseAmount(dynamic value, {required int fallback}) {
+    if (value is num) return value.round();
+
+    return double.tryParse(value?.toString() ?? '')?.round() ?? fallback;
+  }
+
+  String _extractErrorMessage(http.Response response) {
+    try {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final message = json['message'];
+
+      if (message is String && message.trim().isNotEmpty) return message;
+
+      final errors = json['errors'];
+
+      if (errors is Map && errors.isNotEmpty) {
+        return errors.values.map((e) => e is List ? e.join(', ') : e.toString()).join('; ');
+      }
+    } catch (_) {
+      // Fall back to the raw response body.
+    }
+
+    return response.body;
   }
 
   // Mock implementation
@@ -182,24 +218,24 @@ class KlikQrisPaymentService {
     );
   }
 
-  Future<Result<String>> _mockQueryQrisStatus(String orderId) async {
+  Future<Result<KlikQrisPaymentStatus>> _mockQueryQrisStatus(String orderId) async {
     final state = _mockStates[orderId];
     if (state == null) {
-      return Result.success(data: 'failed');
+      return Result.success(data: KlikQrisPaymentStatus.expired);
     }
 
     if (state.status == 'paid') {
-      return Result.success(data: 'paid');
+      return Result.success(data: KlikQrisPaymentStatus.paid);
     }
 
     final elapsed = DateTime.now().difference(state.createdAt);
     if (elapsed.inSeconds >= 30) {
       _mockStates[orderId] = state.copyWith(status: 'paid');
       cl('[KlikQrisMock] Payment completed for $orderId');
-      return Result.success(data: 'paid');
+      return Result.success(data: KlikQrisPaymentStatus.paid);
     }
 
-    return Result.success(data: 'pending');
+    return Result.success(data: KlikQrisPaymentStatus.pending);
   }
 }
 

@@ -12,6 +12,7 @@ class KlikQrisPaymentState {
   final String orderId;
   final String signature;
   final int totalAmount;
+  final bool isDirect;
 
   const KlikQrisPaymentState({
     this.transaction,
@@ -25,6 +26,7 @@ class KlikQrisPaymentState {
     this.orderId = '',
     this.signature = '',
     this.totalAmount = 0,
+    this.isDirect = false,
   });
 
   KlikQrisPaymentState copyWith({
@@ -39,6 +41,7 @@ class KlikQrisPaymentState {
     String? orderId,
     String? signature,
     int? totalAmount,
+    bool? isDirect,
   }) {
     return KlikQrisPaymentState(
       transaction: transaction ?? this.transaction,
@@ -52,10 +55,12 @@ class KlikQrisPaymentState {
       orderId: orderId ?? this.orderId,
       signature: signature ?? this.signature,
       totalAmount: totalAmount ?? this.totalAmount,
+      isDirect: isDirect ?? this.isDirect,
     );
   }
 
   bool get isPaid => paymentStatus == 'paid';
   bool get isFailed => paymentStatus == 'failed';
+  bool get isExpired => paymentStatus == 'expired';
   bool get isPending => paymentStatus == 'pending';
 }

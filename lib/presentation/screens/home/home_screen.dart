@@ -212,6 +212,7 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
       elevation: 0,
       shadowColor: Colors.transparent,
       actions: const [
+        _DirectQrisButton(),
         _ScanButton(),
         _SyncButton(),
         _NetworkInfo(),
@@ -457,26 +458,59 @@ class _Title extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              user?.name ?? '',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                height: 0,
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                user?.name ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  height: 0,
+                ),
               ),
-            ),
-            Text(
-              user?.email ?? '',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 10,
-                color: Theme.of(context).colorScheme.outline,
+              Text(
+                user?.email ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontSize: 10,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _DirectQrisButton extends StatelessWidget {
+  const _DirectQrisButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSizes.padding / 4),
+      child: Tooltip(
+        message: AppLocalizations.of(context)!.directQris_title,
+        child: AppButton(
+          height: 26,
+          borderRadius: BorderRadius.circular(4),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding / 2),
+          buttonColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06),
+          child: Icon(
+            Icons.qr_code_2_rounded,
+            size: 16,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          onTap: () => context.push('/payment/direct'),
+        ),
+      ),
     );
   }
 }
