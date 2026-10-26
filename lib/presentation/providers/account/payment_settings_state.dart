@@ -10,7 +10,7 @@ class PaymentSettingsState {
   const PaymentSettingsState({
     this.apiKey = '',
     this.merchantId = '',
-    this.isSandbox = true,
+    this.isSandbox = false,
     this.ttsEnabled = true,
     this.isLoaded = false,
     this.isSaving = false,

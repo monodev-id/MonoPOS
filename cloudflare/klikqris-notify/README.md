@@ -1,5 +1,8 @@
 # klikqris-notify
 
+> Last synced with app v1.3.7. Used by both cart checkout and **Direct QRIS** — both flows store
+> `paymentExternalId = order_id` so the worker can match either transaction type.
+
 Cloudflare Worker that receives **KlikQRIS QRIS payment notifications** (webhook)
 and updates the matching Supabase `transactions` row so the POS app picks up the
 payment without manual polling/checking.
@@ -71,8 +74,12 @@ signature (the app does not persist it yet). Until then:
 | `PAID`           | `paid`          |
 | `EXPIRED`        | `failed`        |
 
+> The Flutter app marks its local transaction `expired` when polling times out. The worker maps the
+> webhook `EXPIRED` event to `failed`; both are terminal statuses and are not counted as revenue.
+
 ## Notes
 
 - Idempotency: webhooks are deduped by `order_id` (24h TTL in KV) only **after** a
   successful Supabase update, so retries still apply.
 - The Supabase PATCH uses the `service_role` key — treat it as highly sensitive.
+- Direct QRIS transactions use the same `order_id` matching key; no extra worker configuration is needed.

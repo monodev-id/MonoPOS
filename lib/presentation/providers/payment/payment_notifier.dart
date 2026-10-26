@@ -47,7 +47,12 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
       return Result.failure(error: message);
     }
 
-    state = state.copyWith(isPolling: true, isDirect: isDirect);
+    state = state.copyWith(
+      isPolling: true,
+      isDirect: isDirect,
+      clearError: true,
+      manualCheckPending: false,
+    );
 
     try {
       final transactionRepo = ref.read(transactionRepositoryProvider);
@@ -104,6 +109,8 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
         signature: qrisData.signature,
         totalAmount: qrisData.totalAmount,
         isDirect: isDirect,
+        clearError: true,
+        manualCheckPending: false,
       );
 
       _startPolling(transactionId, paymentTimeout);
@@ -134,13 +141,23 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
     final klikQrisService = ref.read(klikQrisPaymentServiceProvider);
     int attempts = 0;
 
+    if (state.orderId.isEmpty) return;
+
     while (state.paymentStatus == 'pending' && attempts < 3) {
       await Future.delayed(const Duration(seconds: 15));
       attempts++;
 
-      final result = await klikQrisService.queryQrisStatus(orderId: state.orderId);
+      if (state.orderId.isEmpty || state.paymentStatus != 'pending') return;
 
-      if (result.isFailure) continue;
+      final result = await klikQrisService.queryQrisStatus(
+        orderId: state.orderId,
+        expectedTotalAmount: state.totalAmount > 0 ? state.totalAmount : null,
+      );
+
+      if (result.isFailure) {
+        cl('[KlikQRIS] auto poll failed: ${result.error}');
+        continue;
+      }
 
       switch (result.data!) {
         case KlikQrisPaymentStatus.paid:
@@ -160,15 +177,28 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
   }
 
   Future<void> checkPaymentManually() async {
-    if (state.transaction == null) return;
+    if (state.transaction == null || state.paymentStatus != 'pending' || state.orderId.isEmpty) {
+      return;
+    }
 
-    state = state.copyWith(isManualChecking: true);
+    state = state.copyWith(
+      isManualChecking: true,
+      manualCheckPending: false,
+      clearError: true,
+    );
 
     final klikQrisService = ref.read(klikQrisPaymentServiceProvider);
-    final result = await klikQrisService.queryQrisStatus(orderId: state.orderId);
+    final result = await klikQrisService.queryQrisStatus(
+      orderId: state.orderId,
+      expectedTotalAmount: state.totalAmount > 0 ? state.totalAmount : null,
+    );
 
     if (result.isFailure) {
-      state = state.copyWith(isManualChecking: false);
+      cl('[KlikQRIS] manual check failed: ${result.error}');
+      state = state.copyWith(
+        isManualChecking: false,
+        errorMessage: result.error?.toString() ?? 'Gagal cek status pembayaran',
+      );
       return;
     }
 
@@ -178,7 +208,10 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
       case KlikQrisPaymentStatus.expired:
         await _onPaymentExpired(state.transaction!.id!);
       case KlikQrisPaymentStatus.pending:
-        state = state.copyWith(isManualChecking: false);
+        state = state.copyWith(
+          isManualChecking: false,
+          manualCheckPending: true,
+        );
     }
   }
 
@@ -186,7 +219,11 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
     _pollTimer?.cancel();
     _elapsedTimer?.cancel();
 
-    state = state.copyWith(paymentStatus: 'paid');
+    state = state.copyWith(
+      paymentStatus: 'paid',
+      clearError: true,
+      manualCheckPending: false,
+    );
 
     final transactionRepo = ref.read(transactionRepositoryProvider);
     await UpdatePaymentStatusUsecase(transactionRepo).call(transactionId, 'paid');
@@ -208,6 +245,7 @@ class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
       paymentStatus: 'expired',
       errorMessage: message ?? 'Pembayaran kedaluwarsa',
       isManualChecking: false,
+      manualCheckPending: false,
     );
 
     final transactionRepo = ref.read(transactionRepositoryProvider);

@@ -453,6 +453,8 @@
   "qris_checkInstruction": "Press the button below once the customer has paid",
   "qris_checkPayment": "Check Payment",
   "qris_checking": "Checking...",
+  "qris_checkFailed": "Failed to check payment status. Check your connection and try again.",
+  "qris_paymentNotReceived": "Payment not received yet. Please try again in a moment.",
   "qris_expiredTitle": "QRIS Expired",
   "qris_expiredMessage": "This QR code has expired and can no longer be paid.",
   "qris_createNew": "Create New QRIS",

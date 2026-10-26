@@ -1,7 +1,8 @@
 # UI.md - UI Reference
 
-> Last synced with code: v1.2.7 (Oct 2026). Covers KlikQRIS payment screen, product-data/app-update
-> screens, printer status banner, supplier/purchase screens, and new shared widgets.
+> Last synced with code: v1.3.7 (Oct 2026). Covers direct QRIS, cart/unit snapshot, barcode label
+> printing, KlikQRIS payment screen, product-data/app-update screens, printer status banner,
+> supplier/purchase screens, and revenue day detail.
 
 ## Reusable Widgets (`lib/presentation/widgets/`)
 
@@ -63,25 +64,28 @@ screens/
 ```
 
 Other screen-scoped components: `products/components/` (product cards, tiered-price editor,
-purchase info), `transactions/components/`, `revenue/components/`, `purchases/components/`
-(purchase card, item editor, product picker sheet), `suppliers/` (list + form screens).
+purchase info), `transactions/components/`, `revenue/components/` (summary card, payment stat,
+day transaction tile), `purchases/components/` (purchase card, item editor, product picker sheet),
+`suppliers/` (list + form screens).
 
 ## Key Screens (implemented)
 
 | Route | Screen | Notes |
 | ----- | ------ | ----- |
 | `/payment/direct` | `DirectQrisScreen` | Amount-first QRIS (no cart), quick amounts, optional description/customer, config guard + sandbox badge; entry points in Home/Transactions app bars |
-| `/payment/qris` | `KlikQrisPaymentScreen` | QR display (base64/url), total + unique-code breakdown, expiry countdown, auto-poll 3× @15s + manual check, expired view with retry/close, cancel-confirm `PopScope`, TTS on paid |
+| `/payment/qris` | `KlikQrisPaymentScreen` | QR display (base64/url), total + unique-code breakdown, expiry countdown, auto-poll 3× @15s + always-available manual check (with failure/pending feedback), expired view with retry/close, cancel-confirm `PopScope`, TTS on paid |
+| `/account/barcode-labels` | `ProductBarcodeLabelScreen` | Admin-only: generate/save EAN-13 for products without barcodes, search/filter, select-all, per-product copies, batch print labels (requires connected printer) |
 | `/account/product-data` | `ProductDataScreen` | JSON export/import with per-product breakdown + progress |
 | `/account/app-update` | `AppUpdateScreen` | GitHub release check, Markdown changelog, download progress, install (admin only) |
 | `/account/payment-settings` | `PaymentSettingsScreen` | KlikQRIS API key / merchant ID / sandbox toggle / TTS toggle, Save button |
-| `/account/printer-settings` | `PrinterSettingsScreen` | Scan/connect, paper size, test print, live status banner + badge |
+| `/account/printer-settings` | `PrinterSettingsScreen` | Scan/connect, paper size, test print, live status banner + badge, saved-printer reconnect |
 | `/account/store-settings` | `StoreSettingsScreen` | Store name/address/receipt footer, Save button with caret fix |
-| `/home` | `HomeScreen` | POS grid with auto-fill pagination, `_NetworkInfo` sync-mode toggle + `_SyncButton` status |
+| `/home` | `HomeScreen` | POS grid with auto-fill pagination, cart panel, direct QRIS + scan buttons, `_NetworkInfo` sync-mode toggle + `_SyncButton` status |
 | `/account/suppliers` | `SupplierScreen` | Supplier/grosir list + search, create/edit form (admin only) |
 | `/account/purchases` | `PurchaseScreen` | Purchase history, search, long-press delete (admin only) |
 | `/account/purchases/create` | `PurchaseFormScreen` | Supplier, date, stock toggle, multi-item entry, last-price hints, quick-add supplier (admin only) |
 | `/account/purchases/detail/:id` | `PurchaseDetailScreen` | Header totals, item list with HPP, delete + "catat lagi" (admin only) |
+| `/account/revenue/day/:date` | `RevenueDayScreen` | Day summary (cash/QRIS/other + product count) and transaction list for that day (admin only) |
 
 ## Sizing & Spacing (`AppSizes`)
 
@@ -120,12 +124,16 @@ Text styles via `Theme.of(context).textTheme`: `bodySmall`, `bodyMedium`, `bodyL
 - **Disabled state**: 0.5 opacity on buttons/cards
 - **Out-of-stock overlay**: Semi-transparent white layer with badge
 - **Dialogs/Snackbars**: Use `AppRoutes.rootNavigatorKey` for global context access
-- **Success feedback**: `AppSuccessOverlay.show()` after save/export/import (not just snackbar)
+- **Feedback**: errors → `AppSnackBar.showError` or `AppDialog.showError` (blocking); success after save/delete/export/import → `AppSuccessOverlay.show()`; repeated/transient feedback (barcode scan, add to cart, printer/sync status) → `AppSnackBar.show` or an inline indicator, never the success overlay
 - **Currency**: Display via `CurrencyFormatter.withoutSymbol(...)` (no `Rp` prefix, no decimals); inputs use thousand-separator formatter
 - **Checkout sheet**: Quick amount buttons (`Uang Pas`, 50rb, 100rb) + custom amount field; Pay button label shows item count + total
+- **Cart unit snapshot**: Each cart line carries the product's unit snapshot (`OrderedProductEntity.units`) so the unit dropdown still works when the paginated product cache does not contain that product; legacy products get a synthetic base unit
+- **Barcode scan**: Camera scan and HID/search submissions use `GetProductByBarcodeUsecase` (SQLite first), then add +1 base unit straight to the cart without an intermediate dialog; focus returns to the hidden HID listener for the next scan
+- **Barcode labels**: Admin screen generates unique EAN-13 codes, saves them via the product repository, and prints label batches (per-product copies) using the connection status from `PrinterManager`
 - **Direct QRIS**: Amount-only payment from the Home/Transactions app bar; records a `qris` transaction at the entered amount (unique code from KlikQRIS is display-only), blocked with an admin shortcut when KlikQRIS is not configured
 - **Tiered pricing**: Add-to-cart dialog shows live price per qty break; cart line shows tier badge
-- **Printer status**: Banner in printer settings + badge on printer menu; state synced from `PrinterManager` (not cached prefs)
+- **Printer status**: Banner in printer settings + badge on printer menu; state synced from `PrinterManager` (not cached prefs); saved printer reconnects on app start/resume
+- **Revenue detail**: Summary card shows total, transaction/product counts, and cash/QRIS/other breakdowns; tapping a day opens the per-day transaction list
 - **Adaptive layout**: `AppSizes.isTablet/isDesktop` → centered `maxWidth: 600` columns, nav rail on wide screens; dialogs use constrained width to avoid overflow
 - **Animations**: `AnimatedContainer`, `AnimatedSwitcher` for state transitions
 - **Performance**: `RepaintBoundary` on repeated list/grid items

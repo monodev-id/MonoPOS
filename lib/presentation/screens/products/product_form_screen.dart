@@ -123,7 +123,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     if (res.isSuccess) {
       if (!mounted) return;
       context.go('/products');
-      AppSnackBar.show(AppLocalizations.of(context)!.product_created);
+      AppSuccessOverlay.show(AppLocalizations.of(context)!.product_created);
     } else {
       AppDialog.showError(error: res.error?.toString());
     }
@@ -137,7 +137,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     if (res.isSuccess) {
       if (!mounted) return;
       context.pop();
-      AppSnackBar.show(AppLocalizations.of(context)!.product_updated);
+      AppSuccessOverlay.show(AppLocalizations.of(context)!.product_updated);
     } else {
       AppDialog.showError(error: res.error?.toString());
     }

@@ -13,6 +13,7 @@ import '../../widgets/app_dialog.dart';
 import '../../widgets/app_drop_down.dart';
 import '../../widgets/app_progress_indicator.dart';
 import '../../widgets/app_snack_bar.dart';
+import '../../widgets/app_success_overlay.dart';
 import '../../widgets/app_text_field.dart';
 import 'components/product_picker_sheet.dart';
 import 'components/purchase_item_editor.dart';
@@ -78,7 +79,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     if (res.isSuccess) {
       ref.read(purchaseNotifierProvider.notifier).getPurchases();
       context.pushReplacement('/account/purchases/detail/${res.data}');
-      AppSnackBar.show('Pembelian disimpan');
+      AppSuccessOverlay.show('Pembelian disimpan');
     } else {
       AppDialog.showError(error: res.error?.toString());
     }

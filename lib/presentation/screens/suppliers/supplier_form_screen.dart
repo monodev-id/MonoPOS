@@ -8,7 +8,7 @@ import '../../providers/suppliers/supplier_notifier.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_progress_indicator.dart';
-import '../../widgets/app_snack_bar.dart';
+import '../../widgets/app_success_overlay.dart';
 import '../../widgets/app_text_field.dart';
 
 class SupplierFormScreen extends ConsumerStatefulWidget {
@@ -61,7 +61,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
     if (res.isSuccess) {
       ref.read(supplierNotifierProvider.notifier).getAllSuppliers();
       context.pop();
-      AppSnackBar.show(widget.id == null ? 'Supplier ditambahkan' : 'Supplier diperbarui');
+      AppSuccessOverlay.show(widget.id == null ? 'Supplier ditambahkan' : 'Supplier diperbarui');
     } else {
       AppDialog.showError(error: res.error?.toString());
     }

@@ -8,7 +8,7 @@ import '../../widgets/app_button.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_empty_state.dart';
 import '../../widgets/app_progress_indicator.dart';
-import '../../widgets/app_snack_bar.dart';
+import '../../widgets/app_success_overlay.dart';
 import '../../widgets/app_text_field.dart';
 
 class SupplierScreen extends ConsumerStatefulWidget {
@@ -183,7 +183,7 @@ class _SupplierScreenState extends ConsumerState<SupplierScreen> {
         ctx.pop();
         final res = await ref.read(supplierNotifierProvider.notifier).deleteSupplier(id);
         if (res.isSuccess) {
-          AppSnackBar.show('Supplier dihapus');
+          AppSuccessOverlay.show('Supplier dihapus');
         } else {
           AppDialog.showError(error: res.error?.toString());
         }

@@ -8,7 +8,7 @@ import '../../providers/customer/customer_form_notifier.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_progress_indicator.dart';
-import '../../widgets/app_snack_bar.dart';
+import '../../widgets/app_success_overlay.dart';
 import '../../widgets/app_text_field.dart';
 
 class CustomerFormScreen extends ConsumerStatefulWidget {
@@ -51,7 +51,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     if (res.isSuccess) {
       if (!mounted) return;
       context.pop();
-      AppSnackBar.show('Pelanggan berhasil ditambahkan');
+      AppSuccessOverlay.show('Pelanggan berhasil ditambahkan');
     } else {
       AppDialog.showError(error: res.error?.toString());
     }
@@ -65,7 +65,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     if (res.isSuccess) {
       if (!mounted) return;
       context.pop();
-      AppSnackBar.show('Pelanggan berhasil diupdate');
+      AppSuccessOverlay.show('Pelanggan berhasil diupdate');
     } else {
       AppDialog.showError(error: res.error?.toString());
     }

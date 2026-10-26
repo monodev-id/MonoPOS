@@ -1,7 +1,8 @@
 # WORKFLOW Sistem POS - MonoPOS
 
-> Last synced with code: v1.2.6 (Sep 2026). Payment = **KlikQRIS** (Doku retired),
-> Supabase via runtime Settings, admin-only routes enforced in `AppRoutes`.
+> Last synced with code: v1.3.7 (Oct 2026). Payment = **KlikQRIS** (Doku retired) with cart checkout
+> and direct-nominal QRIS. Supabase via runtime Settings, admin-only routes enforced in `AppRoutes`.
+> Supplier/purchase/HPP data is local-only.
 
 ## 1. Alur Autentikasi (Login / Logout)
 
@@ -113,15 +114,28 @@ OrderedProduct.isTieredPrice = 1 jika tier terpakai
 Struk & cart menampilkan badge tier
 ```
 
-### 2e. Input Barcode (Kamera + HID)
+### 2e. Input Barcode (Kamera + HID + Kolom Pencarian)
 
 ```
-Kamera: barcode_scanner_screen (mobile_scanner) → cari produk → tambah
-HID: barcode_hid_listener (hardware scanner, fokus global) → tambah otomatis
-Produk tidak ditemukan → snackbar error
+Kamera: barcode_scanner_screen (mobile_scanner) → lookup database → tambah langsung
+HID: barcode_hid_listener (hardware scanner, fokus global) → lookup database → tambah langsung
+Kolom pencarian: query 6+ digit dianggap barcode → lookup database → tambah langsung
+Lookup: GetProductByBarcodeUsecase (SQLite dulu) → fallback cache daftar produk
+Sukses: keranjang +1 satuan dasar (tanpa dialog), SystemSound, snackbar nama/qty
+Produk tidak ditemukan → snackbar error; fokus HID dikembalikan untuk scan berikutnya
 ```
 
-### 2f. Validasi Stok Rendah
+### 2f. Snapshot Satuan di Keranjang
+
+```
+Saat item masuk keranjang, HomeNotifier menyimpan snapshot ProductUnit produk
+  ↓
+Dropdown satuan & perhitungan tiered price memakai snapshot item (bukan cache paginasi)
+  ↓
+Produk legacy tanpa baris ProductUnit memakai satu unit sintetis (base unit)
+```
+
+### 2g. Validasi Stok Rendah
 
 ```
 Qty diminta > stok → AppLowStockDialog konfirmasi
@@ -163,7 +177,7 @@ Pilih metode pembayaran
       │    ├── Paid ✅ → suara kasir + TTS    │
       │    │     → update paid → detail       │
       │    ├── Pending → tombol Cek Pembayaran│
-      │    └── Expired/failed ❌ → error      │
+      │    └── Expired ❌ → update expired    │
       │ 5. Back/close → dialog konfirmasi     │
       │    (hindari batal tak sengaja)        │
       │ 6. Webhook klikqris-notify (opsional) │
@@ -171,7 +185,25 @@ Pilih metode pembayaran
       └──────────────────────────────────────┘
 ```
 
-### 3a. Simpan Transaksi (Detail)
+### 3a. Direct QRIS (Nominal Langsung)
+
+```
+Home/Transactions AppBar → ikon QR (/payment/direct)
+  ↓
+DirectQrisScreen: nominal + quick amount (10rb/25rb/50rb/100rb)
+  + keterangan & nama pelanggan (opsional)
+  ↓
+Belum dikonfigurasi?
+  ├── Admin → tombol Buka Pengaturan (Payment Settings)
+  └── Kasir → pesan hubungi admin
+  ↓
+Create QRIS → simpan transaksi qris (pending, tanpa kurangi stok)
+  → generateQris → KlikQrisPaymentScreen
+  ↓
+Nominal transaksi = nominal input; kode unik KlikQRIS hanya ditampilkan
+```
+
+### 3b. Simpan Transaksi (Detail)
 
 ```
 HomeNotifier → CreateTransactionUsecase
@@ -302,6 +334,26 @@ Catatan:
 - Form produk menyimpan `costPrice`; sinkronisasi produk ke Supabase tetap membuang `costPrice` karena
   kolom tersebut belum ada di tabel remote.
 
+### 4c. Cetak Label Barcode (Admin)
+
+```
+Account → Barcode Labels (/account/barcode-labels)
+  ↓
+Generate kode EAN-13 unik untuk produk tanpa barcode
+  (BarcodeGenerator + cek duplikat via product repository)
+  ↓
+Simpan massal → update Product.barcode lewat UpdateProductUsecase
+  (produk + refresh daftar produk/beranda, tetap masuk alur sync produk)
+  ↓
+Pilih produk (search/filter with/without barcode) + jumlah salinan
+  ↓
+Print label → PrinterService (butuh printer terhubung)
+  ├── Belum terhubung → dialog → Printer Settings
+  └── Terhubung → kirim label batch, sukses overlay
+```
+
+Produk baru juga bisa dibuat langsung dari layar ini: isi nama → Generate kode → Save Product → Print Label.
+
 ---
 
 ## 5. Alur Riwayat Transaksi
@@ -415,10 +467,19 @@ Banner + badge status koneksi (real-time dari PrinterManager) di layar printer s
 │                                           │
 │  ┌─────────────────────────────────────┐  │
 │  │ 📋 Edit Profil     → /account/profile│ │
+│  │ 👥 Karyawan        → /account/employees │
 │  │ 🏪 Pengaturan Toko → /account/store  │ │
-│  │ 🖨️ Pengaturan Printer → /account/...  │ │
-│  │ 💳 Pengaturan Pembayaran → /account/..│ │
 │  │ 📊 Laporan Pendapatan → /account/rev  │ │
+│  │ 🧑 Pelanggan       → /account/customers │
+│  │ 🏬 Supplier/Grosir → /account/suppliers │
+│  │ 📦 Pembelian       → /account/purchases │
+│  │ 🎨 Tema / 🌐 Bahasa                  │ │
+│  │ 🖨️ Pengaturan Printer → /account/...  │ │
+│  │ 🏷️ Label Barcode   → /account/barcode-labels │
+│  │ 💳 Pengaturan Pembayaran → /account/..│ │
+│  │ 💾 Data Produk     → /account/product-data │
+│  │ ⬆️  App Update     → /account/app-update │
+│  │ ☁️  Supabase Sync  → dialog runtime   │ │
 │  │ ℹ️  Tentang          → /account/about │ │
 │  │ 🚪 Logout                            │ │
 │  └─────────────────────────────────────┘  │
@@ -433,9 +494,11 @@ Banner + badge status koneksi (real-time dari PrinterManager) di layar printer s
 - Scan & connect printer (USB/Bluetooth/BLE/Network)
 - Pilih ukuran kertas (58mm/72mm/80mm)
 - Test print
+- Auto-reconnect printer tersimpan saat app start/resume; banner + badge mengikuti `PrinterManager`
+
 ### 8c. Pengaturan Pembayaran (KlikQRIS)
 
-- API Key, Merchant ID, toggle Sandbox, toggle suara/TTS (`klikqris_tts_enabled`)
+- API Key, Merchant ID, toggle Sandbox (default **Production**), toggle suara/TTS (`klikqris_tts_enabled`)
 - Tombol **Save** eksplisit + `AppSuccessOverlay`; tidak ada write per ketikan
 - Kosong (API key/merchant) = **mock mode** untuk development (QR mock, paid ±30s)
 
@@ -445,7 +508,21 @@ Banner + badge status koneksi (real-time dari PrinterManager) di layar printer s
   per produk + progress; import dengan dialog konfirmasi, overwrite lokal
 - File dibagikan via file picker/share; simpan salinan di tempat aman
 
-### 8e. Pembaruan Aplikasi (App Update, Admin)
+### 8e. Label Barcode (Admin)
+
+- `Account → Barcode Labels`: generate/save EAN-13 untuk produk tanpa barcode, filter
+  with/without barcode, pilih semua, atur jumlah salinan, lalu print batch
+- Produk baru bisa langsung dibuat + disimpan dari layar ini
+- Print membutuhkan printer terhubung; jika belum, arahkan ke Printer Settings
+
+### 8f. Supplier & Pembelian (Admin)
+
+- `Account → Suppliers`: daftar/cari supplier, tambah/edit, hapus ditolak jika masih dipakai nota
+- `Account → Purchases`: daftar nota, detail, hapus; form mendukung supplier baru, tanggal,
+  switch tambah stok, multi-item, dan hint harga terakhir per supplier
+- Data lokal saja; HPP produk berasal dari `PurchaseItem.baseUnitPrice` terbaru
+
+### 8g. Pembaruan Aplikasi (App Update, Admin)
 
 ```
 Account → App Update → checkForUpdate() (GitHub Releases API)
@@ -454,12 +531,12 @@ Account → App Update → checkForUpdate() (GitHub Releases API)
   └── Sudah terbaru → status "up to date"
 ```
 
-### 8f. Supabase Sync (Runtime Config)
+### 8h. Supabase Sync (Runtime Config)
 
 - `Account → Supabase Sync` (admin only): input URL + anon key → simpan ke
   `SharedPreferences` (`SupabaseCredentials`) → **restart app** untuk aktif
 - Indikator: `Aktif` / `Belum diatur`; tombol hapus konfigurasi tersedia
-- Tanpa kredensial: app full offline, write di-queue, indikator `Pending`
+- Tanpa kredensial: app full offline, write di-queue, tombol sync menampilkan `Sync off`
 
 ---
 
@@ -469,21 +546,25 @@ Account → App Update → checkForUpdate() (GitHub Releases API)
 ┌──────────────────────────────────────────┐
 │        REVENUE SCREEN (/account/revenue)  │
 │                                           │
-│  Pilih rentang tanggal                    │
+│  Pilih rentang tanggal (default 30 hari)  │
 │    ↓                                      │
 │  RevenueNotifier.loadRevenue()            │
 │    ↓                                      │
 │  GetDailyRevenueUsecase                   │
 │    ↓                                      │
-│  Query transaksi berdasarkan tanggal      │
+│  Query transaksi paid (admin: semua user) │
 │    ↓                                      │
-│  Tampilkan per hari:                      │
+│  Tampilkan summary + per hari:            │
 │  ┌─────────────────────────────────────┐  │
-│  │ Tanggal    │ Transaksi │ Pendapatan │  │
+│  │ Total │ Transaksi │ Produk           │  │
+│  │ Cash  │ QRIS      │ Lainnya          │  │
 │  │ 18/06/2026 │    15     │ Rp 2.5jt   │  │
 │  │ 19/06/2026 │    23     │ Rp 4.1jt   │  │
-│  │ ...        │    ...    │ ...        │  │
 │  └─────────────────────────────────────┘  │
+│    ↓ tap hari                             │
+│  REVENUE DAY (/account/revenue/day/:date) │
+│  • Ringkasan hari + rincian cash/QRIS/other│
+│  • Daftar transaksi hari tersebut         │
 └──────────────────────────────────────────┘
 ```
 
@@ -548,8 +629,10 @@ Relasi pembelian (lokal, belum disinkronkan):
 | Pembayaran Digital | KlikQRIS QRIS API (sandbox + production) + webhook `klikqris-notify` |
 | Suara & TTS | `flutter_tts` (id-ID) + `audioplayers` (`cashmasuk.mp3`, terbilang rupiah) |
 | App Update | GitHub Releases API + `open_filex` installer (`AppUpdate` clean-arch module) |
-| Scanner | `mobile_scanner` (kamera) + HID listener (hardware scanner) |
+| Scanner | `mobile_scanner` (kamera) + HID listener (hardware scanner) + lookup SQLite by barcode |
+| Barcode Label | `barcode_widget` + EAN-13 generator (`BarcodeGenerator`) |
 | Printer | unified_esc_pos_printer (USB/BT/BLE/Network) |
+| Data Pembelian | Supplier/Purchase/PurchaseItem **lokal (SQLite)** — belum disinkronkan |
 | Arsitektur | Clean Architecture (5 layer) |
 | Pattern | Result type, Usecase pattern, Offline-first |
 
@@ -608,23 +691,26 @@ Relasi pembelian (lokal, belum disinkronkan):
 /error                     → ErrorScreen
 
 /payment/qris              → KlikQrisPaymentScreen (full-screen overlay, PopScope confirm-cancel)
+/payment/direct            → DirectQrisScreen (QRIS nominal langsung, entry dari Home/Transactions)
 
 ShellRoute (Bottom Navigation - MainScreen):
-  /home                    → HomeScreen (POS kasir)
+  /home                    → HomeScreen (POS kasir; direct QRIS + scan di AppBar)
   /products                → ProductsScreen (daftar produk)
     /products/product-create          → ProductFormScreen (tambah, admin only)
     /products/product-edit/:id        → ProductFormScreen (edit, admin only)
     /products/product-detail/:id      → ProductDetailScreen
-  /transactions            → TransactionsScreen (riwayat)
+  /transactions            → TransactionsScreen (riwayat; direct QRIS di AppBar)
     /transactions/transaction-detail/:id → TransactionDetailScreen (cetak manual)
   /account                 → AccountScreen (pengaturan)
     /account/profile                  → ProfileFormScreen
     /account/store-settings           → StoreSettingsScreen (admin only)
     /account/printer-settings         → PrinterSettingsScreen
+    /account/barcode-labels           → ProductBarcodeLabelScreen (admin only)
     /account/payment-settings         → PaymentSettingsScreen (KlikQRIS, admin only)
     /account/product-data             → ProductDataScreen (backup JSON, admin only)
     /account/app-update               → AppUpdateScreen (admin only)
     /account/revenue                  → RevenueScreen (admin only)
+      /account/revenue/day/:date      → RevenueDayScreen (admin only)
     /account/about                    → AboutScreen
     /account/customers                → CustomerScreen (+ customer-form)
     /account/employees                → EmployeesScreen (+ employee-form, admin only)
@@ -636,8 +722,8 @@ ShellRoute (Bottom Navigation - MainScreen):
 
 Admin-only paths (`AppRoutes._adminOnlyPaths`, kasir di-redirect ke `/home`):
 `/account/employees`, `/account/store-settings`, `/account/revenue`,
-`/account/payment-settings`, `/account/product-data`, `/account/app-update`,
-`/account/suppliers`, `/account/purchases`,
+`/account/payment-settings`, `/account/product-data`, `/account/barcode-labels`,
+`/account/app-update`, `/account/suppliers`, `/account/purchases`,
 `/products/product-create`, `/products/product-edit`.
 
 ---
@@ -653,20 +739,21 @@ Admin-only paths (`AppRoutes._adminOnlyPaths`, kasir di-redirect ke `/home`):
    - Ketik nama pelanggan (opsional)
      ↓
 3. TAMBAH PRODUK KE KERANJANG
-   - Tap produk dari grid → otomatis masuk keranjang
-   - Atau scan barcode → produk ditemukan & ditambahkan
-   - Ubah qty, pilih satuan jika multi-unit
+   - Tap produk dari grid → dialog qty/satuan/tier
+   - Scan barcode (kamera/HID) atau submit barcode di search → lookup DB → +1 langsung
+   - Ubah qty, pilih satuan jika multi-unit (snapshot satuan per item)
      ↓
 4. CHECKOUT
    - Pilih metode bayar
      ├── CASH: quick amount (Uang Pas/50rb/100rb) atau custom → hitung kembalian
      └── QRIS: Generate QR → pelanggan scan → auto-poll 3x @15s / tombol manual /
          webhook klikqris-notify → suara kasir + TTS → detail transaksi
+   - Alternatif tanpa keranjang: tombol QR di AppBar → /payment/direct → input nominal
      ↓
 5. TRANSAKSI TERSIMPAN
    - Local SQLite ✅
    - Remote Supabase (jika online) / Queue (jika offline)
-   - Stok produk berkurang
+   - Stok produk berkurang (kecuali Direct QRIS tanpa produk)
      ↓
 6. CETAK STRUK (opsional)
    - Printer thermal → struk keluar
@@ -683,9 +770,10 @@ Admin-only paths (`AppRoutes._adminOnlyPaths`, kasir di-redirect ke `/home`):
    Splash → Login dengan akun admin
      ↓
 2. KELOLA PRODUK
-   - Tambah produk baru (nama, harga, stok, barcode, foto, multi-unit)
+   - Tambah produk baru (nama, harga, stok, barcode, HPP, foto, multi-unit, tier)
    - Edit produk yang sudah ada
    - Hapus produk
+   - Cetak label barcode untuk produk tanpa barcode (batch + jumlah salinan)
      ↓
 3. CATAT PEMBELIAN & SUPPLIER
    - Tambah supplier / grosir (nama unik)
@@ -699,15 +787,18 @@ Admin-only paths (`AppRoutes._adminOnlyPaths`, kasir di-redirect ke `/home`):
    - Detail transaksi
    - Cetak ulang struk
    - Hapus transaksi jika perlu
+   - Buat QRIS langsung dari nominal (tanpa keranjang)
      ↓
 5. PENGATURAN
    - Edit profil toko (nama, alamat, footer struk)
-   - Setup printer thermal
+   - Setup printer thermal (+ auto-reconnect)
    - Konfigurasi pembayaran QRIS
+   - Backup/import data produk (JSON)
      ↓
 6. LAPORAN PENDAPATAN
    - Pilih rentang tanggal
-   - Lihat rekap harian (total transaksi, total pendapatan)
+   - Lihat rekap harian + rincian cash/QRIS/other
+   - Buka detail transaksi per hari
      ↓
 7. KONTROL SINKRONISASI
    - Cek status: Auto / Online / Offline

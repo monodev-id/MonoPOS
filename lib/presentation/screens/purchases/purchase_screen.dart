@@ -8,7 +8,7 @@ import '../../widgets/app_button.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_empty_state.dart';
 import '../../widgets/app_progress_indicator.dart';
-import '../../widgets/app_snack_bar.dart';
+import '../../widgets/app_success_overlay.dart';
 import '../../widgets/app_text_field.dart';
 import 'components/purchase_card.dart';
 
@@ -126,7 +126,7 @@ class _PurchaseScreenState extends ConsumerState<PurchaseScreen> {
         ctx.pop();
         final res = await ref.read(purchaseNotifierProvider.notifier).deletePurchase(id);
         if (res.isSuccess) {
-          AppSnackBar.show('Pembelian dihapus');
+          AppSuccessOverlay.show('Pembelian dihapus');
         } else {
           AppDialog.showError(error: res.error?.toString());
         }

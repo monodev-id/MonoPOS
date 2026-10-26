@@ -1000,6 +1000,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get qris_checking => 'Memeriksa...';
 
   @override
+  String get qris_checkFailed =>
+      'Gagal memeriksa status pembayaran. Periksa koneksi lalu coba lagi.';
+
+  @override
+  String get qris_paymentNotReceived =>
+      'Pembayaran belum diterima. Coba lagi beberapa saat lagi.';
+
+  @override
   String get qris_expiredTitle => 'QRIS Kedaluwarsa';
 
   @override

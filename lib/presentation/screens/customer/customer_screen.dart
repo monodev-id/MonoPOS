@@ -8,7 +8,7 @@ import '../../widgets/app_button.dart';
 import '../../widgets/app_dialog.dart';
 import '../../widgets/app_empty_state.dart';
 import '../../widgets/app_progress_indicator.dart';
-import '../../widgets/app_snack_bar.dart';
+import '../../widgets/app_success_overlay.dart';
 
 class CustomerScreen extends ConsumerStatefulWidget {
   const CustomerScreen({super.key});
@@ -96,7 +96,7 @@ class _CustomerScreenState extends ConsumerState<CustomerScreen> {
                             var res = await ref.read(customerNotifierProvider.notifier).deleteCustomer(customer.id!);
 
                             if (res.isSuccess) {
-                              AppSnackBar.show('Pelanggan dihapus');
+                              AppSuccessOverlay.show('Pelanggan dihapus');
                             }
                           },
                         );

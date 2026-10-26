@@ -6,6 +6,9 @@ import '../../app/routes/app_routes.dart';
 import '../../core/themes/app_sizes.dart';
 
 class AppSuccessOverlay {
+  static OverlayEntry? _activeEntry;
+  static Timer? _dismissTimer;
+
   static void show(
     String message, {
     Duration duration = const Duration(milliseconds: 1800),
@@ -14,15 +17,28 @@ class AppSuccessOverlay {
     final overlay = navigator?.overlay;
     if (overlay == null) return;
 
+    _dismiss();
+
     final entry = OverlayEntry(
       builder: (_) => _SuccessOverlayContent(message: message),
     );
 
+    _activeEntry = entry;
     overlay.insert(entry);
 
-    Timer(duration, () {
+    _dismissTimer = Timer(duration, _dismiss);
+  }
+
+  static void _dismiss() {
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+
+    final entry = _activeEntry;
+    _activeEntry = null;
+
+    if (entry != null && entry.mounted) {
       entry.remove();
-    });
+    }
   }
 }
 
@@ -70,52 +86,59 @@ class _SuccessOverlayContentState extends State<_SuccessOverlayContent> with Sin
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Material(
-      color: Colors.transparent,
-      child: Center(
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 0.6, end: 1.0).animate(_scale),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: AppSizes.padding * 2),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.padding * 1.5,
-              vertical: AppSizes.padding,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppSizes.radius * 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(40),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      label: widget.message,
+      child: ExcludeSemantics(
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.6, end: 1.0).animate(_scale),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: AppSizes.padding * 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.padding * 1.5,
+                  vertical: AppSizes.padding,
                 ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      size: const Size(72, 72),
-                      painter: _CheckPainter(
-                        progress: _checkProgress.value,
-                        color: theme.colorScheme.tertiary,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(AppSizes.radius * 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(40),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return CustomPaint(
+                          size: const Size(72, 72),
+                          painter: _CheckPainter(
+                            progress: _checkProgress.value,
+                            color: theme.colorScheme.tertiary,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSizes.padding),
+                    Text(
+                      widget.message,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSizes.padding),
-                Text(
-                  widget.message,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

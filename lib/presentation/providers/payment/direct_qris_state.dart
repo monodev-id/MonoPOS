@@ -10,7 +10,7 @@ class DirectQrisState {
     this.description = '',
     this.customerName = '',
     this.isConfigured = false,
-    this.isSandbox = true,
+    this.isSandbox = false,
   });
 
   bool get canSubmit => isConfigured && amount > 0;

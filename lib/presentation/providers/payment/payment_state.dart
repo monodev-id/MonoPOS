@@ -9,6 +9,7 @@ class KlikQrisPaymentState {
   final int elapsedSeconds;
   final bool autoCheckDone;
   final bool isManualChecking;
+  final bool manualCheckPending;
   final String orderId;
   final String signature;
   final int totalAmount;
@@ -23,6 +24,7 @@ class KlikQrisPaymentState {
     this.elapsedSeconds = 0,
     this.autoCheckDone = false,
     this.isManualChecking = false,
+    this.manualCheckPending = false,
     this.orderId = '',
     this.signature = '',
     this.totalAmount = 0,
@@ -34,10 +36,12 @@ class KlikQrisPaymentState {
     String? qrCode,
     String? paymentStatus,
     String? errorMessage,
+    bool clearError = false,
     bool? isPolling,
     int? elapsedSeconds,
     bool? autoCheckDone,
     bool? isManualChecking,
+    bool? manualCheckPending,
     String? orderId,
     String? signature,
     int? totalAmount,
@@ -47,11 +51,12 @@ class KlikQrisPaymentState {
       transaction: transaction ?? this.transaction,
       qrCode: qrCode ?? this.qrCode,
       paymentStatus: paymentStatus ?? this.paymentStatus,
-      errorMessage: errorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       isPolling: isPolling ?? this.isPolling,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
       autoCheckDone: autoCheckDone ?? this.autoCheckDone,
       isManualChecking: isManualChecking ?? this.isManualChecking,
+      manualCheckPending: manualCheckPending ?? this.manualCheckPending,
       orderId: orderId ?? this.orderId,
       signature: signature ?? this.signature,
       totalAmount: totalAmount ?? this.totalAmount,

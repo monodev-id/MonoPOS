@@ -39,7 +39,7 @@ class KlikQrisPaymentService {
 
   String? get _apiKey => _prefs.getString(Constants.klikQrisApiKey);
   String? get _merchantId => _prefs.getString(Constants.klikQrisMerchantId);
-  bool get _isSandbox => _prefs.getBool(Constants.klikQrisIsSandbox) ?? true;
+  bool get _isSandbox => _prefs.getBool(Constants.klikQrisIsSandbox) ?? false;
 
   static const String _baseUrl = 'https://klikqris.com/api';
 
@@ -125,6 +125,7 @@ class KlikQrisPaymentService {
 
   Future<Result<KlikQrisPaymentStatus>> queryQrisStatus({
     required String orderId,
+    int? expectedTotalAmount,
   }) async {
     if (isMockMode) {
       return _mockQueryQrisStatus(orderId);
@@ -148,7 +149,32 @@ class KlikQrisPaymentService {
       }
 
       final data = json['data'] as Map<String, dynamic>?;
-      final transactionStatus = (data?['status'] as String? ?? 'PENDING').toUpperCase();
+
+      if (data == null) {
+        return Result.failure(error: 'Respons status KlikQRIS tidak valid');
+      }
+
+      final responseOrderId = data['order_id']?.toString();
+      if (responseOrderId != null && responseOrderId.isNotEmpty && responseOrderId != orderId) {
+        return Result.failure(
+          error: 'Order ID tidak cocok: $responseOrderId (diharapkan $orderId)',
+        );
+      }
+
+      if (expectedTotalAmount != null && expectedTotalAmount > 0) {
+        final responseTotal = _parseAmount(data['total_amount'], fallback: -1);
+
+        if (responseTotal != expectedTotalAmount) {
+          return Result.failure(
+            error:
+                'Nominal tidak cocok: '
+                '${responseTotal < 0 ? 'tidak tersedia' : responseTotal} '
+                '(diharapkan $expectedTotalAmount)',
+          );
+        }
+      }
+
+      final transactionStatus = (data['status'] as String? ?? 'PENDING').toUpperCase();
 
       switch (transactionStatus) {
         case 'SUCCESS':

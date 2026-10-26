@@ -1003,6 +1003,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qris_checking => 'Checking...';
 
   @override
+  String get qris_checkFailed =>
+      'Failed to check payment status. Check your connection and try again.';
+
+  @override
+  String get qris_paymentNotReceived =>
+      'Payment not received yet. Please try again in a moment.';
+
+  @override
   String get qris_expiredTitle => 'QRIS Expired';
 
   @override

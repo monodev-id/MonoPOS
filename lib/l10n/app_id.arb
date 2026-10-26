@@ -453,6 +453,8 @@
   "qris_checkInstruction": "Tekan tombol di bawah setelah pelanggan membayar",
   "qris_checkPayment": "Cek Pembayaran",
   "qris_checking": "Memeriksa...",
+  "qris_checkFailed": "Gagal memeriksa status pembayaran. Periksa koneksi lalu coba lagi.",
+  "qris_paymentNotReceived": "Pembayaran belum diterima. Coba lagi beberapa saat lagi.",
   "qris_expiredTitle": "QRIS Kedaluwarsa",
   "qris_expiredMessage": "QR ini sudah kedaluwarsa dan tidak dapat dibayar lagi.",
   "qris_createNew": "Buat QRIS Baru",

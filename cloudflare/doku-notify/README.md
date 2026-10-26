@@ -1,6 +1,6 @@
 # ⚠️ DEPRECATED — doku-notify (use `../klikqris-notify`)
 
-> Doku SNAP retired in v1.2.6. Active webhook: `cloudflare/klikqris-notify/`.
+> Doku SNAP retired in v1.2.6; current app release is v1.3.7. Active webhook: `cloudflare/klikqris-notify/`.
 > This worker is kept as archive only.
 
 # doku-notify (ARCHIVE)

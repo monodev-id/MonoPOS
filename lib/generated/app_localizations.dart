@@ -1928,6 +1928,18 @@ abstract class AppLocalizations {
   /// **'Checking...'**
   String get qris_checking;
 
+  /// No description provided for @qris_checkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check payment status. Check your connection and try again.'**
+  String get qris_checkFailed;
+
+  /// No description provided for @qris_paymentNotReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment not received yet. Please try again in a moment.'**
+  String get qris_paymentNotReceived;
+
   /// No description provided for @qris_expiredTitle.
   ///
   /// In en, this message translates to:

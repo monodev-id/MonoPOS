@@ -11,7 +11,7 @@ final paymentSettingsNotifierProvider = NotifierProvider.autoDispose<PaymentSett
 class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> {
   String _originalApiKey = '';
   String _originalMerchantId = '';
-  bool _originalIsSandbox = true;
+  bool _originalIsSandbox = false;
   bool _originalTtsEnabled = true;
 
   @override
@@ -20,7 +20,7 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
 
     final apiKey = prefs.getString(Constants.klikQrisApiKey) ?? '';
     final merchantId = prefs.getString(Constants.klikQrisMerchantId) ?? '';
-    final isSandbox = prefs.getBool(Constants.klikQrisIsSandbox) ?? true;
+    final isSandbox = prefs.getBool(Constants.klikQrisIsSandbox) ?? false;
     final ttsEnabled = prefs.getBool(Constants.klikQrisTtsEnabled) ?? true;
 
     _originalApiKey = apiKey;

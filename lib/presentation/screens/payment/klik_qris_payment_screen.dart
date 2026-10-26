@@ -217,22 +217,26 @@ class _KlikQrisPaymentScreenState extends ConsumerState<KlikQrisPaymentScreen> {
               ),
               const SizedBox(height: AppSizes.padding),
               Text(
-                state.autoCheckDone ? l10n.qris_checkInstruction : l10n.qris_waiting,
+                state.errorMessage != null
+                    ? l10n.qris_checkFailed
+                    : state.manualCheckPending
+                    ? l10n.qris_paymentNotReceived
+                    : state.autoCheckDone
+                    ? l10n.qris_checkInstruction
+                    : l10n.qris_waiting,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
+                  color: state.errorMessage != null ? AppColors.red : Theme.of(context).colorScheme.outline,
                 ),
               ),
-              if (state.autoCheckDone) ...[
-                const SizedBox(height: AppSizes.padding * 2),
-                AppButton(
-                  text: state.isManualChecking ? l10n.qris_checking : l10n.qris_checkPayment,
-                  enabled: !state.isManualChecking,
-                  onTap: () {
-                    _notifier.checkPaymentManually();
-                  },
-                ),
-              ],
+              const SizedBox(height: AppSizes.padding * 2),
+              AppButton(
+                text: state.isManualChecking ? l10n.qris_checking : l10n.qris_checkPayment,
+                enabled: !state.isManualChecking,
+                onTap: () {
+                  _notifier.checkPaymentManually();
+                },
+              ),
             ],
           ),
         ),

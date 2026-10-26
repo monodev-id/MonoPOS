@@ -1,5 +1,7 @@
 # CLAUDE.md - Flutter Project Conventions
 
+> Current release: `1.3.7` (`versionCode 24`). Keep this file, `README.md`, and the reference docs in sync when architecture or feature modules change.
+
 ## Architecture
 
 **Clean Architecture** with five layers:
@@ -85,6 +87,8 @@ presentation
 - **Never access repositories or datasources directly from UI (screens/widgets)**. Always go through a Notifier. Even for simple reads, create a notifier if one doesn't exist.
 - **Every screen that loads data** should have a corresponding notifier+state. No inline `ref.read(repoProvider)` from screens.
 - **Follow existing naming conventions** — match verb patterns already used in the codebase (e.g. if existing notifiers use `loadX`, don't introduce `fetchX`).
+- **Local-only features** — `Purchase` and `Supplier` follow the full datasource → repository → usecase → notifier flow but write only to SQLite (no remote datasource or queue). Products, transactions, users, customers, and queued actions keep the local + remote sync flow.
+- **Generated localization** — edit `lib/l10n/app_en.arb` / `app_id.arb`, then run `flutter gen-l10n`. Never edit `lib/generated/` by hand.
 
 ### Usecase Rules
 
@@ -178,6 +182,7 @@ presentation
 - **Form screens**: Track initial field values, detect changes with `_hasChanges`, use `PopScope` with confirm-discard dialog
 - **Detail screens**: Load data via notifier by ID (not passed as entity param), reload after edit/delete
 - **List screens**: Use scroll pagination (`NotificationListener<ScrollNotification>`) with `loadMore()`, search field with `onSearchChanged()`
+- **Purchase/supplier modules**: Local-only repositories; purchase items snapshot product name/unit and store `baseUnitPrice` (HPP per base unit); stock/HPP recalculation lives in the local datasource transaction
 - **Shared dialogs**: Static class with private constructor and static `show()` method
 - **Service classes**: Static class with private constructor for utilities (e.g. `PrinterService`, `DeviceInfoService`)
 
@@ -185,7 +190,11 @@ presentation
 
 - `UI.md` — UI reference (layouts, components, design specs)
 - `DATABASE.md` — Database schema reference (tables, columns, queries)
+- `SYNC.md` — Offline-first sync architecture (modes, queue, replay)
 - `WORKFLOW.md` — Git workflow (commits, branches, PRs)
+- `WORKFLOW_SYSTEM.md` — End-to-end feature flows and routing map
+- `DOKU_PAYMENT_GATEWAY.md` — Deprecated Doku archive (active gateway is KlikQRIS)
+- `cloudflare/klikqris-notify/README.md` — Active payment webhook worker
 
 These docs may not exist yet. If provided, follow them.
 

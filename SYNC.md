@@ -1,7 +1,8 @@
 # Sinkronisasi Data (Online/Offline Mode)
 
-> Last synced with code: v1.2.6. Supabase credentials via **Account → Supabase Sync**
+> Last synced with code: v1.3.7. Supabase credentials via **Account → Supabase Sync**
 > (runtime, `SupabaseCredentials` in SharedPreferences) — restart applies. No rebuild needed.
+> Supplier/purchase/HPP data is local-only; direct QRIS transactions use the same queue as cart QRIS.
 
 ## Arsitektur
 
@@ -106,7 +107,11 @@ SyncService.isOnline berubah jadi true
           - "product/createProduct" → ProductRemoteDatasource.createProduct()
           - "product/updateProduct" → ProductRemoteDatasource.updateProduct()
           - "product/deleteProduct" → ProductRemoteDatasource.deleteProduct()
-          - "transaction/..." → TransactionRemoteDatasource.*()
+          - "product/saveProductUnits" → no-op (sudah ditangani create/update produk)
+          - "transaction/createTransaction" → TransactionRemoteDatasource.createTransaction()
+          - "transaction/updateTransaction" → TransactionRemoteDatasource.updateTransaction()
+          - "transaction/updatePaymentStatus" → TransactionRemoteDatasource.updatePaymentStatus()
+          - "transaction/deleteTransaction" → TransactionRemoteDatasource.deleteTransaction()
         → Jika sukses: delete dari queue
         → Jika gagal: biarkan di queue (akan dicoba lagi nanti)
   → Refresh status (isHasQueuedActions, isSyncronizing)
@@ -122,11 +127,12 @@ SyncService.isOnline berubah jadi true
 ### `_SyncButton` (home_screen.dart ~L429)
 - **Lokasi:** AppBar, di kiri `_NetworkInfo`
 - **Fungsi:** Indikator status sinkronisasi
+  - `Sync off` — Supabase belum dikonfigurasi
   - `Sync...` — sedang sinkronisasi
   - `Pending` — ada data yang belum tersinkronisasi
   - `Synced` — semua data sudah tersinkronisasi
-- **Tap:** Refresh data (panggil `getUserData()`)
-- **State:** `mainNotifierProvider.select((p) => p.isSyncronizing)` + `isHasQueuedActions`
+- **Tap:** Refresh data + proses antrian (`syncNow()` + `getUserData()`)
+- **State:** `mainNotifierProvider.select((p) => p.isSyncronizing)` + `isHasQueuedActions` + `SupabaseConfig.isConfigured`
 
 ## Struktur QueuedAction
 
@@ -147,20 +153,24 @@ Disimpan di tabel SQLite `QueuedAction`:
 |------|-----------|
 | `lib/core/services/sync/sync_service.dart` | Tambah enum `SyncMode`, forced offline, `ChangeNotifier`, `toggleMode()` |
 | `lib/data/repositories/user_repository_impl.dart` | Tambah `SyncService` + `QueuedActionRepository`, `_syncRemote` jadi async + queue |
-| `lib/data/repositories/product_repository_impl.dart` | Sama |
-| `lib/data/repositories/transaction_repository_impl.dart` | Sama |
+| `lib/data/repositories/product_repository_impl.dart` | Sama; `saveProductUnits` / `saveProductTiers` ikut sync |
+| `lib/data/repositories/transaction_repository_impl.dart` | Sama; `create`, `update`, `updatePaymentStatus`, `delete` masuk antrian |
 | `lib/domain/usecases/queued_action_usecases.dart` | `ProcessQueuedActionUsecase` sekarang dispatch remote call beneran |
 | `lib/presentation/providers/main/main_notifier.dart` | Tambah `toggleSyncMode()`, `_listenSyncMode()`, update `_processQueuedActions()` |
 | `lib/presentation/providers/main/main_state.dart` | Tambah field `syncMode` |
-| `lib/presentation/screens/home/home_screen.dart` | `_NetworkInfo` jadi toggle, `_SyncButton` label diperbaiki |
+| `lib/presentation/screens/home/home_screen.dart` | `_NetworkInfo` jadi toggle, `_SyncButton` label diperbaiki (`Sync off` saat belum dikonfigurasi) |
 | `lib/app/di/app_providers.dart` | Tambah `syncServiceProvider`, inject ke repos |
+| `lib/data/repositories/purchase_repository_impl.dart` | **Local-only** — tidak memakai `SyncService`/queue |
+| `lib/data/repositories/supplier_repository_impl.dart` | **Local-only** — tidak memakai `SyncService`/queue |
 
 ## Catatan
 
 - **Auto-register user:** Saat login, jika user belum ada di Supabase Auth, otomatis di-register (di `AuthRemoteDataSourceImpl`)
 - **Auto-confirm:** Email otomatis terkonfirmasi (setting `mailer_autoconfirm: true` di Supabase)
 - **Upsert:** `UserRemoteDatasourceImpl` pakai `upsert` bukan `insert` biar idempotent
-- **Duplicate-key guard:** Replay antrian offline menahan error `23505`/`21000` agar tidak duplikat (fix `03a29ce`)
+- **Duplicate-key guard:** Replay antrian menelan error unique violation `23505` agar tidak duplikat (fix `03a29ce`)
 - **Supabase Sync menu:** Hanya tampil untuk role **admin** (kasir disembunyikan)
-- **Tanpa Supabase:** App full offline; semua write ke SQLite + queue; indikator `Pending` sampai kredensial diisi
+- **Tanpa Supabase:** App full offline; semua write ke SQLite + queue; tombol sync menampilkan `Sync off` sampai kredensial diisi
 - **KlikQRIS webhook:** `cloudflare/klikqris-notify` mempercepat `paymentStatus → paid` di Supabase; device melihat perubahan saat sync berikutnya (polling tetap sebagai fallback)
+- **Direct QRIS:** transaksi `qris` dengan nominal langsung tetap disimpan `pending` → `paid`/`expired` via repository transaksi, sehingga status ikut masuk antrian saat offline
+- **Purchase/supplier:** data lokal saja — tidak ada remote datasource, queue, atau replay. Update HPP produk tetap memakai alur product repository (dan ikut sync tanpa `costPrice`)

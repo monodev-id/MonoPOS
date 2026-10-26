@@ -23,10 +23,15 @@ Description is written in **Bahasa Indonesia** and can be multi-clause (comma-se
 ### Examples
 
 ```
-feat: integrasi Doku SNAP QRIS payment gateway, ganti Interactive QRIS
-fix: ganti auto-save ke tombol Save di pengaturan Doku, hapus write per ketikan ke SharedPreferences
+feat(qris): tambah transaksi QRIS langsung dari nominal
+fix: perbaiki layout list keranjang, snapshot satuan produk, dan lookup barcode dari database
+feat: tambah pencatatan pembelian supplier dan detail laporan pendapatan
 feat: manajemen akun karyawan + role-based access control (admin/kasir)
 ```
+
+When a change affects architecture, schema, routes, or user-facing flows, update the matching Markdown
+docs in the same PR (`README.md`, `CLAUDE.md`, `UI.md`, `DATABASE.md`, `SYNC.md`, `WORKFLOW_SYSTEM.md`,
+and the relevant `cloudflare/*/README.md`).
 
 ## Branch Naming
 
