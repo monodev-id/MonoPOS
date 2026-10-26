@@ -5,6 +5,7 @@ import '../../../core/common/result.dart';
 import '../../../core/utilities/console_logger.dart';
 import '../../../domain/entities/ordered_product_entity.dart';
 import '../../../domain/entities/product_entity.dart';
+import '../../../domain/entities/product_unit_entity.dart';
 import '../../../domain/entities/transaction_entity.dart';
 import '../../../domain/usecases/product_usecases.dart';
 import '../../../domain/usecases/transaction_usecases.dart';
@@ -130,9 +131,45 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     state = state.copyWith(isPanelExpanded: val);
   }
 
-  int _conversionFor(ProductEntity product, String unitName) {
-    if (product.units.isEmpty) return 1;
-    return product.units.where((u) => u.unitName == unitName).firstOrNull?.conversionValue ?? 1;
+  int _conversionFor(List<ProductUnitEntity> units, String unitName) {
+    return units.where((u) => u.unitName == unitName).firstOrNull?.conversionValue ?? 1;
+  }
+
+  /// Snapshot satuan yang disimpan bersama item keranjang.
+  ///
+  /// Produk lama yang belum punya baris ProductUnit tetap mendapat satu unit
+  /// sintetis supaya dropdown dan perhitungan harga tetap berjalan.
+  List<ProductUnitEntity> _unitsSnapshotFor(ProductEntity product) {
+    if (product.units.isNotEmpty) return List<ProductUnitEntity>.of(product.units);
+
+    return [
+      ProductUnitEntity(
+        productId: product.id ?? 0,
+        unitName: product.unit,
+        conversionValue: 1,
+        price: product.price,
+        wholesalePrice: product.wholesalePrice,
+        isBase: true,
+      ),
+    ];
+  }
+
+  /// Mengambil satuan untuk item keranjang. Snapshot item diprioritaskan agar
+  /// tidak bergantung pada cache daftar produk yang hanya berisi satu halaman.
+  Future<List<ProductUnitEntity>> _unitsForOrderedProduct(OrderedProductEntity item) async {
+    if (item.units.isNotEmpty) return item.units;
+
+    final products = ref.read(berandaProductsNotifierProvider).allProducts;
+    final cached = products?.where((p) => p.id == item.productId).firstOrNull;
+    if (cached != null) return _unitsSnapshotFor(cached);
+
+    if (item.productId <= 0) return const [];
+
+    final productRepository = ref.read(productRepositoryProvider);
+    final res = await GetProductUsecase(productRepository).call(item.productId);
+    if (res.isSuccess && res.data != null) return _unitsSnapshotFor(res.data!);
+
+    return const [];
   }
 
   Future<void> onAddOrderedProduct(
@@ -146,9 +183,10 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     final orderedProducts = [...state.orderedProducts];
     final finalPriceType = priceType ?? state.selectedPriceType;
     bool isGrosir = finalPriceType == 'grosir';
+    final units = _unitsSnapshotFor(product);
 
     String selectedUnit = unitName ?? product.unit;
-    int conversion = conversionValue ?? _conversionFor(product, selectedUnit);
+    int conversion = conversionValue ?? _conversionFor(units, selectedUnit);
     var currentIndex = orderedProducts.indexWhere((e) => e.productId == product.id && e.unit == selectedUnit);
 
     int basePrice =
@@ -156,7 +194,13 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     int price = basePrice;
     bool isTiered = false;
 
-    final result = await _resolveTieredPrice(product, selectedUnit, qty, basePrice);
+    final result = await _resolveTieredPrice(
+      productName: product.name,
+      units: units,
+      unitName: selectedUnit,
+      qty: qty,
+      fallbackPrice: basePrice,
+    );
     price = result.price;
     isTiered = result.isTiered;
 
@@ -168,6 +212,7 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
         unit: selectedUnit,
         conversionValue: conversion,
         isTieredPrice: isTiered,
+        units: units,
       );
     } else {
       var order = OrderedProductEntity(
@@ -182,6 +227,7 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
         unit: selectedUnit,
         conversionValue: conversion,
         isTieredPrice: isTiered,
+        units: units,
       );
 
       orderedProducts.add(order);
@@ -233,31 +279,28 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     if (index < 0 || index >= orderedProducts.length) return;
 
     final item = orderedProducts[index];
-    final products = ref.read(berandaProductsNotifierProvider).allProducts;
-    final product = products?.where((p) => p.id == item.productId).firstOrNull;
+    final units = await _unitsForOrderedProduct(item);
+    final unit = units.where((u) => u.unitName == item.unit).firstOrNull;
+    final isGrosir = priceType == 'grosir';
 
-    if (product == null) {
-      orderedProducts[index] = item.copyWith(priceType: priceType);
-      state = state.copyWith(orderedProducts: orderedProducts);
-      return;
-    }
+    final newPrice = unit != null
+        ? (isGrosir && unit.wholesalePrice != null ? unit.wholesalePrice! : unit.price)
+        : item.price;
 
-    bool isGrosir = priceType == 'grosir';
-    int newPrice;
+    final result = await _resolveTieredPrice(
+      productName: item.name,
+      units: units,
+      unitName: item.unit,
+      qty: item.quantity,
+      fallbackPrice: newPrice,
+    );
 
-    if (product.units.isNotEmpty) {
-      var unit = product.units.firstWhere(
-        (u) => u.unitName == item.unit,
-        orElse: () => product.units.first,
-      );
-      newPrice = isGrosir && unit.wholesalePrice != null ? unit.wholesalePrice! : unit.price;
-    } else {
-      newPrice = isGrosir && product.wholesalePrice != null ? product.wholesalePrice! : product.price;
-    }
-
-    final result = await _resolveTieredPrice(product, item.unit, item.quantity, newPrice);
-
-    orderedProducts[index] = item.copyWith(price: result.price, priceType: priceType, isTieredPrice: result.isTiered);
+    orderedProducts[index] = item.copyWith(
+      price: result.price,
+      priceType: priceType,
+      isTieredPrice: result.isTiered,
+      units: units.isNotEmpty ? units : item.units,
+    );
     state = state.copyWith(orderedProducts: orderedProducts);
   }
 
@@ -268,21 +311,13 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     final item = orderedProducts[index];
     if (item.unit == unitName) return;
 
-    final products = ref.read(berandaProductsNotifierProvider).allProducts;
-    final product = products?.where((p) => p.id == item.productId).firstOrNull;
-
-    if (product == null) {
-      orderedProducts[index] = item.copyWith(unit: unitName);
-      state = state.copyWith(orderedProducts: orderedProducts);
-      return;
-    }
-
-    final unit = product.units.where((u) => u.unitName == unitName).firstOrNull;
+    final units = await _unitsForOrderedProduct(item);
+    final unit = units.where((u) => u.unitName == unitName).firstOrNull;
     final conversion = unit?.conversionValue ?? 1;
     final isGrosir = item.priceType == 'grosir';
     final basePrice = unit != null
         ? (isGrosir && unit.wholesalePrice != null ? unit.wholesalePrice! : unit.price)
-        : (isGrosir && product.wholesalePrice != null ? product.wholesalePrice! : product.price);
+        : item.price;
 
     final clashIndex = orderedProducts.indexWhere(
       (e) => e.productId == item.productId && e.unit == unitName,
@@ -291,21 +326,35 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     if (clashIndex != -1 && clashIndex != index) {
       final clash = orderedProducts[clashIndex];
       final mergedQty = clash.quantity + item.quantity;
-      final result = await _resolveTieredPrice(product, unitName, mergedQty, basePrice);
+      final result = await _resolveTieredPrice(
+        productName: item.name,
+        units: units,
+        unitName: unitName,
+        qty: mergedQty,
+        fallbackPrice: basePrice,
+      );
       orderedProducts[clashIndex] = clash.copyWith(
         quantity: mergedQty,
         price: result.price,
         conversionValue: conversion,
         isTieredPrice: result.isTiered,
+        units: units.isNotEmpty ? units : clash.units,
       );
       orderedProducts.removeAt(index);
     } else {
-      final result = await _resolveTieredPrice(product, unitName, item.quantity, basePrice);
+      final result = await _resolveTieredPrice(
+        productName: item.name,
+        units: units,
+        unitName: unitName,
+        qty: item.quantity,
+        fallbackPrice: basePrice,
+      );
       orderedProducts[index] = item.copyWith(
         unit: unitName,
         conversionValue: conversion,
         price: result.price,
         isTieredPrice: result.isTiered,
+        units: units.isNotEmpty ? units : item.units,
       );
     }
 
@@ -333,40 +382,45 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
   Future<void> onChangedOrderedProductQuantity(int index, double value) async {
     final orderedProducts = [...state.orderedProducts];
     final item = orderedProducts[index];
-    final products = ref.read(berandaProductsNotifierProvider).allProducts;
-    final product = products?.where((p) => p.id == item.productId).firstOrNull;
+    final units = await _unitsForOrderedProduct(item);
 
-    int price = item.price;
-    bool isTiered = item.isTieredPrice;
-    if (product != null) {
-      final result = await _resolveTieredPrice(product, item.unit, value, item.price);
-      price = result.price;
-      isTiered = result.isTiered;
-    }
+    final result = await _resolveTieredPrice(
+      productName: item.name,
+      units: units,
+      unitName: item.unit,
+      qty: value,
+      fallbackPrice: item.price,
+    );
 
-    orderedProducts[index] = item.copyWith(quantity: value, price: price, isTieredPrice: isTiered);
+    orderedProducts[index] = item.copyWith(
+      quantity: value,
+      price: result.price,
+      isTieredPrice: result.isTiered,
+      units: units.isNotEmpty ? units : item.units,
+    );
     state = state.copyWith(orderedProducts: orderedProducts);
   }
 
-  Future<({int price, bool isTiered})> _resolveTieredPrice(
-    ProductEntity product,
-    String unitName,
-    double qty,
-    int fallbackPrice,
-  ) async {
+  Future<({int price, bool isTiered})> _resolveTieredPrice({
+    required String productName,
+    required List<ProductUnitEntity> units,
+    required String unitName,
+    required double qty,
+    required int fallbackPrice,
+  }) async {
     try {
-      if (product.units.isEmpty) {
-        cl('TieredPrice: product "${product.name}" has no units');
+      if (units.isEmpty) {
+        cl('TieredPrice: product "$productName" has no units');
         return (price: fallbackPrice, isTiered: false);
       }
 
-      var unit = product.units.firstWhere(
+      var unit = units.firstWhere(
         (u) => u.unitName == unitName,
-        orElse: () => product.units.first,
+        orElse: () => units.first,
       );
 
       if (unit.id == null || unit.id! <= 0) {
-        cl('TieredPrice: unit.id is null or <= 0 for "${product.name}" unit "$unitName"');
+        cl('TieredPrice: unit.id is null or <= 0 for "$productName" unit "$unitName"');
         return (price: fallbackPrice, isTiered: false);
       }
 

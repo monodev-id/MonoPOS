@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'product_unit_entity.dart';
+
 class OrderedProductEntity extends Equatable {
   final int? id;
   final int? transactionId;
@@ -13,6 +15,14 @@ class OrderedProductEntity extends Equatable {
   final String unit;
   final int conversionValue;
   final bool isTieredPrice;
+
+  /// Snapshot satuan produk saat item masuk keranjang.
+  ///
+  /// Dipakai oleh dropdown satuan di keranjang agar tidak bergantung pada
+  /// cache daftar produk yang sifatnya paginasi. Tidak diserialisasi ke
+  /// database/Supabase karena hanya dibutuhkan selama transaksi berjalan.
+  final List<ProductUnitEntity> units;
+
   final String? createdAt;
   final String? updatedAt;
 
@@ -29,6 +39,7 @@ class OrderedProductEntity extends Equatable {
     this.unit = 'pcs',
     this.conversionValue = 1,
     this.isTieredPrice = false,
+    this.units = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -46,6 +57,7 @@ class OrderedProductEntity extends Equatable {
     String? unit,
     int? conversionValue,
     bool? isTieredPrice,
+    List<ProductUnitEntity>? units,
     String? createdAt,
     String? updatedAt,
   }) {
@@ -62,6 +74,7 @@ class OrderedProductEntity extends Equatable {
       unit: unit ?? this.unit,
       conversionValue: conversionValue ?? this.conversionValue,
       isTieredPrice: isTieredPrice ?? this.isTieredPrice,
+      units: units ?? this.units,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -81,6 +94,7 @@ class OrderedProductEntity extends Equatable {
     unit,
     conversionValue,
     isTieredPrice,
+    units,
     createdAt,
     updatedAt,
   ];

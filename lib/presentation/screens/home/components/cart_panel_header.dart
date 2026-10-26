@@ -24,8 +24,9 @@ class _PriceTypeToggle extends ConsumerWidget {
 
 class CartPanelHeader extends ConsumerWidget {
   final PanelController panelController;
+  final bool isPanelUsed;
 
-  const CartPanelHeader({super.key, required this.panelController});
+  const CartPanelHeader({super.key, required this.panelController, this.isPanelUsed = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -97,7 +98,12 @@ class CartPanelHeader extends ConsumerWidget {
                     leftButtonText: AppLocalizations.of(context)!.home_cancel,
                     onTapRightButton: (context) {
                       ref.read(homeNotifierProvider.notifier).onRemoveAllOrderedProduct();
-                      panelController.close();
+                      // Panel hanya ada pada layout sempit; pada layout lebar
+                      // controller tidak terpasang ke SlidingUpPanel sehingga
+                      // memanggil close() akan memicu assertion.
+                      if (isPanelUsed && panelController.isAttached) {
+                        panelController.close();
+                      }
                       context.pop();
                     },
                   );

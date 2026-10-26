@@ -76,7 +76,7 @@ class _BackButton extends ConsumerWidget {
       borderColor: Theme.of(context).colorScheme.primary,
       textColor: Theme.of(context).colorScheme.primary,
       onTap: () {
-        if (isPanelUsed) panelController.close();
+        if (isPanelUsed && panelController.isAttached) panelController.close();
       },
     );
   }
@@ -102,7 +102,7 @@ class _PayButton extends ConsumerWidget {
       enabled: homeState.orderedProducts.isNotEmpty,
       onTap: () {
         if (isPanelUsed && !homeState.isPanelExpanded) {
-          panelController.open();
+          if (panelController.isAttached) panelController.open();
         } else {
           AppDialog.show(
             child: const _AdditionalInfoDialog(),

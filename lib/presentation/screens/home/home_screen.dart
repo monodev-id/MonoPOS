@@ -45,6 +45,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final scrollController = ScrollController();
   final searchFieldController = TextEditingController();
   final panelController = PanelController();
+  final _cartHeaderKey = GlobalKey();
+  final _cartFooterKey = GlobalKey();
+  final _cartOverlayInsets = ValueNotifier<EdgeInsets>(EdgeInsets.zero);
 
   @override
   void initState() {
@@ -61,7 +64,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     scrollController.removeListener(scrollListener);
     scrollController.dispose();
     searchFieldController.dispose();
+    _cartOverlayInsets.dispose();
     super.dispose();
+  }
+
+  /// Header dan footer SlidingUpPanel menumpuk di atas area panel. Ukur
+  /// tingginya agar area list hanya memakai ruang yang benar-benar tersedia,
+  /// bukan memakai tinggi tetap yang bisa berubah saat isi footer berubah.
+  void _scheduleCartOverlayMeasurement() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final headerHeight = _cartHeaderKey.currentContext?.size?.height ?? 0;
+      final footerHeight = _cartFooterKey.currentContext?.size?.height ?? 0;
+      final insets = EdgeInsets.only(top: headerHeight, bottom: footerHeight);
+
+      if (_cartOverlayInsets.value != insets) {
+        _cartOverlayInsets.value = insets;
+      }
+    });
   }
 
   void scrollListener() {
@@ -112,6 +133,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) => maybeLoadMore());
 
+    // Tinggi footer berubah saat produk pertama ditambahkan/dihapus terakhir
+    // (ringkasan total ikut tampil/hilang), jadi ukur ulang overlay panel.
+    ref.watch(homeNotifierProvider.select((s) => s.orderedProducts.isEmpty));
+
     final isWide = AppSizes.isTablet(context) || AppSizes.isDesktop(context);
 
     if (isWide) {
@@ -148,6 +173,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    _scheduleCartOverlayMeasurement();
+
     return Scaffold(
       body: Column(
         children: [
@@ -183,9 +210,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
               ),
-              header: CartPanelHeader(panelController: panelController),
-              panel: CartPanelBody(panelController: panelController),
-              footer: CartPanelFooter(panelController: panelController),
+              header: CartPanelHeader(
+                key: _cartHeaderKey,
+                panelController: panelController,
+              ),
+              panel: ValueListenableBuilder<EdgeInsets>(
+                valueListenable: _cartOverlayInsets,
+                builder: (context, overlayInsets, _) {
+                  return CartPanelBody(
+                    panelController: panelController,
+                    overlayInsets: overlayInsets,
+                  );
+                },
+              ),
+              footer: CartPanelFooter(
+                key: _cartFooterKey,
+                panelController: panelController,
+              ),
               onPanelOpened: () => ref.read(homeNotifierProvider.notifier).onChangedIsPanelExpanded(true),
               onPanelClosed: () => ref.read(homeNotifierProvider.notifier).onChangedIsPanelExpanded(false),
             ),
@@ -331,7 +372,7 @@ class _CartPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          CartPanelHeader(panelController: panelController),
+          CartPanelHeader(panelController: panelController, isPanelUsed: isPanelUsed),
           Expanded(
             child: CartPanelBody(panelController: panelController, isPanelUsed: isPanelUsed),
           ),
@@ -543,15 +584,16 @@ class _ScanButton extends ConsumerWidget {
           if (barcode == null || barcode.trim().isEmpty) return;
           final normalizedBarcode = barcode.trim();
 
-          final products = ref.read(berandaProductsNotifierProvider).allProducts;
-          var product = products?.where((p) => p.barcode?.trim() == normalizedBarcode).firstOrNull;
+          final repo = ref.read(productRepositoryProvider);
+          final result = await GetProductByBarcodeUsecase(repo).call(normalizedBarcode);
 
-          product ??= await () async {
-            final repo = ref.read(productRepositoryProvider);
-            final result = await GetProductByBarcodeUsecase(repo).call(normalizedBarcode);
-            if (result.isSuccess) return result.data;
-            return null;
-          }();
+          if (!context.mounted) return;
+
+          ProductEntity? product = result.isSuccess ? result.data : null;
+          if (product == null) {
+            final products = ref.read(berandaProductsNotifierProvider).allProducts;
+            product = products?.where((p) => p.barcode?.trim() == normalizedBarcode).firstOrNull;
+          }
 
           if (product == null) {
             if (!context.mounted) return;
@@ -703,14 +745,13 @@ class _SearchField extends ConsumerWidget {
   static final _barcodeOnly = RegExp(r'^[0-9]{6,}$');
 
   Future<ProductEntity?> _findByBarcode(WidgetRef ref, String barcode) async {
-    final products = ref.read(berandaProductsNotifierProvider).allProducts;
-    final cached = products?.where((p) => p.barcode?.trim() == barcode).firstOrNull;
-    if (cached != null) return cached;
-
+    // Database lebih dulu agar data satuan yang dipakai selalu yang terbaru.
     final repo = ref.read(productRepositoryProvider);
     final result = await GetProductByBarcodeUsecase(repo).call(barcode);
+    if (result.isSuccess && result.data != null) return result.data;
 
-    return result.isSuccess ? result.data : null;
+    final products = ref.read(berandaProductsNotifierProvider).allProducts;
+    return products?.where((p) => p.barcode?.trim() == barcode).firstOrNull;
   }
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {

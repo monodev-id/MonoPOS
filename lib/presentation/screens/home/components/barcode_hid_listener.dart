@@ -83,21 +83,22 @@ class _BarcodeHidListenerState extends ConsumerState<BarcodeHidListener> with Wi
     _isProcessing = true;
 
     try {
-      final products = ref.read(berandaProductsNotifierProvider).allProducts;
-      final cached = products?.where((p) => p.barcode?.trim() == trimmed).firstOrNull;
-
-      if (cached != null) {
-        await _addToCart(cached);
-        return;
-      }
-
+      // Ambil dari database lebih dulu supaya snapshot satuan yang masuk ke
+      // keranjang selalu data terbaru, bukan cache daftar produk yang mungkin
+      // sudah usang atau belum memuat produk ini.
       final repo = ref.read(productRepositoryProvider);
       final result = await GetProductByBarcodeUsecase(repo).call(trimmed);
 
       if (!mounted) return;
 
-      if (result.isSuccess && result.data != null) {
-        await _addToCart(result.data!);
+      ProductEntity? product = result.isSuccess ? result.data : null;
+      if (product == null) {
+        final products = ref.read(berandaProductsNotifierProvider).allProducts;
+        product = products?.where((p) => p.barcode?.trim() == trimmed).firstOrNull;
+      }
+
+      if (product != null) {
+        await _addToCart(product);
       } else {
         _onProductNotFound(trimmed);
       }

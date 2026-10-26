@@ -13,14 +13,24 @@ class CartPanelBody extends StatelessWidget {
   final PanelController panelController;
   final bool isPanelUsed;
 
-  const CartPanelBody({super.key, required this.panelController, this.isPanelUsed = true});
+  /// Ruang yang ditempati header/footer overlay (dipakai pada layout
+  /// SlidingUpPanel). Pada layout lebar nilainya nol karena header dan footer
+  /// berada dalam Column yang sama dengan list.
+  final EdgeInsets overlayInsets;
+
+  const CartPanelBody({
+    super.key,
+    required this.panelController,
+    this.isPanelUsed = true,
+    this.overlayInsets = EdgeInsets.zero,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 62),
-      physics: const NeverScrollableScrollPhysics(),
-      child: _OrderList(panelController: panelController, isPanelUsed: isPanelUsed),
+    return _OrderList(
+      panelController: panelController,
+      isPanelUsed: isPanelUsed,
+      overlayInsets: overlayInsets,
     );
   }
 }
@@ -28,8 +38,13 @@ class CartPanelBody extends StatelessWidget {
 class _OrderList extends ConsumerWidget {
   final PanelController panelController;
   final bool isPanelUsed;
+  final EdgeInsets overlayInsets;
 
-  const _OrderList({required this.panelController, this.isPanelUsed = true});
+  const _OrderList({
+    required this.panelController,
+    this.isPanelUsed = true,
+    this.overlayInsets = EdgeInsets.zero,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,8 +52,8 @@ class _OrderList extends ConsumerWidget {
     final allProducts = ref.watch(berandaProductsNotifierProvider.select((p) => p.allProducts));
 
     if (homeState.orderedProducts.isEmpty) {
-      return SizedBox(
-        height: AppSizes.screenHeight(context) - 272,
+      return Padding(
+        padding: EdgeInsets.only(top: overlayInsets.top, bottom: overlayInsets.bottom),
         child: AppEmptyState(
           title: AppLocalizations.of(context)!.cart_empty,
           subtitle: AppLocalizations.of(context)!.cart_noProducts,
@@ -46,52 +61,59 @@ class _OrderList extends ConsumerWidget {
       );
     }
 
-    return SizedBox(
-      height: AppSizes.screenHeight(context) - 272,
-      child: Scrollbar(
-        child: ListView.builder(
-          itemCount: homeState.orderedProducts.length,
-          padding: const EdgeInsets.all(AppSizes.padding),
-          itemBuilder: (context, i) {
-            final item = homeState.orderedProducts[i];
-            final product = allProducts?.where((p) => p.id == item.productId).firstOrNull;
-            final availableUnits = product != null && product.units.isNotEmpty
-                ? product.units.map((u) => u.unitName).toList()
-                : [item.unit];
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppSizes.padding),
-              child: OrderCard(
-                name: item.name,
-                imageUrl: item.imageUrl,
-                stock: item.stock,
-                price: item.price,
-                priceType: item.priceType,
-                unit: item.unit,
-                initialQuantity: item.quantity,
-                selectedUnit: item.unit,
-                availableUnits: availableUnits,
-                conversionValue: item.conversionValue,
-                isTieredPrice: item.isTieredPrice,
-                onChangedUnit: (val) {
-                  if (val == null) return;
-                  ref.read(homeNotifierProvider.notifier).onChangedOrderedProductUnit(i, val);
-                },
-                onChangedQuantity: (val) {
-                  ref.read(homeNotifierProvider.notifier).onChangedOrderedProductQuantity(i, val);
-                },
-                onChangedPriceType: (val) {
-                  ref.read(homeNotifierProvider.notifier).onChangedOrderedProductPriceType(i, val);
-                },
-                onTapRemove: () {
-                  final isLast = homeState.orderedProducts.length == 1;
-                  ref.read(homeNotifierProvider.notifier).onRemoveOrderedProduct(homeState.orderedProducts[i]);
-                  if (isLast && isPanelUsed) panelController.close();
-                },
-              ),
-            );
-          },
+    return Scrollbar(
+      child: ListView.builder(
+        itemCount: homeState.orderedProducts.length,
+        padding: EdgeInsets.fromLTRB(
+          AppSizes.padding,
+          overlayInsets.top + AppSizes.padding / 1.5,
+          AppSizes.padding,
+          overlayInsets.bottom + AppSizes.padding,
         ),
+        itemBuilder: (context, i) {
+          final item = homeState.orderedProducts[i];
+          final product = allProducts?.where((p) => p.id == item.productId).firstOrNull;
+          final units = item.units.isNotEmpty
+              ? item.units
+              : (product != null && product.units.isNotEmpty ? product.units : item.units);
+          final List<String> availableUnits = units.isNotEmpty
+              ? units.map((u) => u.unitName).toList()
+              : [item.unit];
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSizes.padding),
+            child: OrderCard(
+              name: item.name,
+              imageUrl: item.imageUrl,
+              stock: item.stock,
+              price: item.price,
+              priceType: item.priceType,
+              unit: item.unit,
+              initialQuantity: item.quantity,
+              selectedUnit: item.unit,
+              availableUnits: availableUnits,
+              conversionValue: item.conversionValue,
+              isTieredPrice: item.isTieredPrice,
+              onChangedUnit: (val) {
+                if (val == null) return;
+                ref.read(homeNotifierProvider.notifier).onChangedOrderedProductUnit(i, val);
+              },
+              onChangedQuantity: (val) {
+                ref.read(homeNotifierProvider.notifier).onChangedOrderedProductQuantity(i, val);
+              },
+              onChangedPriceType: (val) {
+                ref.read(homeNotifierProvider.notifier).onChangedOrderedProductPriceType(i, val);
+              },
+              onTapRemove: () {
+                final isLast = homeState.orderedProducts.length == 1;
+                ref.read(homeNotifierProvider.notifier).onRemoveOrderedProduct(homeState.orderedProducts[i]);
+                if (isLast && isPanelUsed && panelController.isAttached) {
+                  panelController.close();
+                }
+              },
+            ),
+          );
+        },
       ),
     );
   }
