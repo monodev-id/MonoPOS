@@ -272,16 +272,17 @@ class PrinterService {
           style: const PrintTextStyle(bold: true),
         );
         for (final product in grosirItems) {
-          final unitPrice = CurrencyFormatter.withoutSymbol(product.price, decimalDigits: 0);
+          final qty = product.quantity == product.quantity.roundToDouble()
+              ? product.quantity.toInt().toString()
+              : product.quantity.toStringAsFixed(1);
           final subtotal = CurrencyFormatter.withoutSymbol(
             (product.price * product.quantity).round(),
             decimalDigits: 0,
           );
 
-          ticket.text(product.name);
           ticket.row([
             PrintColumn(
-              text: '$unitPrice x ${_formatReceiptQuantity(product.quantity, product.unit)}',
+              text: '$qty x ${product.name} : ${product.unit}',
               flex: 3,
             ),
             PrintColumn(text: subtotal, flex: 2, align: PrintAlign.right),
@@ -299,16 +300,17 @@ class PrinterService {
           );
         }
         for (final product in retailItems) {
-          final unitPrice = CurrencyFormatter.withoutSymbol(product.price, decimalDigits: 0);
+          final qty = product.quantity == product.quantity.roundToDouble()
+              ? product.quantity.toInt().toString()
+              : product.quantity.toStringAsFixed(1);
           final subtotal = CurrencyFormatter.withoutSymbol(
             (product.price * product.quantity).round(),
             decimalDigits: 0,
           );
 
-          ticket.text(product.name);
           ticket.row([
             PrintColumn(
-              text: '$unitPrice x ${_formatReceiptQuantity(product.quantity, product.unit)}',
+              text: '$qty x ${product.name} : ${product.unit}',
               flex: 3,
             ),
             PrintColumn(text: subtotal, flex: 2, align: PrintAlign.right),
@@ -370,17 +372,6 @@ class PrinterService {
     } catch (e) {
       return Result.failure(error: e.toString());
     }
-  }
-
-  String _formatReceiptQuantity(double quantity, String unit) {
-    final qty = quantity == quantity.roundToDouble() ? quantity.toInt().toString() : quantity.toStringAsFixed(1);
-    final normalizedUnit = unit.trim();
-
-    if (RegExp(r'^\d+/\d+(?:\s|$)').hasMatch(normalizedUnit)) {
-      return normalizedUnit;
-    }
-
-    return normalizedUnit.isEmpty ? qty : '$qty $normalizedUnit';
   }
 
   Future<Result<void>> printQrCode({
