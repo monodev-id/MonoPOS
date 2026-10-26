@@ -451,52 +451,51 @@ class _ProductItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final qtyStr = order.quantity == order.quantity.roundToDouble()
+        ? order.quantity.toInt().toString()
+        : order.quantity.toStringAsFixed(1);
+
+    final subtotal = (order.price * order.quantity).round();
+
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                order.name,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(
+                child: Text(
+                  '$qtyStr x ${order.name} : ${order.unit}',
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: order.priceType == 'grosir'
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: Text(
-                order.priceType == 'grosir'
-                    ? AppLocalizations.of(context)!.home_grosir
-                    : AppLocalizations.of(context)!.home_retail,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: AppSizes.padding / 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: order.priceType == 'grosir'
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  order.priceType == 'grosir'
+                      ? AppLocalizations.of(context)!.home_grosir
+                      : AppLocalizations.of(context)!.home_retail,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: AppSizes.padding / 4),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${CurrencyFormatter.withoutSymbol(order.price, decimalDigits: 0)} x ${order.quantity == order.quantity.roundToDouble() ? order.quantity.toInt().toString() : order.quantity.toStringAsFixed(1)} ${order.unit}',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            Text(
-              CurrencyFormatter.withoutSymbol((order.price) * order.quantity, decimalDigits: 0),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
+        const SizedBox(width: AppSizes.padding / 2),
+        Text(
+          CurrencyFormatter.withoutSymbol(subtotal, decimalDigits: 0),
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
     );
