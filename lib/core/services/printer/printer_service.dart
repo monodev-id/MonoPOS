@@ -376,6 +376,10 @@ class PrinterService {
     final qty = quantity == quantity.roundToDouble() ? quantity.toInt().toString() : quantity.toStringAsFixed(1);
     final normalizedUnit = unit.trim();
 
+    if (RegExp(r'^\d+/\d+(?:\s|$)').hasMatch(normalizedUnit)) {
+      return normalizedUnit;
+    }
+
     return normalizedUnit.isEmpty ? qty : '$qty $normalizedUnit';
   }
 
