@@ -3,15 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/di/app_providers.dart';
-import '../../../../app/routes/app_routes.dart';
-import '../../../../core/utilities/currency_formatter.dart';
 import '../../../../domain/entities/product_entity.dart';
-import '../../../../domain/entities/product_unit_entity.dart';
 import '../../../../domain/usecases/product_usecases.dart';
 import '../../../providers/home/home_notifier.dart';
 import '../../../providers/products/products_notifier.dart';
-import '../../../widgets/app_dialog.dart';
 import '../../../widgets/app_snack_bar.dart';
+
+/// Focus node bersama untuk menangkap input scanner HID.
+/// Dipakai juga oleh kolom pencarian agar fokus bisa dikembalikan setelah scan.
+final barcodeScanFocusNodeProvider = Provider<FocusNode>((ref) {
+  final node = FocusNode(debugLabel: 'barcodeHidListener');
+  ref.onDispose(node.dispose);
+  return node;
+});
+
+void requestBarcodeScannerFocus(WidgetRef ref) {
+  ref.read(barcodeScanFocusNodeProvider).requestFocus();
+}
 
 class BarcodeHidListener extends ConsumerStatefulWidget {
   const BarcodeHidListener({super.key});
@@ -20,37 +28,42 @@ class BarcodeHidListener extends ConsumerStatefulWidget {
   ConsumerState<BarcodeHidListener> createState() => _BarcodeHidListenerState();
 }
 
-class _BarcodeHidListenerState extends ConsumerState<BarcodeHidListener> {
-  final _focusNode = FocusNode();
+class _BarcodeHidListenerState extends ConsumerState<BarcodeHidListener> with WidgetsBindingObserver {
   final _controller = TextEditingController();
+  late final FocusNode _focusNode;
   bool _isProcessing = false;
-  bool _dialogOpen = false;
 
   @override
   void initState() {
     super.initState();
+    _focusNode = ref.read(barcodeScanFocusNodeProvider);
+    WidgetsBinding.instance.addObserver(this);
+    FocusManager.instance.addListener(_onFocusChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
   }
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    FocusManager.instance.removeListener(_onFocusChanged);
     _controller.dispose();
     super.dispose();
   }
 
-  List<ProductUnitEntity> _effectiveUnits(ProductEntity product) {
-    if (product.units.isNotEmpty) return product.units;
-    return [
-      ProductUnitEntity(
-        unitName: product.unit,
-        conversionValue: 1,
-        price: product.price,
-        wholesalePrice: product.wholesalePrice,
-        isBase: true,
-        productId: product.id ?? 0,
-      ),
-    ];
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _focusNode.requestFocus();
+    }
+  }
+
+  /// Kembalikan fokus ke listener saat tidak ada field lain yang fokus,
+  /// supaya scan berikutnya tidak "nyangkut" di kolom pencarian.
+  void _onFocusChanged() {
+    if (!mounted) return;
+    if (FocusManager.instance.primaryFocus == null) {
+      _focusNode.requestFocus();
+    }
   }
 
   static final _digitsOnly = RegExp(r'^[0-9]+$');
@@ -74,7 +87,7 @@ class _BarcodeHidListenerState extends ConsumerState<BarcodeHidListener> {
       final cached = products?.where((p) => p.barcode?.trim() == trimmed).firstOrNull;
 
       if (cached != null) {
-        _addToCart(cached);
+        await _addToCart(cached);
         return;
       }
 
@@ -84,7 +97,7 @@ class _BarcodeHidListenerState extends ConsumerState<BarcodeHidListener> {
       if (!mounted) return;
 
       if (result.isSuccess && result.data != null) {
-        _addToCart(result.data!);
+        await _addToCart(result.data!);
       } else {
         _onProductNotFound(trimmed);
       }
@@ -94,71 +107,13 @@ class _BarcodeHidListenerState extends ConsumerState<BarcodeHidListener> {
     }
   }
 
-  void _addToCart(ProductEntity product) {
-    _showUnitPicker(product, _effectiveUnits(product));
-  }
-
-  void _showUnitPicker(ProductEntity product, List<ProductUnitEntity> effectiveUnits) {
-    if (_dialogOpen || !mounted) return;
-    _dialogOpen = true;
-
-    final isGrosir = ref.read(homeNotifierProvider).selectedPriceType == 'grosir';
-
-    AppDialog.show(
-      title: 'Pilih Satuan - ${product.name}',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final unit in effectiveUnits)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: Text(unit.unitName),
-              trailing: Text(
-                CurrencyFormatter.withoutSymbol(
-                  isGrosir && unit.wholesalePrice != null ? unit.wholesalePrice! : unit.price,
-                  decimalDigits: 0,
-                ),
-              ),
-              onTap: () => _onPickUnit(product, unit),
-            ),
-        ],
-      ),
-      showButtons: false,
-    ).whenComplete(() {
-      _dialogOpen = false;
-      if (mounted) _focusNode.requestFocus();
-    });
-  }
-
-  void _onPickUnit(ProductEntity product, ProductUnitEntity unit) {
-    AppRoutes.rootNavigatorKey.currentState?.pop();
-
-    final homeState = ref.read(homeNotifierProvider);
-    final currentQty =
-        homeState.orderedProducts
-            .where((e) => e.productId == product.id && e.unit == unit.unitName)
-            .firstOrNull
-            ?.quantity ??
-        0;
-    final isGrosir = homeState.selectedPriceType == 'grosir';
-    final price = isGrosir && unit.wholesalePrice != null ? unit.wholesalePrice! : unit.price;
-
-    ref
-        .read(homeNotifierProvider.notifier)
-        .onAddOrderedProduct(
-          product,
-          currentQty + 1,
-          unitName: unit.unitName,
-          conversionValue: unit.conversionValue,
-          overridePrice: price,
-        );
+  Future<void> _addToCart(ProductEntity product) async {
+    final added = await ref.read(homeNotifierProvider.notifier).addScannedProduct(product);
 
     SystemSound.play(SystemSoundType.click);
 
     if (mounted) {
-      final totalQty = (currentQty + 1).toInt();
-      AppSnackBar.show('${product.name} ($totalQty ${unit.unitName})');
+      AppSnackBar.show('${product.name} (${added.quantity.toInt()} ${added.unit})');
     }
   }
 

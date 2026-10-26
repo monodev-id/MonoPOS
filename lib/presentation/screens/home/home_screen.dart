@@ -1,5 +1,6 @@
 import 'package:app_image/app_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
@@ -524,67 +525,12 @@ class _ScanButton extends ConsumerWidget {
             return;
           }
           final found = product;
+          final added = await ref.read(homeNotifierProvider.notifier).addScannedProduct(found);
 
-          final homeState = ref.read(homeNotifierProvider);
-          double currentQty =
-              homeState.orderedProducts
-                  .where((e) => e.productId == found.id && e.unit == found.unit)
-                  .firstOrNull
-                  ?.quantity ??
-              0.0;
-          bool isGrosir = homeState.selectedPriceType == 'grosir';
-
-          List<ProductUnitEntity> scanEffectiveUnits;
-          if (found.units.isNotEmpty) {
-            scanEffectiveUnits = found.units;
-          } else {
-            scanEffectiveUnits = [
-              ProductUnitEntity(
-                unitName: found.unit,
-                conversionValue: 1,
-                price: found.price,
-                wholesalePrice: found.wholesalePrice,
-                isBase: true,
-                productId: found.id ?? 0,
-              ),
-            ];
-          }
+          SystemSound.play(SystemSoundType.click);
 
           if (!context.mounted) return;
-
-          final scanDialogKey = GlobalKey<AddToCartDialogState>();
-
-          AppDialog.show(
-            title: 'Enter Amount',
-            child: AddToCartDialog(
-              key: scanDialogKey,
-              product: found,
-              initialQuantity: currentQty,
-              isGrosir: isGrosir,
-              effectiveUnits: scanEffectiveUnits,
-            ),
-            rightButtonText: AppLocalizations.of(context)!.home_addToCart,
-            leftButtonText: AppLocalizations.of(context)!.home_cancel,
-            onTapLeftButton: (context) {
-              context.pop();
-            },
-            onTapRightButton: (context) {
-              var state = scanDialogKey.currentState;
-              if (state == null) return;
-
-              ref
-                  .read(homeNotifierProvider.notifier)
-                  .onAddOrderedProduct(
-                    found,
-                    state.quantity == 0 ? 1.0 : state.quantity,
-                    unitName: state.selectedUnit,
-                    conversionValue: state.conversionValue,
-                    overridePrice: state.price,
-                    priceType: state.priceType,
-                  );
-              context.pop();
-            },
-          );
+          AppSnackBar.show('${found.name} (${added.quantity.toInt()} ${added.unit})');
         },
       ),
     );
@@ -720,6 +666,48 @@ class _SearchField extends ConsumerWidget {
 
   const _SearchField({required this.controller});
 
+  static final _barcodeOnly = RegExp(r'^[0-9]{6,}$');
+
+  Future<ProductEntity?> _findByBarcode(WidgetRef ref, String barcode) async {
+    final products = ref.read(berandaProductsNotifierProvider).allProducts;
+    final cached = products?.where((p) => p.barcode?.trim() == barcode).firstOrNull;
+    if (cached != null) return cached;
+
+    final repo = ref.read(productRepositoryProvider);
+    final result = await GetProductByBarcodeUsecase(repo).call(barcode);
+
+    return result.isSuccess ? result.data : null;
+  }
+
+  Future<void> _submit(BuildContext context, WidgetRef ref) async {
+    final query = controller.text.trim();
+    final isBarcode = _barcodeOnly.hasMatch(query);
+
+    FocusScope.of(context).unfocus();
+
+    // Hasil scan yang terlanjur masuk ke kolom pencarian tetap langsung
+    // ditambahkan ke keranjang, bukan ditampilkan sebagai hasil pencarian.
+    if (isBarcode) {
+      final product = await _findByBarcode(ref, query);
+
+      if (product != null) {
+        final added = await ref.read(homeNotifierProvider.notifier).addScannedProduct(product);
+        controller.clear();
+        ref.read(berandaProductsNotifierProvider.notifier).getAllProducts();
+
+        if (!context.mounted) return;
+        SystemSound.play(SystemSoundType.click);
+        AppSnackBar.show('${product.name} (${added.quantity.toInt()} ${added.unit})');
+        requestBarcodeScannerFocus(ref);
+        return;
+      }
+    }
+
+    ref.read(berandaProductsNotifierProvider.notifier).resetProducts();
+    ref.read(berandaProductsNotifierProvider.notifier).getAllProducts(contains: query);
+    requestBarcodeScannerFocus(ref);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AppTextField(
@@ -727,13 +715,10 @@ class _SearchField extends ConsumerWidget {
       hintText: 'Search Products...',
       type: AppTextFieldType.search,
       textInputAction: TextInputAction.search,
-      onEditingComplete: () {
-        FocusScope.of(context).unfocus();
-        ref.read(berandaProductsNotifierProvider.notifier).resetProducts();
-        ref.read(berandaProductsNotifierProvider.notifier).getAllProducts(contains: controller.text);
-      },
+      onEditingComplete: () => _submit(context, ref),
       onTapClearButton: () {
         ref.read(berandaProductsNotifierProvider.notifier).getAllProducts(contains: controller.text);
+        requestBarcodeScannerFocus(ref);
       },
     );
   }

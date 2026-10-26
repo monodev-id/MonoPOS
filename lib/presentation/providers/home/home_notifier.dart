@@ -190,6 +190,40 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     state = state.copyWith(orderedProducts: orderedProducts);
   }
 
+  /// Menambahkan produk hasil scan langsung ke keranjang (+1) pada satuan dasar.
+  /// Tidak membuka dialog apa pun; satuan bisa diubah dari keranjang.
+  Future<({double quantity, String unit})> addScannedProduct(ProductEntity product) async {
+    var selectedUnit = product.unit;
+    var conversion = 1;
+
+    if (product.units.isNotEmpty) {
+      final unit = product.units.firstWhere(
+        (u) => u.unitName == product.unit,
+        orElse: () => product.units.firstWhere((u) => u.isBase, orElse: () => product.units.first),
+      );
+      selectedUnit = unit.unitName;
+      conversion = unit.conversionValue;
+    }
+
+    final currentQty =
+        state.orderedProducts
+            .where((e) => e.productId == product.id && e.unit == selectedUnit)
+            .firstOrNull
+            ?.quantity ??
+        0;
+
+    final newQty = currentQty + 1;
+
+    await onAddOrderedProduct(
+      product,
+      newQty,
+      unitName: selectedUnit,
+      conversionValue: conversion,
+    );
+
+    return (quantity: newQty, unit: selectedUnit);
+  }
+
   void onChangedPriceType(String value) {
     state = state.copyWith(selectedPriceType: value);
   }
