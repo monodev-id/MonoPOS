@@ -1676,6 +1676,30 @@ abstract class AppLocalizations {
   /// **'Total'**
   String get receipt_total;
 
+  /// No description provided for @receipt_totalItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Items'**
+  String get receipt_totalItem;
+
+  /// No description provided for @receipt_paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get receipt_paid;
+
+  /// No description provided for @receipt_remaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get receipt_remaining;
+
+  /// No description provided for @receipt_dueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Date'**
+  String get receipt_dueDate;
+
   /// No description provided for @receipt_pay.
   ///
   /// In en, this message translates to:

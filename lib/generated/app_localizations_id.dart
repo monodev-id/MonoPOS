@@ -869,6 +869,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get receipt_total => 'Total';
 
   @override
+  String get receipt_totalItem => 'Total Item';
+
+  @override
+  String get receipt_paid => 'Dibayar';
+
+  @override
+  String get receipt_remaining => 'Sisa';
+
+  @override
+  String get receipt_dueDate => 'Jatuh Tempo';
+
+  @override
   String get receipt_pay => 'Bayar';
 
   @override

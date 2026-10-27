@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unified_esc_pos_printer/unified_esc_pos_printer.dart';
 
+import '../../../domain/entities/ordered_product_entity.dart';
 import '../../../domain/entities/product_entity.dart';
 import '../../../domain/entities/transaction_entity.dart';
 import '../../../generated/app_localizations.dart';
@@ -11,6 +12,7 @@ import '../../../generated/app_localizations_id.dart';
 import '../../../generated/app_localizations_en.dart';
 import '../../common/result.dart';
 import '../../constants/constants.dart';
+import '../../extensions/string_casing_extension.dart';
 import '../../utilities/barcode_generator.dart';
 import '../../utilities/console_logger.dart';
 import '../../utilities/currency_formatter.dart';
@@ -253,46 +255,36 @@ class PrinterService {
         transaction.createdAt ?? DateTime.now().toIso8601String(),
       );
 
-      ticket.text('${_l10n.receipt_date} : $date');
-      ticket.text('${_l10n.receipt_trxId} : #${transaction.id}');
+      ticket.row([
+        PrintColumn(text: date, flex: 1),
+        PrintColumn(text: '#${transaction.id}', flex: 1, align: PrintAlign.right),
+      ]);
+      ticket.text('${_l10n.receipt_cashier} : ${transaction.createdBy?.name ?? '-'}');
       if (transaction.customerName != null && transaction.customerName!.isNotEmpty) {
         ticket.text('${_l10n.receipt_customer} : ${transaction.customerName}');
       }
-      ticket.text('${_l10n.receipt_cashier} : ${transaction.createdBy?.name ?? '-'}');
 
       ticket.separator();
 
       final grosirItems = transaction.orderedProducts?.where((p) => p.priceType == 'grosir').toList() ?? [];
       final retailItems = transaction.orderedProducts?.where((p) => p.priceType != 'grosir').toList() ?? [];
+      final hasMixedPriceTypes = grosirItems.isNotEmpty && retailItems.isNotEmpty;
 
       if (grosirItems.isNotEmpty) {
-        ticket.text(
-          _l10n.receipt_grosir,
-          align: PrintAlign.center,
-          style: const PrintTextStyle(bold: true),
-        );
-        for (final product in grosirItems) {
-          final qty = product.quantity == product.quantity.roundToDouble()
-              ? product.quantity.toInt().toString()
-              : product.quantity.toStringAsFixed(1);
-          final subtotal = CurrencyFormatter.withoutSymbol(
-            (product.price * product.quantity).round(),
-            decimalDigits: 0,
+        if (hasMixedPriceTypes) {
+          ticket.text(
+            _l10n.receipt_grosir,
+            align: PrintAlign.center,
+            style: const PrintTextStyle(bold: true),
           );
-
-          ticket.row([
-            PrintColumn(
-              text: '$qty x ${product.name} : ${product.unit}',
-              flex: 3,
-            ),
-            PrintColumn(text: subtotal, flex: 2, align: PrintAlign.right),
-          ]);
+        }
+        for (final product in grosirItems) {
+          _printOrderedProduct(ticket, product);
         }
       }
 
       if (retailItems.isNotEmpty) {
-        if (grosirItems.isNotEmpty) {
-          ticket.separator();
+        if (hasMixedPriceTypes) {
           ticket.text(
             _l10n.receipt_retail,
             align: PrintAlign.center,
@@ -300,26 +292,23 @@ class PrinterService {
           );
         }
         for (final product in retailItems) {
-          final qty = product.quantity == product.quantity.roundToDouble()
-              ? product.quantity.toInt().toString()
-              : product.quantity.toStringAsFixed(1);
-          final subtotal = CurrencyFormatter.withoutSymbol(
-            (product.price * product.quantity).round(),
-            decimalDigits: 0,
-          );
-
-          ticket.row([
-            PrintColumn(
-              text: '$qty x ${product.name} : ${product.unit}',
-              flex: 3,
-            ),
-            PrintColumn(text: subtotal, flex: 2, align: PrintAlign.right),
-          ]);
+          _printOrderedProduct(ticket, product);
         }
       }
 
       ticket.separator();
 
+      ticket.row([
+        PrintColumn(
+          text: _l10n.receipt_totalItem,
+          flex: 3,
+        ),
+        PrintColumn(
+          text: '${transaction.totalOrderedProduct}',
+          flex: 2,
+          align: PrintAlign.right,
+        ),
+      ]);
       ticket.row([
         PrintColumn(
           text: _l10n.receipt_total,
@@ -328,7 +317,7 @@ class PrinterService {
         ),
         PrintColumn(
           text: CurrencyFormatter.withoutSymbol(transaction.totalAmount, decimalDigits: 0),
-          flex: 3,
+          flex: 2,
           align: PrintAlign.right,
           style: const PrintTextStyle(bold: true),
         ),
@@ -336,28 +325,85 @@ class PrinterService {
 
       ticket.emptyLines();
 
-      ticket.row([
-        PrintColumn(
-          text: '${_l10n.receipt_pay} (${transaction.paymentMethod})',
-          flex: 3,
-        ),
-        PrintColumn(
-          text: CurrencyFormatter.withoutSymbol(transaction.receivedAmount, decimalDigits: 0),
-          flex: 3,
-          align: PrintAlign.right,
-        ),
-      ]);
-      ticket.row([
-        PrintColumn(
-          text: _l10n.receipt_change,
-          flex: 3,
-        ),
-        PrintColumn(
-          text: CurrencyFormatter.withoutSymbol(transaction.returnAmount, decimalDigits: 0),
-          flex: 3,
-          align: PrintAlign.right,
-        ),
-      ]);
+      final paymentMethod = transaction.paymentMethod.toTitleCase();
+      final receivedAmount = CurrencyFormatter.withoutSymbol(transaction.receivedAmount, decimalDigits: 0);
+
+      if (transaction.paymentType == 'cash') {
+        ticket.row([
+          PrintColumn(
+            text: '${_l10n.receipt_pay} ($paymentMethod)',
+            flex: 3,
+          ),
+          PrintColumn(
+            text: receivedAmount,
+            flex: 2,
+            align: PrintAlign.right,
+          ),
+        ]);
+        ticket.row([
+          PrintColumn(
+            text: _l10n.receipt_change,
+            flex: 3,
+          ),
+          PrintColumn(
+            text: CurrencyFormatter.withoutSymbol(transaction.returnAmount, decimalDigits: 0),
+            flex: 2,
+            align: PrintAlign.right,
+          ),
+        ]);
+      } else {
+        ticket.row([
+          PrintColumn(
+            text: _l10n.receipt_paymentMethod,
+            flex: 3,
+          ),
+          PrintColumn(
+            text: paymentMethod,
+            flex: 2,
+            align: PrintAlign.right,
+          ),
+        ]);
+        ticket.row([
+          PrintColumn(
+            text: _l10n.receipt_paid,
+            flex: 3,
+          ),
+          PrintColumn(
+            text: receivedAmount,
+            flex: 2,
+            align: PrintAlign.right,
+          ),
+        ]);
+
+        final remainingAmount = transaction.totalAmount - transaction.receivedAmount;
+        if (remainingAmount > 0) {
+          ticket.row([
+            PrintColumn(
+              text: _l10n.receipt_remaining,
+              flex: 3,
+            ),
+            PrintColumn(
+              text: CurrencyFormatter.withoutSymbol(remainingAmount, decimalDigits: 0),
+              flex: 2,
+              align: PrintAlign.right,
+            ),
+          ]);
+        }
+
+        if (transaction.dueDate != null && transaction.dueDate!.isNotEmpty) {
+          ticket.row([
+            PrintColumn(
+              text: _l10n.receipt_dueDate,
+              flex: 3,
+            ),
+            PrintColumn(
+              text: DateTimeFormatter.slashDate(transaction.dueDate!),
+              flex: 2,
+              align: PrintAlign.right,
+            ),
+          ]);
+        }
+      }
 
       ticket.emptyLines();
 
@@ -372,6 +418,31 @@ class PrinterService {
     } catch (e) {
       return Result.failure(error: e.toString());
     }
+  }
+
+  /// Cetak satu item struk dalam dua baris:
+  /// baris pertama nama produk (lebar penuh) + satuan dalam kurung,
+  /// baris kedua qty x harga satuan (indentasi) dan subtotal rata kanan.
+  void _printOrderedProduct(Ticket ticket, OrderedProductEntity product) {
+    final qty = product.quantity == product.quantity.roundToDouble()
+        ? product.quantity.toInt().toString()
+        : product.quantity.toStringAsFixed(1);
+    final unitPrice = CurrencyFormatter.withoutSymbol(product.price, decimalDigits: 0);
+    final subtotal = CurrencyFormatter.withoutSymbol(
+      (product.price * product.quantity).round(),
+      decimalDigits: 0,
+    );
+    final unit = product.unit.trim();
+    final name = unit.isEmpty ? product.name : '${product.name} ($unit)';
+
+    ticket.text(name);
+    ticket.row([
+      PrintColumn(
+        text: '  $qty x $unitPrice',
+        flex: 3,
+      ),
+      PrintColumn(text: subtotal, flex: 2, align: PrintAlign.right),
+    ]);
   }
 
   Future<Result<void>> printQrCode({

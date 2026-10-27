@@ -457,45 +457,60 @@ class _ProductItem extends StatelessWidget {
 
     final subtotal = (order.price * order.quantity).round();
 
-    return Row(
+    final unitPrice = CurrencyFormatter.withoutSymbol(order.price, decimalDigits: 0);
+    final unit = order.unit.trim();
+    final name = unit.isEmpty ? order.name : '${order.name} ($unit)';
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Flexible(
-                child: Text(
-                  '$qtyStr x ${order.name} : ${order.unit}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                name,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            const SizedBox(width: AppSizes.padding / 2),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: order.priceType == 'grosir'
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: Text(
+                order.priceType == 'grosir'
+                    ? AppLocalizations.of(context)!.home_grosir
+                    : AppLocalizations.of(context)!.home_retail,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: AppSizes.padding / 2),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: BoxDecoration(
-                  color: order.priceType == 'grosir'
-                      ? Theme.of(context).colorScheme.primaryContainer
-                      : Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Text(
-                  order.priceType == 'grosir'
-                      ? AppLocalizations.of(context)!.home_grosir
-                      : AppLocalizations.of(context)!.home_retail,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(width: AppSizes.padding / 2),
-        Text(
-          CurrencyFormatter.withoutSymbol(subtotal, decimalDigits: 0),
-          style: Theme.of(context).textTheme.bodyMedium,
+        const SizedBox(height: 2),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '  $qtyStr x $unitPrice',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSizes.padding / 2),
+            Text(
+              CurrencyFormatter.withoutSymbol(subtotal, decimalDigits: 0),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
         ),
       ],
     );
