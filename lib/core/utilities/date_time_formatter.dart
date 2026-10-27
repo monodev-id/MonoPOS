@@ -83,6 +83,21 @@ class DateTimeFormatter {
     return DateFormat('dd/MM/yy • HH:mm').format(parsedDate);
   }
 
+  /// Sama seperti [slashDateShortedYearWithClock] tetapi hanya memakai karakter
+  /// ASCII (tanpa "•") agar aman untuk printer thermal ESC/POS 58 mm.
+  static String slashDateShortedYearWithClockPlain(String iso8601String) {
+    var parsedDate = DateTime.tryParse(iso8601String);
+
+    if (parsedDate == null) {
+      return '(Invalid date format)';
+    }
+
+    String two(int value) => value.toString().padLeft(2, '0');
+
+    return '${two(parsedDate.day)}/${two(parsedDate.month)}/${two(parsedDate.year % 100)} '
+        '${two(parsedDate.hour)}:${two(parsedDate.minute)}';
+  }
+
   static String onlyDate(String iso8601String) {
     var parsedDate = DateTime.tryParse(iso8601String);
 

@@ -251,13 +251,13 @@ class PrinterService {
 
       ticket.emptyLines();
 
-      final date = DateTimeFormatter.slashDateShortedYearWithClock(
+      final date = DateTimeFormatter.slashDateShortedYearWithClockPlain(
         transaction.createdAt ?? DateTime.now().toIso8601String(),
       );
 
       ticket.row([
-        PrintColumn(text: date, flex: 1),
-        PrintColumn(text: '#${transaction.id}', flex: 1, align: PrintAlign.right),
+        PrintColumn(text: date, flex: 3),
+        PrintColumn(text: '#${transaction.id}', flex: 2, align: PrintAlign.right),
       ]);
       ticket.text('${_l10n.receipt_cashier} : ${transaction.createdBy?.name ?? '-'}');
       if (transaction.customerName != null && transaction.customerName!.isNotEmpty) {
