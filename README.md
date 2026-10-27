@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange)](./LICENSE)
 [![Made with Flutter](https://img.shields.io/badge/made%20with-Flutter-blue)](https://flutter.dev/)
 
-> **Current release:** `1.3.8` (`versionCode 25`).
+> **Current release:** `1.3.10` (`versionCode 27`).
 
 > 🚀 This project is the base model of [Zirel POS](https://zirelpos.com/). If you want a ready-to-use, feature-complete POS app, you might want to check it out, it's free, no card required.
 
