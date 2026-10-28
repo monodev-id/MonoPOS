@@ -1,6 +1,6 @@
 # WORKFLOW Sistem POS - MonoPOS
 
-> Last synced with code: v1.3.13 (Oct 2026). Payment = **KlikQRIS** (Doku retired) with cart checkout
+> Last synced with code: v1.3.14 (Oct 2026). Payment = **KlikQRIS** (Doku retired) with cart checkout
 > and direct-nominal QRIS. Supabase via runtime Settings, admin-only routes enforced in `AppRoutes`.
 > Supplier/purchase/HPP data is local-only.
 
