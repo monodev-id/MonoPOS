@@ -421,7 +421,7 @@ class PrinterService {
   }
 
   /// Cetak satu item struk dalam dua baris:
-  /// baris pertama nama produk (lebar penuh),
+  /// baris pertama nama produk (lebar penuh) + satuan dalam kurung,
   /// baris kedua qty x harga satuan (indentasi) dan subtotal rata kanan.
   void _printOrderedProduct(Ticket ticket, OrderedProductEntity product) {
     final qty = product.quantity == product.quantity.roundToDouble()
@@ -432,7 +432,10 @@ class PrinterService {
       (product.price * product.quantity).round(),
       decimalDigits: 0,
     );
-    ticket.text(product.name);
+    final unit = product.unit.trim();
+    final name = unit.isEmpty ? product.name : '${product.name} ($unit)';
+
+    ticket.text(name);
     ticket.row([
       PrintColumn(
         text: '  $qty x $unitPrice',
