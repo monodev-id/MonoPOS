@@ -42,21 +42,25 @@ class DatabaseService {
           db.execute(DatabaseConfig.createSupplierTable),
           db.execute(DatabaseConfig.createPurchaseTable),
           db.execute(DatabaseConfig.createPurchaseItemTable),
+          db.execute(DatabaseConfig.createPaymentNotificationTable),
         ]);
 
         await db.execute(DatabaseConfig.createSupplierNameUniqueIndex);
         await db.execute(DatabaseConfig.createPurchaseDateIndex);
         await db.execute(DatabaseConfig.createPurchaseSupplierIndex);
         await db.execute(DatabaseConfig.createPurchaseItemProductIndex);
+        await db.execute(DatabaseConfig.createTransactionPaymentStatusIndex);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _applyMigrations(db);
         if (oldVersion < 3) await _applyMigrationsV3(db);
+        if (oldVersion < 4) await _applyMigrationsV4(db);
       },
     );
 
     await _applyMigrations(database);
     await _applyMigrationsV3(database);
+    await _applyMigrationsV4(database);
     await _addProductNameUniqueConstraint(database);
     await _addProductBarcodeIndex(database);
     await _applyPurchaseMigrations(database);
@@ -247,6 +251,22 @@ class DatabaseService {
     await _addColumnIfNotExists(db, 'OrderedProduct', 'isTieredPrice', 'INTEGER NOT NULL DEFAULT 0');
   }
 
+  Future<void> _applyMigrationsV4(Database db) async {
+    // Metadata pembayaran QRIS (DANA Bisnis statis → dinamis)
+    await _addColumnIfNotExists(db, 'Transaction', 'paymentProvider', 'TEXT');
+    await _addColumnIfNotExists(db, 'Transaction', 'paymentExpectedAmount', 'INTEGER');
+    await _addColumnIfNotExists(db, 'Transaction', 'paymentUniqueCode', 'INTEGER');
+    await _addColumnIfNotExists(db, 'Transaction', 'paymentExpiresAt', 'TEXT');
+    await _addColumnIfNotExists(db, 'Transaction', 'paymentPaidAt', 'TEXT');
+
+    try {
+      await db.execute(DatabaseConfig.createPaymentNotificationTable);
+      await db.execute(DatabaseConfig.createTransactionPaymentStatusIndex);
+    } catch (e) {
+      ce('Migration tabel PaymentNotification gagal: $e');
+    }
+  }
+
   static const int seedProductCount = 150;
 
   Future<void> _seedProducts() async {
@@ -423,6 +443,7 @@ class DatabaseService {
       database.execute(DatabaseConfig.createSupplierTable),
       database.execute(DatabaseConfig.createPurchaseTable),
       database.execute(DatabaseConfig.createPurchaseItemTable),
+      database.execute(DatabaseConfig.createPaymentNotificationTable),
     ]);
 
     // Samakan kolom dengan schema produksi, yang ditambahkan lewat migrasi di init()
@@ -434,9 +455,15 @@ class DatabaseService {
     await _addColumnIfNotExists(database, 'Transaction', 'paymentType', "TEXT DEFAULT 'cash'");
     await _addColumnIfNotExists(database, 'Transaction', 'customerId', 'TEXT');
     await _addColumnIfNotExists(database, 'Transaction', 'dueDate', 'TEXT');
+    await _addColumnIfNotExists(database, 'Transaction', 'paymentProvider', 'TEXT');
+    await _addColumnIfNotExists(database, 'Transaction', 'paymentExpectedAmount', 'INTEGER');
+    await _addColumnIfNotExists(database, 'Transaction', 'paymentUniqueCode', 'INTEGER');
+    await _addColumnIfNotExists(database, 'Transaction', 'paymentExpiresAt', 'TEXT');
+    await _addColumnIfNotExists(database, 'Transaction', 'paymentPaidAt', 'TEXT');
     await _addColumnIfNotExists(database, 'OrderedProduct', 'isTieredPrice', 'INTEGER NOT NULL DEFAULT 0');
 
     await _addProductBarcodeIndex(database);
+    await database.execute(DatabaseConfig.createTransactionPaymentStatusIndex);
     await database.execute(DatabaseConfig.createSupplierNameUniqueIndex);
     await database.execute(DatabaseConfig.createPurchaseDateIndex);
     await database.execute(DatabaseConfig.createPurchaseSupplierIndex);

@@ -1847,7 +1847,7 @@ abstract class AppLocalizations {
   /// No description provided for @directQris_uniqueCodeNote.
   ///
   /// In en, this message translates to:
-  /// **'KlikQRIS may add a unique code automatically. The recorded transaction still uses the amount you entered.'**
+  /// **'A unique code is added automatically so incoming DANA payments can be matched precisely.'**
   String get directQris_uniqueCodeNote;
 
   /// No description provided for @directQris_createButton.
@@ -1859,13 +1859,13 @@ abstract class AppLocalizations {
   /// No description provided for @directQris_notConfiguredTitle.
   ///
   /// In en, this message translates to:
-  /// **'KlikQRIS is not configured'**
+  /// **'DANA Bisnis QRIS is not set'**
   String get directQris_notConfiguredTitle;
 
   /// No description provided for @directQris_notConfiguredMessage.
   ///
   /// In en, this message translates to:
-  /// **'Set the API Key and Merchant ID before creating a QRIS payment.'**
+  /// **'Upload your static DANA Bisnis QRIS in the payment settings before creating a QRIS payment.'**
   String get directQris_notConfiguredMessage;
 
   /// No description provided for @directQris_openSettings.
@@ -1891,6 +1891,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Production'**
   String get directQris_production;
+
+  /// No description provided for @directQris_danaBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'DANA Bisnis'**
+  String get directQris_danaBadge;
 
   /// No description provided for @qris_title.
   ///
@@ -1997,7 +2003,7 @@ abstract class AppLocalizations {
   /// No description provided for @qris_cancelMessage.
   ///
   /// In en, this message translates to:
-  /// **'The KlikQRIS payment will be cancelled.'**
+  /// **'This QRIS payment will be cancelled and the reserved stock will be returned.'**
   String get qris_cancelMessage;
 
   /// No description provided for @qris_cancelConfirm.
@@ -2029,6 +2035,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open QR image'**
   String get qris_openImage;
+
+  /// No description provided for @qris_listenerActive.
+  ///
+  /// In en, this message translates to:
+  /// **'DANA listener active'**
+  String get qris_listenerActive;
+
+  /// No description provided for @qris_listenerInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification access not granted'**
+  String get qris_listenerInactive;
+
+  /// No description provided for @qris_listenerGrant.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant access'**
+  String get qris_listenerGrant;
+
+  /// No description provided for @qris_markPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Paid'**
+  String get qris_markPaid;
+
+  /// No description provided for @qris_markPaidConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as paid?'**
+  String get qris_markPaidConfirmTitle;
+
+  /// No description provided for @qris_markPaidConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Only do this after you have verified the payment in the DANA app.'**
+  String get qris_markPaidConfirmMessage;
+
+  /// No description provided for @qris_printQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Print QR'**
+  String get qris_printQr;
+
+  /// No description provided for @qris_paidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment received'**
+  String get qris_paidTitle;
+
+  /// No description provided for @qris_paidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction has been marked as paid.'**
+  String get qris_paidMessage;
 }
 
 class _AppLocalizationsDelegate

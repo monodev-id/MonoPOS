@@ -37,8 +37,8 @@ The app prioritizes local-first operations, storing all data in SQLite and autom
 - **Barcode Input**: Camera scanner (`mobile_scanner`) plus HID hardware-scanner listener; both look up the product in SQLite first and add the scanned product straight to the cart (+1 base unit) without opening a dialog
 - **Low-Stock Warning**: `AppLowStockDialog` blocks/adds with confirmation when stock is insufficient
 - **Thermal Receipt Printing**: Print transaction receipts via USB, Bluetooth, BLE, or network printers with configurable paper sizes (58mm, 72mm, 80mm); live connection banner + badge synced from `PrinterManager`, saved-printer auto-reconnect on startup/resume, and manual print from transaction detail (no auto-print)
-- **Payments (KlikQRIS)**: QRIS payment gateway (sandbox + production, production by default) with QR display, auto-poll 3× @15s + always-available manual "Cek Pembayaran" button (order-id and total-amount verified against the status API), expiry countdown from `expiredMinutes`, and `klikqris-notify` Cloudflare Worker webhook (see `cloudflare/klikqris-notify/README.md`); mock mode when API key/merchant ID is empty
-- **Direct QRIS**: Amount-first QRIS payment without adding products to the cart (`/payment/direct`), reachable from the Home and Transactions app bars; includes quick amounts, optional description/customer, sandbox/production badge, and a configuration guard. The transaction is recorded at the entered nominal — KlikQRIS' unique code is display-only
+- **Payments (DANA Bisnis QRIS)**: Upload your static DANA Bisnis QRIS once in `Account → Payment Settings`; at checkout Mono POS converts it to a dynamic QRIS with the exact amount (EMVCo TLV + CRC16, ported from BITS-QRIS-Converter) and renders the payload directly. A native Android notification listener always watches DANA notifications and marks the matching `pending` transaction as `paid` automatically, with expiry countdown, unique code matching, manual "Tandai Lunas" fallback, and cash-register sound + TTS
+- **Direct QRIS**: Amount-first QRIS payment without adding products to the cart (`/payment/direct`), reachable from the Home and Transactions app bars; includes quick amounts, optional description/customer, merchant badge, and a configuration guard. The recorded transaction uses the scanned amount plus an auto-generated unique code
 - **Supplier & Purchase Management (Admin, local-only)**: Supplier/wholesaler directory plus multi-item purchase notes; shows/auto-fills the last purchase price per supplier, can add stock per note, and updates product HPP (`costPrice`) from the latest purchase. Deleting a note recalculates stock and HPP. Supplier/purchase data is not synced to Supabase yet
 - **Payment Sound & Voice**: Cash-register sound (`cashmasuk.mp3`) + Indonesian TTS announcement (`terbilang` amount) on successful QRIS payment, toggleable in payment settings
 - **Customer Management**: Customer directory with forms integrated into the sales flow
@@ -97,7 +97,7 @@ mono_pos/
 │   │   │   ├── database/             # Local database service (sqflite)
 │   │   │   ├── info/                 # Device info service
 │   │   │   ├── logger/               # Error logging service
-│   │   │   ├── payment/              # KlikQRIS payment service (cart + direct QRIS)
+│   │   │   ├── payment/              # DANA QRIS (static→dynamic) + notification listener
 │   │   │   ├── printer/              # Thermal printer service + saved-printer reconnect
 │   │   │   ├── storage/              # S3-compatible object storage
 │   │   │   ├── supabase/             # Supabase client config/service + runtime credentials
@@ -130,7 +130,7 @@ mono_pos/
 │   │   │   ├── home/                 # Home screen state (cart, barcode scan)
 │   │   │   ├── language/             # Localization state
 │   │   │   ├── main/                 # Main navigation state
-│   │   │   ├── payment/              # KlikQRIS + direct QRIS payment state
+│   │   │   ├── payment/              # QRIS payment state + DANA listener
 │   │   │   ├── products/             # Products management state (+ purchase info)
 │   │   │   ├── purchases/            # Purchase list, form, and detail state
 │   │   │   ├── revenue/              # Revenue reporting + day-detail state
@@ -146,7 +146,7 @@ mono_pos/
 │   │   │   ├── error/                # Error screens
 │   │   │   ├── home/                 # Home/POS screen (+ barcode scanner, HID listener, cart panel)
 │   │   │   ├── main/                 # Main navigation screen
-│   │   │   ├── payment/              # KlikQRIS payment screen + direct QRIS screen
+│   │   │   ├── payment/              # QRIS payment screen + direct QRIS screen
 │   │   │   ├── products/             # Product management screens (+ purchase info)
 │   │   │   ├── purchases/            # Purchase list/form/detail screens
 │   │   │   ├── revenue/              # Revenue report + per-day detail screens
@@ -261,26 +261,34 @@ flutter test --coverage
 
 To view the test coverage you can use `genhtml` or [test_cov_console](https://pub.dev/packages/test_cov_console)
 
-## Payments (KlikQRIS)
+## Payments (DANA Bisnis QRIS)
 
-Mono POS integrates [KlikQRIS](https://klikqris.id/) for QRIS-based payments. Two flows share the same service and payment screen:
+Mono POS uses a **static DANA Bisnis merchant QRIS** that is converted into a **dynamic QRIS** at checkout. There is no payment API, webhook, or polling: the merchant QRIS string is the source of truth and an Android `NotificationListenerService` reads DANA payment notifications to confirm payments.
 
-- **Cart checkout** — save the cart transaction (`pending`), create the KlikQRIS invoice, and show the QR.
-- **Direct QRIS** — open `/payment/direct` from the Home or Transactions app bar, enter only an amount (plus optional description/customer), and create a `qris` transaction without touching product stock. The KlikQRIS unique code is display-only; the recorded total stays at the entered nominal.
+Setup:
+
+1. Open `Account → Payment Settings` (admin).
+2. Upload a screenshot of the static DANA Bisnis QRIS, scan it with the camera, or paste the QRIS payload. The image is decoded on-device and deleted; only the payload string is stored in `SharedPreferences`.
+3. Validate the merchant info (name, city, NMID) shown by the app and save.
+
+Two flows share the same screen (`/payment/qris`):
+
+- **Cart checkout** — builds the transaction from the cart, then converts the static QRIS with `amount = total + unique code` before saving, so no half-created transaction or stock deduction is left behind if the QRIS is invalid.
+- **Direct QRIS** — open `/payment/direct`, enter an amount (plus optional description/customer), and create a `qris` transaction without touching product stock.
 
 Common flow:
 
-1. The POS saves a `pending` transaction, creates an invoice via the `KlikQrisPaymentService`, and displays the QR code on the `KlikQrisPaymentScreen`.
-2. The user pays with any QRIS-compatible e-wallet/bank app.
-3. Status is confirmed by auto-polling (3× @15s) plus a manual **Cek Pembayaran** button that is available at any time while the QR is pending; the app verifies `order_id` and `total_amount` from the status response before marking a payment as paid. A `klikqris-notify` Cloudflare Worker webhook (`cloudflare/klikqris-notify/`) can flip `paymentStatus` to `paid` on Supabase immediately as an accelerator.
-4. On success the app plays a cash-register sound, announces the amount via Indonesian TTS, and navigates to the transaction detail. Printing is manual from there.
-5. On timeout the transaction is marked `expired` locally; the webhook maps KlikQRIS `EXPIRED` notifications to `failed` on Supabase.
+1. At checkout the app allocates a unique code (1–99, fallback 100–999) for the amount, converts the static QRIS to a dynamic payload, saves the transaction as `pending`, and shows the QR (rendered from the payload, not an image).
+2. The customer scans and pays with any QRIS-compatible app.
+3. DANA posts a notification; the native listener queues it durably and Flutter parses the amount. When exactly one `pending` transaction matches `paymentExpectedAmount`, it is marked `paid`, the app plays the cash-register sound and announces the amount via Indonesian TTS.
+4. `Cek Pembayaran` drains the notification queue on demand; `Tandai Lunas` is available as a manual fallback.
+5. When the countdown ends the transaction becomes `expired`; cancelling deletes the transaction and restores the reserved stock. Payments that arrive late (up to 60 minutes) still match expired transactions.
 
-KlikQRIS credentials (`klikqris_api_key`, `klikqris_merchant_id`, `klikqris_is_sandbox`, `klikqris_tts_enabled`) are configured in `Account → Payment Settings` and stored locally. `klikqris_is_sandbox` defaults to **production** (`false`); enable Sandbox explicitly for testing. Empty API key/merchant ID = **mock mode** (QR mock, status flips to `paid` after ~30s) for development. Direct QRIS is blocked with an admin shortcut to the settings screen until credentials are filled.
+Payment preferences (`dana_qris_static`, `dana_unique_code_enabled`, `dana_expiry_minutes`, `dana_tts_enabled`, `dana_listener_enabled`) are stored locally. Notification access must be granted from the listener card (`Buka Akses Notifikasi`). DANA packages listened to: `id.dana` and `id.dana.kasir`.
 
-> **Local-only data:** supplier, purchase, and product HPP (`costPrice`) records are stored in SQLite only. Product sync strips `costPrice` before writing to Supabase.
+> **Local-only data:** supplier, purchase, product HPP (`costPrice`), DANA payment metadata, and the `PaymentNotification` table are stored in SQLite only. Sync strips them before writing to Supabase.
 
-> **Legacy:** the old Doku SNAP integration is retired — see [`DOKU_PAYMENT_GATEWAY.md`](DOKU_PAYMENT_GATEWAY.md) (deprecated stub). Do not build new features on it.
+> **Legacy:** Doku SNAP and KlikQRIS are retired — see [`DOKU_PAYMENT_GATEWAY.md`](DOKU_PAYMENT_GATEWAY.md). Their services/providers may still exist for reference; do not build new features on them.
 
 ## AI Agent Guidelines
 
@@ -292,7 +300,7 @@ This project includes documentation files designed for AI coding agents (e.g., C
 - [`WORKFLOW.md`](WORKFLOW.md) — Git workflow (commits, branches, PRs)
 - [`WORKFLOW_SYSTEM.md`](WORKFLOW_SYSTEM.md) — Workflow/sync system reference
 - [`SYNC.md`](SYNC.md) — Offline-first sync architecture
-- [`DOKU_PAYMENT_GATEWAY.md`](DOKU_PAYMENT_GATEWAY.md) — Deprecated (Doku SNAP retired, replaced by KlikQRIS)
+- [`DOKU_PAYMENT_GATEWAY.md`](DOKU_PAYMENT_GATEWAY.md) — Deprecated (Doku SNAP and KlikQRIS retired; QRIS now uses DANA Bisnis)
 
 ## Contributing
 

@@ -21,6 +21,7 @@ class TransactionRemoteDatasourceImpl extends TransactionDatasource {
       final json = transaction.toJson();
       json.remove('orderedProducts');
       json.remove('createdBy');
+      _removeLocalOnlyFields(json);
 
       await client.from(SupabaseConfig.transactionsTable).upsert(json, onConflict: 'id');
 
@@ -52,6 +53,7 @@ class TransactionRemoteDatasourceImpl extends TransactionDatasource {
       final json = transaction.toJson();
       json.remove('orderedProducts');
       json.remove('createdBy');
+      _removeLocalOnlyFields(json);
 
       await client.from(SupabaseConfig.transactionsTable).update(json).eq('id', transaction.id);
 
@@ -241,8 +243,16 @@ class TransactionRemoteDatasourceImpl extends TransactionDatasource {
     transaction.orderedProducts = opRes.map((e) => OrderedProductModel.fromJson(Map<String, dynamic>.from(e))).toList();
   }
 
-  List<Map<String, dynamic>> _uniqueRowsById(List<dynamic> rows) {
-    final seen = <int>{};
+  /// Kolom pembayaran DANA hanya berlaku lokal (belum ada di tabel Supabase).
+  void _removeLocalOnlyFields(Map<String, dynamic> json) {
+    json.remove('paymentProvider');
+    json.remove('paymentExpectedAmount');
+    json.remove('paymentUniqueCode');
+    json.remove('paymentExpiresAt');
+    json.remove('paymentPaidAt');
+  }
+
+  List<Map<String, dynamic>> _uniqueRowsById(List<dynamic> rows) {    final seen = <int>{};
     var counter = 0;
     final out = <Map<String, dynamic>>[];
 

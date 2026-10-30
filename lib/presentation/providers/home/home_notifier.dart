@@ -77,6 +77,7 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
       var transaction = TransactionEntity(
         id: DateTime.now().millisecondsSinceEpoch,
         paymentMethod: 'qris',
+        paymentType: 'qris',
         customerName: state.customerName,
         description: state.description,
         orderedProducts: orderedProducts,
@@ -89,8 +90,8 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
         paymentStatus: 'pending',
       );
 
-      final qrisNotifier = ref.read(klikQrisPaymentNotifierProvider.notifier);
-      var res = await qrisNotifier.startKlikQrisPayment(
+      final qrisNotifier = ref.read(qrisPaymentNotifierProvider.notifier);
+      var res = await qrisNotifier.startQrisPayment(
         transaction: transaction,
         totalAmount: totalAmount,
       );

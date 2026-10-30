@@ -15,19 +15,19 @@ final directQrisNotifierProvider = NotifierProvider.autoDispose<DirectQrisNotifi
 class DirectQrisNotifier extends AutoDisposeNotifier<DirectQrisState> {
   @override
   DirectQrisState build() {
-    final service = ref.read(klikQrisPaymentServiceProvider);
+    final service = ref.read(danaQrisPaymentServiceProvider);
 
     return DirectQrisState(
       isConfigured: service.isConfigured,
-      isSandbox: service.isSandbox,
+      merchantName: service.merchantInfo?.merchantName ?? '',
     );
   }
 
   void refreshConfig() {
-    final service = ref.read(klikQrisPaymentServiceProvider);
+    final service = ref.read(danaQrisPaymentServiceProvider);
     state = state.copyWith(
       isConfigured: service.isConfigured,
-      isSandbox: service.isSandbox,
+      merchantName: service.merchantInfo?.merchantName ?? '',
     );
   }
 
@@ -46,7 +46,7 @@ class DirectQrisNotifier extends AutoDisposeNotifier<DirectQrisState> {
   Future<Result<int>> createDirectQris() async {
     if (!state.isConfigured) {
       return Result.failure(
-        error: 'KlikQRIS belum dikonfigurasi. Atur API Key dan ID Merchant terlebih dahulu.',
+        error: 'QRIS DANA Bisnis belum diatur. Upload QRIS statis di Pengaturan Pembayaran.',
       );
     }
 
@@ -92,8 +92,8 @@ class DirectQrisNotifier extends AutoDisposeNotifier<DirectQrisState> {
       );
 
       return ref
-          .read(klikQrisPaymentNotifierProvider.notifier)
-          .startKlikQrisPayment(
+          .read(qrisPaymentNotifierProvider.notifier)
+          .startQrisPayment(
             transaction: transaction,
             totalAmount: amount,
             description: description.isEmpty ? null : description,

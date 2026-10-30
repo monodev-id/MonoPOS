@@ -1,8 +1,8 @@
 # WORKFLOW Sistem POS - MonoPOS
 
-> Last synced with code: v1.3.14 (Oct 2026). Payment = **KlikQRIS** (Doku retired) with cart checkout
-> and direct-nominal QRIS. Supabase via runtime Settings, admin-only routes enforced in `AppRoutes`.
-> Supplier/purchase/HPP data is local-only.
+> Last synced with code: v1.3.14 (Oct 2026). Payment = **QRIS DANA Bisnis** statis → dinamis (Doku & KlikQRIS retired) with cart checkout
+> and direct-nominal QRIS, confirmed by a native DANA notification listener. Supabase via runtime Settings,
+> admin-only routes enforced in `AppRoutes`. Supplier/purchase/HPP data is local-only.
 
 ## 1. Alur Autentikasi (Login / Logout)
 
@@ -165,24 +165,24 @@ Pilih metode pembayaran
   │     ↓
   │   Selesai ✅
   │
-  └── QRIS (KlikQRIS)
+  └── QRIS (DANA Bisnis)
         ↓
-      ┌──────────────────────────────────────┐
-      │ KlikQrisPaymentScreen (/payment/qris)│
-      │                                       │
-      │ 1. Simpan transaksi (status: pending) │
-      │ 2. generateQris(orderId=trxId) → QR   │
-      │ 3. Tampilkan QR + countdown (expiredMinutes) │
-      │ 4. Auto-poll 3x @15s + tombol manual  │
-      │    ├── Paid ✅ → suara kasir + TTS    │
-      │    │     → update paid → detail       │
-      │    ├── Pending → tombol Cek Pembayaran│
-      │    └── Expired ❌ → update expired    │
-      │ 5. Back/close → dialog konfirmasi     │
-      │    (hindari batal tak sengaja)        │
-      │ 6. Webhook klikqris-notify (opsional) │
-      │    mempercepat paid via Supabase      │
-      └──────────────────────────────────────┘
+      ┌──────────────────────────────────────────────┐
+      │ QrisPaymentScreen (/payment/qris)             │
+      │                                               │
+      │ 1. Alokasi kode unik (1–99, fallback 100–999) │
+      │ 2. Konversi QRIS statis → dinamis (TLV+CRC16) │
+      │ 3. Simpan transaksi (status: pending)         │
+      │ 4. Render QR dari payload + countdown expiry  │
+      │ 5. Listener notifikasi DANA mencocokkan       │
+      │    paymentExpectedAmount                      │
+      │    ├── Paid ✅ → suara kasir + TTS            │
+      │    │     → update paid → detail               │
+      │    ├── Pending → tombol Cek Pembayaran        │
+      │    └── Expired ❌ → update expired             │
+      │ 6. Back/close → dialog konfirmasi             │
+      │    (batal = hapus transaksi + restore stok)   │
+      └──────────────────────────────────────────────┘
 ```
 
 ### 3a. Direct QRIS (Nominal Langsung)
@@ -197,10 +197,10 @@ Belum dikonfigurasi?
   ├── Admin → tombol Buka Pengaturan (Payment Settings)
   └── Kasir → pesan hubungi admin
   ↓
-Create QRIS → simpan transaksi qris (pending, tanpa kurangi stok)
-  → generateQris → KlikQrisPaymentScreen
+Create QRIS → konversi QRIS statis + kode unik → simpan transaksi qris
+  (pending, tanpa kurangi stok) → QrisPaymentScreen
   ↓
-Nominal transaksi = nominal input; kode unik KlikQRIS hanya ditampilkan
+Nominal transaksi = nominal input + kode unik (dipakai untuk matching notifikasi)
 ```
 
 ### 3b. Simpan Transaksi (Detail)
@@ -496,11 +496,15 @@ Banner + badge status koneksi (real-time dari PrinterManager) di layar printer s
 - Test print
 - Auto-reconnect printer tersimpan saat app start/resume; banner + badge mengikuti `PrinterManager`
 
-### 8c. Pengaturan Pembayaran (KlikQRIS)
+### 8c. Pengaturan Pembayaran (DANA Bisnis QRIS)
 
-- API Key, Merchant ID, toggle Sandbox (default **Production**), toggle suara/TTS (`klikqris_tts_enabled`)
-- Tombol **Save** eksplisit + `AppSuccessOverlay`; tidak ada write per ketikan
-- Kosong (API key/merchant) = **mock mode** untuk development (QR mock, paid ±30s)
+- Upload gambar QRIS statis / scan kamera / tempel payload; gambar hanya di-decode lalu dihapus,
+  yang disimpan hanya string QRIS (`dana_qris_static`). Preview QR + info merchant/NMID ditampilkan
+- Kartu listener: status akses notifikasi, tombol **Buka Akses Notifikasi**, **Uji Listener**,
+  riwayat notifikasi terakhir, dan **Bersihkan**
+- Preferensi: kode unik otomatis, listener notifikasi, suara/TTS, masa berlaku QRIS (5/10/15/30 menit)
+- Tombol **Simpan Pengaturan** eksplisit + `AppSuccessOverlay`; menyimpan juga menyalakan/mematikan listener
+- QRIS wajib valid & statis (tag 01 = 11, CRC benar); QRIS dinamis ditolak
 
 ### 8d. Data Produk (Backup)
 
@@ -626,7 +630,7 @@ Relasi pembelian (lokal, belum disinkronkan):
 | Backend Remote | Supabase |
 | Autentikasi | Supabase Auth (Google + Email/Password) |
 | Storage | S3-compatible (AWS Signature V4) |
-| Pembayaran Digital | KlikQRIS QRIS API (sandbox + production) + webhook `klikqris-notify` |
+| Pembayaran Digital | QRIS DANA Bisnis statis → dinamis (TLV+CRC16) + listener notifikasi Android (tanpa API/webhook) |
 | Suara & TTS | `flutter_tts` (id-ID) + `audioplayers` (`cashmasuk.mp3`, terbilang rupiah) |
 | App Update | GitHub Releases API + `open_filex` installer (`AppUpdate` clean-arch module) |
 | Scanner | `mobile_scanner` (kamera) + HID listener (hardware scanner) + lookup SQLite by barcode |
@@ -690,7 +694,7 @@ Relasi pembelian (lokal, belum disinkronkan):
 /login                     → LoginScreen
 /error                     → ErrorScreen
 
-/payment/qris              → KlikQrisPaymentScreen (full-screen overlay, PopScope confirm-cancel)
+/payment/qris              → QrisPaymentScreen (QR dinamis, countdown, PopScope confirm-cancel)
 /payment/direct            → DirectQrisScreen (QRIS nominal langsung, entry dari Home/Transactions)
 
 ShellRoute (Bottom Navigation - MainScreen):
@@ -706,7 +710,7 @@ ShellRoute (Bottom Navigation - MainScreen):
     /account/store-settings           → StoreSettingsScreen (admin only)
     /account/printer-settings         → PrinterSettingsScreen
     /account/barcode-labels           → ProductBarcodeLabelScreen (admin only)
-    /account/payment-settings         → PaymentSettingsScreen (KlikQRIS, admin only)
+    /account/payment-settings         → PaymentSettingsScreen (QRIS DANA + listener, admin only)
     /account/product-data             → ProductDataScreen (backup JSON, admin only)
     /account/app-update               → AppUpdateScreen (admin only)
     /account/revenue                  → RevenueScreen (admin only)

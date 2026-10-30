@@ -171,6 +171,8 @@ Disimpan di tabel SQLite `QueuedAction`:
 - **Duplicate-key guard:** Replay antrian menelan error unique violation `23505` agar tidak duplikat (fix `03a29ce`)
 - **Supabase Sync menu:** Hanya tampil untuk role **admin** (kasir disembunyikan)
 - **Tanpa Supabase:** App full offline; semua write ke SQLite + queue; tombol sync menampilkan `Sync off` sampai kredensial diisi
-- **KlikQRIS webhook:** `cloudflare/klikqris-notify` mempercepat `paymentStatus → paid` di Supabase; device melihat perubahan saat sync berikutnya (polling tetap sebagai fallback)
+- **QRIS DANA Bisnis (lokal):** kolom `paymentProvider`, `paymentExpectedAmount`, `paymentUniqueCode`, `paymentExpiresAt`, `paymentPaidAt` dan tabel `PaymentNotification` **tidak disinkronkan** — `TransactionRemoteDatasourceImpl._removeLocalOnlyFields()` membuangnya sebelum upsert/update. Status `paid` tetap ikut tersinkron lewat `paymentStatus`.
+- **Listener notifikasi DANA:** notifikasi `id.dana`/`id.dana.kasir` ditangkap native `NotificationListenerService`, diantrikan di SharedPreferences native, lalu diproses saat app aktif untuk menandai transaksi `pending` menjadi `paid` berdasarkan nominal. Tidak butuh webhook/polling.
+- **KlikQRIS webhook (legacy):** `cloudflare/klikqris-notify` tidak lagi dipakai aplikasi; service/provider lama dibiarkan hanya sebagai referensi.
 - **Direct QRIS:** transaksi `qris` dengan nominal langsung tetap disimpan `pending` → `paid`/`expired` via repository transaksi, sehingga status ikut masuk antrian saat offline
 - **Purchase/supplier:** data lokal saja — tidak ada remote datasource, queue, atau replay. Update HPP produk tetap memakai alur product repository (dan ikut sync tanpa `costPrice`)

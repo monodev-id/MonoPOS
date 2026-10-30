@@ -22,7 +22,11 @@ class TtsService {
     _tts.setPitch(1.0);
   }
 
-  bool get isEnabled => _sharedPreferences.getBool(Constants.klikQrisTtsEnabled) ?? true;
+  bool get isEnabled {
+    final dana = _sharedPreferences.getBool(Constants.danaTtsEnabled);
+    if (dana != null) return dana;
+    return _sharedPreferences.getBool(Constants.klikQrisTtsEnabled) ?? true;
+  }
 
   Future<Result<void>> playCashRegister() async {
     try {

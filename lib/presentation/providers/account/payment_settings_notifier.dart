@@ -1,7 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../app/di/app_providers.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/services/payment/dana_notification_service.dart';
+import '../../../core/services/payment/qris_image_decoder.dart';
+import '../../../core/services/qris/qris_merchant_info.dart';
+import '../../../core/services/qris/qris_validator.dart';
+import '../payment/dana_listener_notifier.dart';
 import 'payment_settings_state.dart';
 
 final paymentSettingsNotifierProvider = NotifierProvider.autoDispose<PaymentSettingsNotifier, PaymentSettingsState>(
@@ -9,46 +17,128 @@ final paymentSettingsNotifierProvider = NotifierProvider.autoDispose<PaymentSett
 );
 
 class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> {
-  String _originalApiKey = '';
-  String _originalMerchantId = '';
-  bool _originalIsSandbox = false;
-  bool _originalTtsEnabled = true;
+  String _originalQris = '';
+  bool _originalTts = true;
+  bool _originalUniqueCode = true;
+  int _originalExpiry = 15;
+  bool _originalListenerEnabled = true;
 
   @override
   PaymentSettingsState build() {
     final prefs = ref.read(sharedPreferencesProvider);
+    final service = ref.read(danaQrisPaymentServiceProvider);
+    final listener = ref.read(danaListenerProvider);
 
-    final apiKey = prefs.getString(Constants.klikQrisApiKey) ?? '';
-    final merchantId = prefs.getString(Constants.klikQrisMerchantId) ?? '';
-    final isSandbox = prefs.getBool(Constants.klikQrisIsSandbox) ?? false;
-    final ttsEnabled = prefs.getBool(Constants.klikQrisTtsEnabled) ?? true;
+    final qris = service.staticQris;
+    final validation = validateQris(qris, requireStatic: true);
+    final info = QrisMerchantInfo.tryParse(qris);
+    final tts = service.isTtsEnabled;
+    final uniqueCode = service.uniqueCodeEnabled;
+    final expiry = service.expiryMinutes;
+    final listenerEnabled = prefs.getBool(Constants.danaListenerEnabled) ?? true;
 
-    _originalApiKey = apiKey;
-    _originalMerchantId = merchantId;
-    _originalIsSandbox = isSandbox;
-    _originalTtsEnabled = ttsEnabled;
+    _originalQris = qris;
+    _originalTts = tts;
+    _originalUniqueCode = uniqueCode;
+    _originalExpiry = expiry;
+    _originalListenerEnabled = listenerEnabled;
 
     return PaymentSettingsState(
-      apiKey: apiKey,
-      merchantId: merchantId,
-      isSandbox: isSandbox,
-      ttsEnabled: ttsEnabled,
+      staticQris: qris,
+      merchantName: info?.merchantName ?? '',
+      merchantCity: info?.merchantCity ?? '',
+      nmid: info?.nmid ?? '',
+      acquirer: info?.acquirer ?? '',
+      isQrisValid: validation.isValid,
+      qrisError: validation.isValid ? null : _qrisErrorMessage(validation),
       isLoaded: true,
+      ttsEnabled: tts,
+      uniqueCodeEnabled: uniqueCode,
+      expiryMinutes: expiry,
+      listenerEnabled: listenerEnabled,
+      listenerPermissionGranted: listener.isPermissionGranted,
+      listenerConnected: listener.isServiceConnected,
+      recentNotifications: listener.recentNotifications,
     );
   }
 
-  void onChangedApiKey(String value) {
-    state = state.copyWith(apiKey: value);
+  String? _qrisErrorMessage(QrisValidationResult validation) {
+    if (validation.isValid) return null;
+    if (validation.errors.isEmpty) return 'QRIS tidak valid';
+    return validation.errors.first;
+  }
+
+  Future<void> pickQrisImage({required ImageSource source}) async {
+    state = state.copyWith(isDecoding: true, clearQrisError: true);
+
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+      );
+
+      if (picked == null) {
+        state = state.copyWith(isDecoding: false);
+        return;
+      }
+
+      final result = await QrisImageDecoder().decodeFile(picked.path);
+
+      if (!result.isSuccess) {
+        state = state.copyWith(
+          isDecoding: false,
+          qrisError: result.error ?? 'Gagal membaca QRIS',
+        );
+        return;
+      }
+
+      _applyQris(result.payload!);
+      state = state.copyWith(isDecoding: false, clearQrisError: true);
+    } catch (e) {
+      state = state.copyWith(isDecoding: false, qrisError: e.toString());
+    }
+  }
+
+  void applyQrisText(String value) {
+    final normalized = value.replaceAll(RegExp(r'\s+'), '').trim();
+    if (normalized.isEmpty) {
+      state = state.copyWith(staticQris: '', isQrisValid: false, qrisError: 'QRIS masih kosong');
+      _updateHasChanges();
+      return;
+    }
+
+    _applyQris(normalized);
     _updateHasChanges();
   }
 
-  void onChangedMerchantId(String value) {
-    state = state.copyWith(merchantId: value);
-    _updateHasChanges();
+  void _applyQris(String qris) {
+    final normalized = qris.replaceAll(RegExp(r'\s+'), '').trim();
+    final validation = validateQris(normalized, requireStatic: true);
+    final info = QrisMerchantInfo.tryParse(normalized);
+
+    state = state.copyWith(
+      staticQris: normalized,
+      isQrisValid: validation.isValid,
+      qrisError: validation.isValid ? null : _qrisErrorMessage(validation),
+      merchantName: info?.merchantName ?? '',
+      merchantCity: info?.merchantCity ?? '',
+      nmid: info?.nmid ?? '',
+      acquirer: info?.acquirer ?? '',
+      clearQrisError: validation.isValid,
+    );
   }
 
-  void onChangedIsSandbox(bool value) {
-    state = state.copyWith(isSandbox: value);
+  void clearQris() {
+    state = state.copyWith(
+      staticQris: '',
+      merchantName: '',
+      merchantCity: '',
+      nmid: '',
+      acquirer: '',
+      isQrisValid: false,
+      qrisError: null,
+      clearQrisError: true,
+    );
     _updateHasChanges();
   }
 
@@ -57,12 +147,28 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
     _updateHasChanges();
   }
 
+  void onChangedUniqueCode(bool value) {
+    state = state.copyWith(uniqueCodeEnabled: value);
+    _updateHasChanges();
+  }
+
+  void onChangedExpiryMinutes(int value) {
+    state = state.copyWith(expiryMinutes: value);
+    _updateHasChanges();
+  }
+
+  void onChangedListenerEnabled(bool value) {
+    state = state.copyWith(listenerEnabled: value);
+    _updateHasChanges();
+  }
+
   void _updateHasChanges() {
     final hasChanges =
-        state.apiKey != _originalApiKey ||
-        state.merchantId != _originalMerchantId ||
-        state.isSandbox != _originalIsSandbox ||
-        state.ttsEnabled != _originalTtsEnabled;
+        state.staticQris != _originalQris ||
+        state.ttsEnabled != _originalTts ||
+        state.uniqueCodeEnabled != _originalUniqueCode ||
+        state.expiryMinutes != _originalExpiry ||
+        state.listenerEnabled != _originalListenerEnabled;
 
     if (hasChanges != state.hasChanges) {
       state = state.copyWith(hasChanges: hasChanges);
@@ -70,19 +176,62 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
   }
 
   Future<void> save() async {
+    if (state.staticQris.isNotEmpty && !state.isQrisValid) {
+      state = state.copyWith(qrisError: state.qrisError ?? 'QRIS tidak valid');
+      return;
+    }
+
     state = state.copyWith(isSaving: true);
 
+    final service = ref.read(danaQrisPaymentServiceProvider);
     final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setString(Constants.klikQrisApiKey, state.apiKey);
-    await prefs.setString(Constants.klikQrisMerchantId, state.merchantId);
-    await prefs.setBool(Constants.klikQrisIsSandbox, state.isSandbox);
+
+    if (state.staticQris.isEmpty) {
+      await service.clearStaticQris();
+    } else {
+      await service.saveStaticQris(state.staticQris);
+    }
+
+    await service.setTtsEnabled(state.ttsEnabled);
+    await service.setUniqueCodeEnabled(state.uniqueCodeEnabled);
+    await service.setExpiryMinutes(state.expiryMinutes);
+
+    // Nyalakan/matikan listener sekaligus, tidak hanya menyimpan preferensi.
+    await ref.read(danaListenerProvider.notifier).setEnabled(state.listenerEnabled);
+    await refreshListener();
+
+    // Samakan key lama supaya layar lain yang masih membacanya ikut berubah.
     await prefs.setBool(Constants.klikQrisTtsEnabled, state.ttsEnabled);
 
-    _originalApiKey = state.apiKey;
-    _originalMerchantId = state.merchantId;
-    _originalIsSandbox = state.isSandbox;
-    _originalTtsEnabled = state.ttsEnabled;
+    _originalQris = state.staticQris;
+    _originalTts = state.ttsEnabled;
+    _originalUniqueCode = state.uniqueCodeEnabled;
+    _originalExpiry = state.expiryMinutes;
+    _originalListenerEnabled = state.listenerEnabled;
 
     state = state.copyWith(isSaving: false, hasChanges: false);
   }
+
+  Future<void> openNotificationSettings() async {
+    await DanaNotificationService().openPermissionSettings();
+  }
+
+  Future<void> refreshListener() async {
+    final listener = ref.read(danaListenerProvider.notifier);
+    await listener.refreshStatus();
+
+    final current = ref.read(danaListenerProvider);
+    state = state.copyWith(
+      listenerPermissionGranted: current.isPermissionGranted,
+      listenerConnected: current.isServiceConnected,
+      recentNotifications: current.recentNotifications,
+    );
+  }
+
+  Future<void> clearNotificationHistory() async {
+    await ref.read(danaListenerProvider.notifier).clearHistory();
+    await refreshListener();
+  }
+
+  bool get supportsImagePick => Platform.isAndroid || Platform.isIOS;
 }

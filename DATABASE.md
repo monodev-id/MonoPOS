@@ -1,13 +1,13 @@
 # DATABASE.md - Database Schema Reference
 
-> Last synced with code: v1.3.8 (`DatabaseConfig.version = 3`). Supplier, purchase, and product `costPrice`
-> data are stored locally only and are not mirrored to Supabase yet.
+> Last synced with code: v1.3.14 (`DatabaseConfig.version = 4`). Supplier, purchase, product `costPrice`, and
+> DANA Bisnis payment metadata are stored locally only and are not mirrored to Supabase yet.
 
 Database: SQLite (`app_database.db`) via `sqflite`
 
 ## Migration Strategy
 
-Database version is maintained in `DatabaseConfig` (currently **version 3**). On every startup, `_applyMigrations()`, `_applyMigrationsV3()`, and `_applyPurchaseMigrations()` in `DatabaseService` run idempotent `ALTER TABLE ADD COLUMN IF NOT EXISTS` / `CREATE TABLE IF NOT EXISTS` statements, normalize legacy barcodes, and create indexes. This means new columns/tables are added automatically without bumping the version number.
+Database version is maintained in `DatabaseConfig` (currently **version 4**). On every startup, `_applyMigrations()`, `_applyMigrationsV3()`, `_applyMigrationsV4()`, and `_applyPurchaseMigrations()` in `DatabaseService` run idempotent `ALTER TABLE ADD COLUMN` / `CREATE TABLE IF NOT EXISTS` statements, normalize legacy barcodes, and create indexes. Version 4 adds the DANA Bisnis payment columns, the `PaymentNotification` table, and `idx_transaction_payment_status`.
 
 Source of truth: `lib/core/services/database/database_config.dart`. Seed data: 150 demo products on first install in debug builds only (`DatabaseService`), plus local seed users (`admin` / `kasir1` / `kasir2`) and the Supabase admin user.
 
@@ -91,9 +91,14 @@ Source of truth: `lib/core/services/database/database_config.dart`. Seed data: 1
 | returnAmount        | INTEGER  |                           |
 | totalAmount         | INTEGER  |                           |
 | totalOrderedProduct | INTEGER  |                           |
-| paymentStatus       | TEXT     | DEFAULT 'paid' (`pending`/`paid`/`expired`; webhook can set `failed`) |
-| paymentQR           | TEXT     | QR image base64 or URL (KlikQRIS) |
-| paymentExternalId   | TEXT     | `orderId` = transaction id string (webhook matching key) |
+| paymentStatus       | TEXT     | DEFAULT 'paid' (`pending`/`paid`/`expired`) |
+| paymentQR           | TEXT     | QRIS payload string (dynamic, generated at checkout) |
+| paymentExternalId   | TEXT     | Legacy gateway order id (KlikQRIS) |
+| paymentProvider     | TEXT     | `dana_static` for DANA Bisnis QRIS (local only) |
+| paymentExpectedAmount | INTEGER | `totalAmount + paymentUniqueCode`, matching key for DANA notifications (local only) |
+| paymentUniqueCode   | INTEGER  | 1–99 (fallback 100–999) to disambiguate equal amounts (local only) |
+| paymentExpiresAt    | TEXT     | ISO-8601 expiry of the dynamic QRIS (local only) |
+| paymentPaidAt       | TEXT     | ISO-8601 timestamp when the transaction was marked paid (local only) |
 | dueDate             | TEXT     | (legacy, added by migration) |
 | createdAt           | DATETIME | DEFAULT CURRENT_TIMESTAMP |
 | updatedAt           | DATETIME | DEFAULT CURRENT_TIMESTAMP |
@@ -202,6 +207,25 @@ Index: `idx_purchase_item_product` (`productId, purchaseId`).
 | isCritical | INTEGER  | (0 = false, 1 = true)     |
 | createdAt  | DATETIME | DEFAULT CURRENT_TIMESTAMP |
 
+### PaymentNotification
+
+Queue/riwayat notifikasi aplikasi DANA (`id.dana`, `id.dana.kasir`) yang dipakai untuk mencocokkan pembayaran. Lokal saja, tidak disinkronkan.
+
+| Column              | Type     | Constraints                          |
+| ------------------- | -------- | ------------------------------------ |
+| id                  | INTEGER  | PRIMARY KEY AUTOINCREMENT            |
+| notifKey            | TEXT     | NOT NULL UNIQUE (`sbn.key` + `postTime`) |
+| packageName         | TEXT     | `id.dana` / `id.dana.kasir`          |
+| title               | TEXT     |                                      |
+| body                | TEXT     |                                      |
+| amount              | INTEGER  | Hasil parse nominal (null jika bukan pembayaran) |
+| postedAt            | TEXT     | ISO-8601 dari `StatusBarNotification` |
+| capturedAt          | TEXT     | ISO-8601 saat listener menerima      |
+| status              | TEXT     | `unmatched` / `matched` / `matched_late` / `ambiguous` / `ignored` |
+| matchedTransactionId| INTEGER  | FK → Transaction(id)                 |
+| rawJson             | TEXT     | (cadangan)                           |
+| createdAt           | DATETIME | DEFAULT CURRENT_TIMESTAMP            |
+
 ### Indexes
 
 | Index                          | Definition / purpose                                      |
@@ -212,13 +236,17 @@ Index: `idx_purchase_item_product` (`productId, purchaseId`).
 | `idx_purchase_date`            | `Purchase(purchaseDate DESC, id DESC)`                    |
 | `idx_purchase_supplier`        | `Purchase(supplierId)`                                    |
 | `idx_purchase_item_product`    | `PurchaseItem(productId, purchaseId)`                     |
+| `idx_transaction_payment_status` | `Transaction(paymentStatus, paymentExpectedAmount)` — lookup pending by amount |
 
 ## Remote Mirror (Supabase Postgres)
 
 Local tables mirror remote tables defined in `docs/supabase/schema.sql` (snake_case, camelCase-preserving
 quoted columns: `createdById`, `imageUrl`, `wholesalePrice`, ...). Remote adds `users`, `product_units`,
 `product_tiered_prices`, `ordered_products`, `customers`, `queued_actions` with matching FKs.
-Webhook matching: `transactions.paymentExternalId = orderId` (see KlikQRIS flow in `README.md`).
+Webhook matching: `transactions.paymentExternalId = orderId` (legacy KlikQRIS flow, no longer used by the app).
+DANA Bisnis payment metadata (`paymentProvider`, `paymentExpectedAmount`, `paymentUniqueCode`,
+`paymentExpiresAt`, `paymentPaidAt`) and the `PaymentNotification` table are **local-only**; the remote
+datasource strips those columns before create/update.
 
 `Product.costPrice`, `Supplier`, `Purchase`, and `PurchaseItem` are **local-only** for now. Product
 sync strips `costPrice` before create/update. `isCustomPrice` (product) and `isTieredPrice`

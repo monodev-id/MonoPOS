@@ -175,7 +175,7 @@ class _Header extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSizes.padding / 2),
-            _ModeBadge(isSandbox: state.isSandbox),
+            _ModeBadge(merchantName: state.merchantName),
           ],
         ),
       ],
@@ -184,15 +184,15 @@ class _Header extends StatelessWidget {
 }
 
 class _ModeBadge extends StatelessWidget {
-  final bool isSandbox;
+  final String merchantName;
 
-  const _ModeBadge({required this.isSandbox});
+  const _ModeBadge({required this.merchantName});
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final color = isSandbox ? Colors.orange : Colors.green;
+    const color = Colors.green;
+    final label = merchantName.isEmpty ? 'DANA Bisnis' : merchantName;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -204,13 +204,18 @@ class _ModeBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(isSandbox ? Icons.science_outlined : Icons.verified_outlined, size: 14, color: color),
+          const Icon(Icons.verified_outlined, size: 14, color: color),
           const SizedBox(width: 4),
-          Text(
-            isSandbox ? l10n.directQris_sandbox : l10n.directQris_production,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: scheme.onSurface,
-              fontWeight: FontWeight.bold,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 160),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

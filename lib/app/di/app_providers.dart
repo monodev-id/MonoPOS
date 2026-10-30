@@ -9,6 +9,9 @@ import '../../core/services/connectivity/ping_service.dart';
 import '../../core/services/database/database_service.dart';
 import '../../core/services/info/device_info_service.dart';
 import '../../core/services/logger/error_logger_service.dart';
+import '../../core/services/payment/dana_notification_service.dart';
+import '../../core/services/payment/dana_payment_store.dart';
+import '../../core/services/payment/dana_qris_payment_service.dart';
 import '../../core/services/payment/klik_qris_payment_service.dart';
 import '../../core/services/printer/printer_service.dart';
 import '../../core/services/supabase/supabase_config.dart';
@@ -99,6 +102,18 @@ final printerServiceProvider = Provider<PrinterService>((ref) {
 
 final klikQrisPaymentServiceProvider = Provider<KlikQrisPaymentService>(
   (ref) => KlikQrisPaymentService(ref.watch(sharedPreferencesProvider)),
+);
+
+final danaQrisPaymentServiceProvider = Provider<DanaQrisPaymentService>(
+  (ref) => DanaQrisPaymentService(ref.watch(sharedPreferencesProvider)),
+);
+
+final danaPaymentStoreProvider = Provider<DanaPaymentStore>(
+  (ref) => DanaPaymentStore(ref.watch(databaseServiceProvider)),
+);
+
+final danaNotificationServiceProvider = Provider<DanaNotificationService>(
+  (ref) => DanaNotificationService(),
 );
 
 final ttsServiceProvider = Provider<TtsService>((ref) {

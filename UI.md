@@ -1,8 +1,8 @@
 # UI.md - UI Reference
 
-> Last synced with code: v1.3.8 (Oct 2026). Covers direct QRIS, cart/unit snapshot, barcode label
-> printing, KlikQRIS payment screen, product-data/app-update screens, printer status banner,
-> supplier/purchase screens, and revenue day detail.
+> Last synced with code: v1.3.14 (Oct 2026). Covers direct QRIS, cart/unit snapshot, barcode label
+> printing, QRIS DANA payment screen, DANA listener settings, product-data/app-update screens, printer
+> status banner, supplier/purchase screens, and revenue day detail.
 
 ## Reusable Widgets (`lib/presentation/widgets/`)
 
@@ -72,12 +72,12 @@ day transaction tile), `purchases/components/` (purchase card, item editor, prod
 
 | Route | Screen | Notes |
 | ----- | ------ | ----- |
-| `/payment/direct` | `DirectQrisScreen` | Amount-first QRIS (no cart), quick amounts, optional description/customer, config guard + sandbox badge; entry points in Home/Transactions app bars |
-| `/payment/qris` | `KlikQrisPaymentScreen` | QR display (base64/url), total + unique-code breakdown, expiry countdown, auto-poll 3× @15s + always-available manual check (with failure/pending feedback), expired view with retry/close, cancel-confirm `PopScope`, TTS on paid |
+| `/payment/direct` | `DirectQrisScreen` | Amount-first QRIS (no cart), quick amounts, optional description/customer, config guard + merchant badge; entry points in Home/Transactions app bars |
+| `/payment/qris` | `QrisPaymentScreen` | QR rendered from the dynamic payload, total + unique-code breakdown, expiry countdown, listener status chip, always-available manual check (drains the DANA notification queue), print QR, mark-paid fallback, expired view, cancel-confirm `PopScope` (cancel deletes transaction + restores stock), TTS on paid |
 | `/account/barcode-labels` | `ProductBarcodeLabelScreen` | Admin-only: generate/save EAN-13 for products without barcodes, search/filter, select-all, per-product copies, batch print labels (requires connected printer) |
 | `/account/product-data` | `ProductDataScreen` | JSON export/import with per-product breakdown + progress |
 | `/account/app-update` | `AppUpdateScreen` | GitHub release check, Markdown changelog, download progress, install (admin only) |
-| `/account/payment-settings` | `PaymentSettingsScreen` | KlikQRIS API key / merchant ID / sandbox toggle / TTS toggle, Save button |
+| `/account/payment-settings` | `PaymentSettingsScreen` | Upload/scan/paste static DANA Bisnis QRIS, QR preview + merchant/NMID info, listener card (permission, test, history, clear), unique-code/TTS/listener/expiry preferences, Save button |
 | `/account/printer-settings` | `PrinterSettingsScreen` | Scan/connect, paper size, test print, live status banner + badge, saved-printer reconnect |
 | `/account/store-settings` | `StoreSettingsScreen` | Store name/address/receipt footer, Save button with caret fix |
 | `/home` | `HomeScreen` | POS grid with auto-fill pagination, cart panel, direct QRIS + scan buttons, `_NetworkInfo` sync-mode toggle + `_SyncButton` status |
@@ -130,7 +130,7 @@ Text styles via `Theme.of(context).textTheme`: `bodySmall`, `bodyMedium`, `bodyL
 - **Cart unit snapshot**: Each cart line carries the product's unit snapshot (`OrderedProductEntity.units`) so the unit dropdown still works when the paginated product cache does not contain that product; legacy products get a synthetic base unit
 - **Barcode scan**: Camera scan and HID/search submissions use `GetProductByBarcodeUsecase` (SQLite first), then add +1 base unit straight to the cart without an intermediate dialog; focus returns to the hidden HID listener for the next scan
 - **Barcode labels**: Admin screen generates unique EAN-13 codes, saves them via the product repository, and prints label batches (per-product copies) using the connection status from `PrinterManager`
-- **Direct QRIS**: Amount-only payment from the Home/Transactions app bar; records a `qris` transaction at the entered amount (unique code from KlikQRIS is display-only), blocked with an admin shortcut when KlikQRIS is not configured
+- **Direct QRIS**: Amount-only payment from the Home/Transactions app bar; converts the static DANA Bisnis QRIS (amount + unique code) and records a `qris` transaction, blocked with an admin shortcut when the QRIS is not configured
 - **Tiered pricing**: Add-to-cart dialog shows live price per qty break; cart line shows tier badge
 - **Printer status**: Banner in printer settings + badge on printer menu; state synced from `PrinterManager` (not cached prefs); saved printer reconnects on app start/resume
 - **Revenue detail**: Summary card shows total, transaction/product counts, and cash/QRIS/other breakdowns; tapping a day opens the per-day transaction list

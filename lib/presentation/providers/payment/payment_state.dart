@@ -1,71 +1,70 @@
 import '../../../domain/entities/transaction_entity.dart';
 
-class KlikQrisPaymentState {
+class QrisPaymentState {
   final TransactionEntity? transaction;
-  final String qrCode;
+  final String payload;
   final String paymentStatus;
   final String? errorMessage;
-  final bool isPolling;
-  final int elapsedSeconds;
-  final bool autoCheckDone;
-  final bool isManualChecking;
-  final bool manualCheckPending;
-  final String orderId;
-  final String signature;
   final int totalAmount;
+  final int uniqueCode;
+  final int expectedAmount;
+  final DateTime? expiresAt;
+  final int remainingSeconds;
   final bool isDirect;
+  final bool isStarting;
+  final bool isManualChecking;
 
-  const KlikQrisPaymentState({
+  const QrisPaymentState({
     this.transaction,
-    this.qrCode = '',
+    this.payload = '',
     this.paymentStatus = 'pending',
     this.errorMessage,
-    this.isPolling = false,
-    this.elapsedSeconds = 0,
-    this.autoCheckDone = false,
-    this.isManualChecking = false,
-    this.manualCheckPending = false,
-    this.orderId = '',
-    this.signature = '',
     this.totalAmount = 0,
+    this.uniqueCode = 0,
+    this.expectedAmount = 0,
+    this.expiresAt,
+    this.remainingSeconds = 0,
     this.isDirect = false,
+    this.isStarting = false,
+    this.isManualChecking = false,
   });
 
-  KlikQrisPaymentState copyWith({
-    TransactionEntity? transaction,
-    String? qrCode,
-    String? paymentStatus,
-    String? errorMessage,
-    bool clearError = false,
-    bool? isPolling,
-    int? elapsedSeconds,
-    bool? autoCheckDone,
-    bool? isManualChecking,
-    bool? manualCheckPending,
-    String? orderId,
-    String? signature,
-    int? totalAmount,
-    bool? isDirect,
-  }) {
-    return KlikQrisPaymentState(
-      transaction: transaction ?? this.transaction,
-      qrCode: qrCode ?? this.qrCode,
-      paymentStatus: paymentStatus ?? this.paymentStatus,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      isPolling: isPolling ?? this.isPolling,
-      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
-      autoCheckDone: autoCheckDone ?? this.autoCheckDone,
-      isManualChecking: isManualChecking ?? this.isManualChecking,
-      manualCheckPending: manualCheckPending ?? this.manualCheckPending,
-      orderId: orderId ?? this.orderId,
-      signature: signature ?? this.signature,
-      totalAmount: totalAmount ?? this.totalAmount,
-      isDirect: isDirect ?? this.isDirect,
-    );
-  }
+  bool get hasQr => payload.isNotEmpty;
+
+  bool get isPending => paymentStatus == 'pending';
 
   bool get isPaid => paymentStatus == 'paid';
-  bool get isFailed => paymentStatus == 'failed';
+
   bool get isExpired => paymentStatus == 'expired';
-  bool get isPending => paymentStatus == 'pending';
+
+  QrisPaymentState copyWith({
+    TransactionEntity? transaction,
+    String? payload,
+    String? paymentStatus,
+    String? errorMessage,
+    int? totalAmount,
+    int? uniqueCode,
+    int? expectedAmount,
+    DateTime? expiresAt,
+    int? remainingSeconds,
+    bool? isDirect,
+    bool? isStarting,
+    bool? isManualChecking,
+    bool clearError = false,
+  }) {
+    return QrisPaymentState(
+      transaction: transaction ?? this.transaction,
+      payload: payload ?? this.payload,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      totalAmount: totalAmount ?? this.totalAmount,
+      uniqueCode: uniqueCode ?? this.uniqueCode,
+      expectedAmount: expectedAmount ?? this.expectedAmount,
+      expiresAt: expiresAt ?? this.expiresAt,
+      remainingSeconds: remainingSeconds ?? this.remainingSeconds,
+      isDirect: isDirect ?? this.isDirect,
+      isStarting: isStarting ?? this.isStarting,
+      isManualChecking: isManualChecking ?? this.isManualChecking,
+    );
+  }
 }

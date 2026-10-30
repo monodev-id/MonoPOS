@@ -955,17 +955,17 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get directQris_uniqueCodeNote =>
-      'KlikQRIS dapat menambahkan kode unik otomatis. Transaksi tetap dicatat sesuai nominal yang Anda masukkan.';
+      'Kode unik ditambahkan otomatis agar pembayaran DANA bisa dicocokkan dengan tepat.';
 
   @override
   String get directQris_createButton => 'Buat QRIS';
 
   @override
-  String get directQris_notConfiguredTitle => 'KlikQRIS belum dikonfigurasi';
+  String get directQris_notConfiguredTitle => 'QRIS DANA Bisnis belum diatur';
 
   @override
   String get directQris_notConfiguredMessage =>
-      'Atur API Key dan ID Merchant terlebih dahulu sebelum membuat pembayaran QRIS.';
+      'Upload QRIS statis DANA Bisnis di Pengaturan Pembayaran sebelum membuat pembayaran QRIS.';
 
   @override
   String get directQris_openSettings => 'Buka Pengaturan';
@@ -979,6 +979,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get directQris_production => 'Production';
+
+  @override
+  String get directQris_danaBadge => 'DANA Bisnis';
 
   @override
   String get qris_title => 'Pembayaran QRIS';
@@ -1036,7 +1039,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get qris_cancelTitle => 'Batalkan Pembayaran?';
 
   @override
-  String get qris_cancelMessage => 'Pembayaran KlikQRIS akan dibatalkan.';
+  String get qris_cancelMessage =>
+      'Pembayaran QRIS akan dibatalkan dan stok yang dipesan dikembalikan.';
 
   @override
   String get qris_cancelConfirm => 'Ya, Batalkan';
@@ -1052,4 +1056,32 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get qris_openImage => 'Buka gambar QR';
+
+  @override
+  String get qris_listenerActive => 'Listener DANA aktif';
+
+  @override
+  String get qris_listenerInactive => 'Akses notifikasi belum diberikan';
+
+  @override
+  String get qris_listenerGrant => 'Beri akses';
+
+  @override
+  String get qris_markPaid => 'Tandai Lunas';
+
+  @override
+  String get qris_markPaidConfirmTitle => 'Tandai sudah dibayar?';
+
+  @override
+  String get qris_markPaidConfirmMessage =>
+      'Lakukan ini hanya setelah Anda memastikan pembayaran masuk di aplikasi DANA.';
+
+  @override
+  String get qris_printQr => 'Cetak QR';
+
+  @override
+  String get qris_paidTitle => 'Pembayaran diterima';
+
+  @override
+  String get qris_paidMessage => 'Transaksi sudah ditandai lunas.';
 }

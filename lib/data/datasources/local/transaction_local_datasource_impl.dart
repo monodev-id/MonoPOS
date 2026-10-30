@@ -175,6 +175,7 @@ class TransactionLocalDatasourceImpl extends TransactionDatasource {
       var values = <String, dynamic>{'paymentStatus': status};
       if (paymentQR != null) values['paymentQR'] = paymentQR;
       if (paymentExternalId != null) values['paymentExternalId'] = paymentExternalId;
+      if (status == 'paid') values['paymentPaidAt'] = DateTime.now().toIso8601String();
 
       await _databaseService.database.update(
         DatabaseConfig.transactionTableName,

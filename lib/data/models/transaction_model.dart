@@ -22,6 +22,11 @@ class TransactionModel {
   String paymentStatus;
   String? paymentQR;
   String? paymentExternalId;
+  String? paymentProvider;
+  int? paymentExpectedAmount;
+  int? paymentUniqueCode;
+  String? paymentExpiresAt;
+  String? paymentPaidAt;
 
   TransactionModel({
     required this.id,
@@ -43,6 +48,11 @@ class TransactionModel {
     this.paymentStatus = 'paid',
     this.paymentQR,
     this.paymentExternalId,
+    this.paymentProvider,
+    this.paymentExpectedAmount,
+    this.paymentUniqueCode,
+    this.paymentExpiresAt,
+    this.paymentPaidAt,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -68,6 +78,11 @@ class TransactionModel {
       paymentStatus: json['paymentStatus'] ?? 'paid',
       paymentQR: json['paymentQR'],
       paymentExternalId: json['paymentExternalId'],
+      paymentProvider: json['paymentProvider'],
+      paymentExpectedAmount: json['paymentExpectedAmount'],
+      paymentUniqueCode: json['paymentUniqueCode'],
+      paymentExpiresAt: json['paymentExpiresAt'],
+      paymentPaidAt: json['paymentPaidAt'],
     );
   }
 
@@ -92,6 +107,11 @@ class TransactionModel {
       'paymentStatus': paymentStatus,
       'paymentQR': paymentQR,
       'paymentExternalId': paymentExternalId,
+      'paymentProvider': paymentProvider,
+      'paymentExpectedAmount': paymentExpectedAmount,
+      'paymentUniqueCode': paymentUniqueCode,
+      'paymentExpiresAt': paymentExpiresAt,
+      'paymentPaidAt': paymentPaidAt,
     };
   }
 
@@ -116,6 +136,11 @@ class TransactionModel {
       paymentStatus: entity.paymentStatus,
       paymentQR: entity.paymentQR,
       paymentExternalId: entity.paymentExternalId,
+      paymentProvider: entity.paymentProvider,
+      paymentExpectedAmount: entity.paymentExpectedAmount,
+      paymentUniqueCode: entity.paymentUniqueCode,
+      paymentExpiresAt: entity.paymentExpiresAt,
+      paymentPaidAt: entity.paymentPaidAt,
     );
   }
 
@@ -140,6 +165,11 @@ class TransactionModel {
       paymentStatus: paymentStatus,
       paymentQR: paymentQR,
       paymentExternalId: paymentExternalId,
+      paymentProvider: paymentProvider,
+      paymentExpectedAmount: paymentExpectedAmount,
+      paymentUniqueCode: paymentUniqueCode,
+      paymentExpiresAt: paymentExpiresAt,
+      paymentPaidAt: paymentPaidAt,
     );
   }
 }

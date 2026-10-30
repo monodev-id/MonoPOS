@@ -18,6 +18,17 @@ class Constants {
   static const String klikQrisIsSandbox = 'klikqris_is_sandbox';
   static const String klikQrisTtsEnabled = 'klikqris_tts_enabled';
 
+  // DANA Bisnis QRIS (statis → dinamis) + listener notifikasi
+  static const String danaQrisStatic = 'dana_qris_static';
+  static const String danaTtsEnabled = 'dana_tts_enabled';
+  static const String danaUniqueCodeEnabled = 'dana_unique_code_enabled';
+  static const String danaExpiryMinutes = 'dana_expiry_minutes';
+  static const String danaListenerEnabled = 'dana_listener_enabled';
+  static const String danaListenerPackages = 'dana_listener_packages';
+  static const String danaLastListenerSync = 'dana_last_listener_sync';
+
+  static const String danaProviderStatic = 'dana_static';
+
   static const int minSyncIntervalToleranceForCriticalInMinutes = 5;
   static const int minSyncIntervalToleranceForLessCriticalInMinutes = 100;
 

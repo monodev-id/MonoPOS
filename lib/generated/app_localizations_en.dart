@@ -958,17 +958,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get directQris_uniqueCodeNote =>
-      'KlikQRIS may add a unique code automatically. The recorded transaction still uses the amount you entered.';
+      'A unique code is added automatically so incoming DANA payments can be matched precisely.';
 
   @override
   String get directQris_createButton => 'Create QRIS';
 
   @override
-  String get directQris_notConfiguredTitle => 'KlikQRIS is not configured';
+  String get directQris_notConfiguredTitle => 'DANA Bisnis QRIS is not set';
 
   @override
   String get directQris_notConfiguredMessage =>
-      'Set the API Key and Merchant ID before creating a QRIS payment.';
+      'Upload your static DANA Bisnis QRIS in the payment settings before creating a QRIS payment.';
 
   @override
   String get directQris_openSettings => 'Open Settings';
@@ -982,6 +982,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get directQris_production => 'Production';
+
+  @override
+  String get directQris_danaBadge => 'DANA Bisnis';
 
   @override
   String get qris_title => 'QRIS Payment';
@@ -1039,7 +1042,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qris_cancelTitle => 'Cancel Payment?';
 
   @override
-  String get qris_cancelMessage => 'The KlikQRIS payment will be cancelled.';
+  String get qris_cancelMessage =>
+      'This QRIS payment will be cancelled and the reserved stock will be returned.';
 
   @override
   String get qris_cancelConfirm => 'Yes, Cancel';
@@ -1055,4 +1059,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qris_openImage => 'Open QR image';
+
+  @override
+  String get qris_listenerActive => 'DANA listener active';
+
+  @override
+  String get qris_listenerInactive => 'Notification access not granted';
+
+  @override
+  String get qris_listenerGrant => 'Grant access';
+
+  @override
+  String get qris_markPaid => 'Mark as Paid';
+
+  @override
+  String get qris_markPaidConfirmTitle => 'Mark as paid?';
+
+  @override
+  String get qris_markPaidConfirmMessage =>
+      'Only do this after you have verified the payment in the DANA app.';
+
+  @override
+  String get qris_printQr => 'Print QR';
+
+  @override
+  String get qris_paidTitle => 'Payment received';
+
+  @override
+  String get qris_paidMessage => 'Transaction has been marked as paid.';
 }

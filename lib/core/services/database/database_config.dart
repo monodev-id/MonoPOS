@@ -3,7 +3,7 @@ class DatabaseConfig {
   DatabaseConfig._();
 
   static const String dbPath = 'app_database.db';
-  static const int version = 3;
+  static const int version = 4;
 
   static const String userTableName = 'User';
   static const String productTableName = 'Product';
@@ -16,6 +16,7 @@ class DatabaseConfig {
   static const String supplierTableName = 'Supplier';
   static const String purchaseTableName = 'Purchase';
   static const String purchaseItemTableName = 'PurchaseItem';
+  static const String paymentNotificationTableName = 'PaymentNotification';
 
   static const String createUserTable =
       '''
@@ -105,10 +106,33 @@ CREATE TABLE IF NOT EXISTS '$transactionTableName' (
     'paymentStatus' TEXT DEFAULT 'paid',
     'paymentQR' TEXT,
     'paymentExternalId' TEXT,
+    'paymentProvider' TEXT,
+    'paymentExpectedAmount' INTEGER,
+    'paymentUniqueCode' INTEGER,
+    'paymentExpiresAt' TEXT,
+    'paymentPaidAt' TEXT,
     'createdAt' DATETIME DEFAULT CURRENT_TIMESTAMP,
     'updatedAt' DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY ('id'),
     FOREIGN KEY ('createdById') REFERENCES 'User' ('id')
+);
+''';
+
+  static const String createPaymentNotificationTable =
+      '''
+CREATE TABLE IF NOT EXISTS '$paymentNotificationTableName' (
+    'id' INTEGER PRIMARY KEY AUTOINCREMENT,
+    'notifKey' TEXT NOT NULL UNIQUE,
+    'packageName' TEXT,
+    'title' TEXT,
+    'body' TEXT,
+    'amount' INTEGER,
+    'postedAt' TEXT,
+    'capturedAt' TEXT,
+    'status' TEXT DEFAULT 'unmatched',
+    'matchedTransactionId' INTEGER,
+    'rawJson' TEXT,
+    'createdAt' DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ''';
 
@@ -222,4 +246,6 @@ CREATE TABLE IF NOT EXISTS '$purchaseItemTableName' (
       'CREATE INDEX IF NOT EXISTS idx_purchase_supplier ON Purchase(supplierId)';
   static const String createPurchaseItemProductIndex =
       'CREATE INDEX IF NOT EXISTS idx_purchase_item_product ON PurchaseItem(productId, purchaseId)';
+  static const String createTransactionPaymentStatusIndex =
+      'CREATE INDEX IF NOT EXISTS idx_transaction_payment_status ON Transaction(paymentStatus, paymentExpectedAmount)';
 }

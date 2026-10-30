@@ -4,262 +4,215 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/di/app_providers.dart';
 import '../../../core/common/result.dart';
-import '../../../core/services/payment/klik_qris_payment_service.dart';
+import '../../../core/constants/constants.dart';
+import '../../../core/services/qris/qris_converter.dart';
 import '../../../core/utilities/console_logger.dart';
 import '../../../domain/entities/transaction_entity.dart';
 import '../../../domain/usecases/transaction_usecases.dart';
+import 'dana_listener_notifier.dart';
 import 'payment_state.dart';
 
-final klikQrisPaymentNotifierProvider = NotifierProvider<KlikQrisPaymentNotifier, KlikQrisPaymentState>(
-  KlikQrisPaymentNotifier.new,
+final qrisPaymentNotifierProvider = NotifierProvider<QrisPaymentNotifier, QrisPaymentState>(
+  QrisPaymentNotifier.new,
 );
 
-class KlikQrisPaymentNotifier extends Notifier<KlikQrisPaymentState> {
-  Timer? _pollTimer;
-  Timer? _elapsedTimer;
+/// Alur pembayaran QRIS DANA Bisnis.
+///
+/// Konversi statis → dinamis dilakukan di sini, sebelum transaksi disimpan,
+/// sehingga checkout tidak pernah meninggalkan transaksi setengah jadi.
+class QrisPaymentNotifier extends Notifier<QrisPaymentState> {
+  Timer? _countdownTimer;
 
   @override
-  KlikQrisPaymentState build() {
-    ref.onDispose(() {
-      _pollTimer?.cancel();
-      _elapsedTimer?.cancel();
-    });
-    return const KlikQrisPaymentState();
+  QrisPaymentState build() {
+    ref.onDispose(_cancelTimer);
+    return const QrisPaymentState();
   }
 
-  Future<Result<int>> startKlikQrisPayment({
+  void _cancelTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
+  Future<Result<int>> startQrisPayment({
     required TransactionEntity transaction,
     required int totalAmount,
     String? description,
     bool isDirect = false,
   }) async {
-    final klikQrisService = ref.read(klikQrisPaymentServiceProvider);
+    final service = ref.read(danaQrisPaymentServiceProvider);
 
-    if (!klikQrisService.isConfigured) {
-      const message = 'KlikQRIS belum dikonfigurasi. Atur API Key dan ID Merchant terlebih dahulu.';
-      state = state.copyWith(isPolling: false, errorMessage: message);
+    if (!service.isConfigured) {
+      const message = 'QRIS DANA Bisnis belum diatur. Upload QRIS statis di Pengaturan Pembayaran.';
+      state = state.copyWith(isStarting: false, errorMessage: message);
       return Result.failure(error: message);
     }
 
     if (totalAmount <= 0) {
       const message = 'Nominal pembayaran tidak valid.';
-      state = state.copyWith(isPolling: false, errorMessage: message);
+      state = state.copyWith(isStarting: false, errorMessage: message);
       return Result.failure(error: message);
     }
 
-    state = state.copyWith(
-      isPolling: true,
-      isDirect: isDirect,
-      clearError: true,
-      manualCheckPending: false,
-    );
+    state = state.copyWith(isStarting: true, clearError: true);
 
     try {
-      final transactionRepo = ref.read(transactionRepositoryProvider);
-      final saveResult = await CreateTransactionUsecase(transactionRepo).call(
-        transaction.copyWith(paymentStatus: 'pending'),
+      final store = ref.read(danaPaymentStoreProvider);
+      final uniqueCode = service.uniqueCodeEnabled ? await store.allocateUniqueCode(baseAmount: totalAmount) : 0;
+      final expectedAmount = totalAmount + uniqueCode;
+      final payload = service.buildDynamicPayload(expectedAmount);
+      final expiresAt = DateTime.now().add(Duration(minutes: service.expiryMinutes));
+
+      final pending = transaction.copyWith(
+        paymentStatus: 'pending',
+        paymentQR: payload,
+        paymentProvider: Constants.danaProviderStatic,
+        paymentExpectedAmount: expectedAmount,
+        paymentUniqueCode: uniqueCode,
+        paymentExpiresAt: expiresAt.toIso8601String(),
       );
 
+      final transactionRepo = ref.read(transactionRepositoryProvider);
+      final saveResult = await CreateTransactionUsecase(transactionRepo).call(pending);
+
       if (saveResult.isFailure) {
-        return Result.failure(error: saveResult.error ?? 'Failed to save transaction');
+        state = state.copyWith(isStarting: false, errorMessage: saveResult.error?.toString());
+        return Result.failure(error: saveResult.error ?? 'Gagal menyimpan transaksi');
       }
 
       final transactionId = saveResult.data!;
-      final orderId = transactionId.toString();
 
-      final qrisResult = await klikQrisService.generateQris(
-        orderId: orderId,
-        grossAmount: totalAmount,
-        description: description ?? transaction.description,
-      );
-
-      if (qrisResult.isFailure) {
-        await DeleteTransactionUsecase(transactionRepo).call(transactionId);
-        state = state.copyWith(isPolling: false, errorMessage: qrisResult.error?.toString());
-        return Result.failure(error: qrisResult.error ?? 'Failed to create KlikQRIS invoice');
-      }
-
-      final qrisData = qrisResult.data!;
-      final paymentQR = qrisData.qrImageBase64.isNotEmpty ? qrisData.qrImageBase64 : qrisData.qrUrl;
-      final paymentTimeout = qrisData.expiredMinutes * 60;
-
-      cl(
-        '[KlikQRIS] paymentQR: len=${paymentQR.length} prefix=${paymentQR.length > 20 ? paymentQR.substring(0, 20) : paymentQR}',
-      );
-
-      await UpdatePaymentStatusUsecase(transactionRepo).call(
-        transactionId,
-        'pending',
-        paymentQR: paymentQR,
-        paymentExternalId: qrisData.orderId,
-      );
-
-      state = state.copyWith(
-        transaction: transaction.copyWith(
-          id: transactionId,
-          paymentStatus: 'pending',
-          paymentQR: paymentQR,
-          paymentExternalId: qrisData.orderId,
-        ),
-        qrCode: paymentQR,
+      state = QrisPaymentState(
+        transaction: pending.copyWith(id: transactionId),
+        payload: payload,
         paymentStatus: 'pending',
-        isPolling: false,
-        elapsedSeconds: 0,
-        orderId: qrisData.orderId,
-        signature: qrisData.signature,
-        totalAmount: qrisData.totalAmount,
+        totalAmount: totalAmount,
+        uniqueCode: uniqueCode,
+        expectedAmount: expectedAmount,
+        expiresAt: expiresAt,
+        remainingSeconds: service.expiryMinutes * 60,
         isDirect: isDirect,
-        clearError: true,
-        manualCheckPending: false,
       );
 
-      _startPolling(transactionId, paymentTimeout);
+      _startCountdown();
+      cl(
+        '[DANA] QRIS dinamis dibuat: base=$totalAmount code=$uniqueCode '
+        'expected=$expectedAmount len=${payload.length}',
+      );
 
       return Result.success(data: transactionId);
+    } on QrisConvertException catch (e) {
+      state = state.copyWith(isStarting: false, errorMessage: e.message);
+      return Result.failure(error: e.message);
     } catch (e) {
-      state = state.copyWith(isPolling: false, errorMessage: e.toString());
+      state = state.copyWith(isStarting: false, errorMessage: e.toString());
       return Result.failure(error: e.toString());
     }
   }
 
-  void _startPolling(int transactionId, int timeoutSeconds) {
-    _pollTimer?.cancel();
-    _elapsedTimer?.cancel();
+  void _startCountdown() {
+    _cancelTimer();
 
-    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (state.elapsedSeconds >= timeoutSeconds) {
-        _onPaymentExpired(transactionId, message: 'Waktu pembayaran habis');
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final expiresAt = state.expiresAt;
+      if (expiresAt == null) return;
+
+      final remaining = expiresAt.difference(DateTime.now()).inSeconds;
+      if (remaining <= 0) {
+        _onExpired();
         return;
       }
-      state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
+
+      state = state.copyWith(remainingSeconds: remaining);
     });
-
-    _autoPollStatus(transactionId);
   }
 
-  Future<void> _autoPollStatus(int transactionId) async {
-    final klikQrisService = ref.read(klikQrisPaymentServiceProvider);
-    int attempts = 0;
+  Future<void> _onExpired() async {
+    _cancelTimer();
 
-    if (state.orderId.isEmpty) return;
+    final transactionId = state.transaction?.id;
+    state = state.copyWith(paymentStatus: 'expired', remainingSeconds: 0);
 
-    while (state.paymentStatus == 'pending' && attempts < 3) {
-      await Future.delayed(const Duration(seconds: 15));
-      attempts++;
-
-      if (state.orderId.isEmpty || state.paymentStatus != 'pending') return;
-
-      final result = await klikQrisService.queryQrisStatus(
-        orderId: state.orderId,
-        expectedTotalAmount: state.totalAmount > 0 ? state.totalAmount : null,
-      );
-
-      if (result.isFailure) {
-        cl('[KlikQRIS] auto poll failed: ${result.error}');
-        continue;
-      }
-
-      switch (result.data!) {
-        case KlikQrisPaymentStatus.paid:
-          await _onPaymentSuccess(transactionId);
-          return;
-        case KlikQrisPaymentStatus.expired:
-          await _onPaymentExpired(transactionId);
-          return;
-        case KlikQrisPaymentStatus.pending:
-          break;
-      }
-    }
-
-    if (state.paymentStatus == 'pending') {
-      state = state.copyWith(autoCheckDone: true);
-    }
-  }
-
-  Future<void> checkPaymentManually() async {
-    if (state.transaction == null || state.paymentStatus != 'pending' || state.orderId.isEmpty) {
-      return;
-    }
-
-    state = state.copyWith(
-      isManualChecking: true,
-      manualCheckPending: false,
-      clearError: true,
-    );
-
-    final klikQrisService = ref.read(klikQrisPaymentServiceProvider);
-    final result = await klikQrisService.queryQrisStatus(
-      orderId: state.orderId,
-      expectedTotalAmount: state.totalAmount > 0 ? state.totalAmount : null,
-    );
-
-    if (result.isFailure) {
-      cl('[KlikQRIS] manual check failed: ${result.error}');
-      state = state.copyWith(
-        isManualChecking: false,
-        errorMessage: result.error?.toString() ?? 'Gagal cek status pembayaran',
-      );
-      return;
-    }
-
-    switch (result.data!) {
-      case KlikQrisPaymentStatus.paid:
-        await _onPaymentSuccess(state.transaction!.id!);
-      case KlikQrisPaymentStatus.expired:
-        await _onPaymentExpired(state.transaction!.id!);
-      case KlikQrisPaymentStatus.pending:
-        state = state.copyWith(
-          isManualChecking: false,
-          manualCheckPending: true,
-        );
-    }
-  }
-
-  Future<void> _onPaymentSuccess(int transactionId) async {
-    _pollTimer?.cancel();
-    _elapsedTimer?.cancel();
-
-    state = state.copyWith(
-      paymentStatus: 'paid',
-      clearError: true,
-      manualCheckPending: false,
-    );
-
-    final transactionRepo = ref.read(transactionRepositoryProvider);
-    await UpdatePaymentStatusUsecase(transactionRepo).call(transactionId, 'paid');
-
-    final transactionResult = await GetTransactionUsecase(transactionRepo).call(transactionId);
-    if (transactionResult.isSuccess && transactionResult.data != null) {
-      final tts = ref.read(ttsServiceProvider);
-      await tts.playCashRegister();
-      final spokenAmount = state.totalAmount > 0 ? state.totalAmount : transactionResult.data!.totalAmount;
-      await tts.speakAmount(spokenAmount);
-    }
-  }
-
-  Future<void> _onPaymentExpired(int transactionId, {String? message}) async {
-    _pollTimer?.cancel();
-    _elapsedTimer?.cancel();
-
-    state = state.copyWith(
-      paymentStatus: 'expired',
-      errorMessage: message ?? 'Pembayaran kedaluwarsa',
-      isManualChecking: false,
-      manualCheckPending: false,
-    );
+    if (transactionId == null) return;
 
     final transactionRepo = ref.read(transactionRepositoryProvider);
     await UpdatePaymentStatusUsecase(transactionRepo).call(transactionId, 'expired');
   }
 
-  void cancelPolling() {
-    _pollTimer?.cancel();
-    _elapsedTimer?.cancel();
+  /// Dipanggil listener notifikasi DANA (atau tombol "Tandai Lunas").
+  Future<void> handlePaidTransaction(int transactionId, {int? amount}) async {
+    if (state.isPaid) return;
+
+    final isCurrentTransaction = state.transaction?.id == transactionId;
+    if (!isCurrentTransaction) return;
+
+    _cancelTimer();
+
+    state = state.copyWith(
+      paymentStatus: 'paid',
+      clearError: true,
+      remainingSeconds: 0,
+    );
+  }
+
+  Future<void> markPaidManually() async {
+    final transactionId = state.transaction?.id;
+    if (transactionId == null || state.isPaid) return;
+
+    state = state.copyWith(isManualChecking: true, clearError: true);
+
+    final transactionRepo = ref.read(transactionRepositoryProvider);
+    final result = await UpdatePaymentStatusUsecase(transactionRepo).call(transactionId, 'paid');
+
+    state = state.copyWith(isManualChecking: false);
+
+    if (result.isFailure) {
+      state = state.copyWith(errorMessage: result.error?.toString());
+      return;
+    }
+
+    final tts = ref.read(ttsServiceProvider);
+    await tts.playCashRegister();
+    await tts.speakAmount(state.expectedAmount);
+
+    await handlePaidTransaction(transactionId);
+  }
+
+  /// Drain queue notifikasi native lalu coba cocokkan ulang.
+  Future<void> checkPaymentManually() async {
+    if (state.isPaid) return;
+
+    state = state.copyWith(isManualChecking: true, clearError: true);
+
+    try {
+      await ref.read(danaListenerProvider.notifier).drainQueue();
+    } catch (e) {
+      cl('[DANA] drain queue gagal: $e');
+    }
+
+    if (!state.isPaid) {
+      state = state.copyWith(isManualChecking: false);
+    }
+  }
+
+  /// Batalkan pembayaran: hapus transaksi supaya stok kembali.
+  Future<Result<void>> cancelPayment() async {
+    _cancelTimer();
+
+    final transactionId = state.transaction?.id;
+
+    // Reset state (bukan 'expired') supaya dialog kedaluwarsa tidak sempat
+    // muncul saat layar ditutup setelah pembatalan.
+    state = const QrisPaymentState();
+
+    if (transactionId == null) return Result.success(data: null);
+
+    final transactionRepo = ref.read(transactionRepositoryProvider);
+    return DeleteTransactionUsecase(transactionRepo).call(transactionId);
   }
 
   void reset() {
-    _pollTimer?.cancel();
-    _elapsedTimer?.cancel();
-    state = const KlikQrisPaymentState();
+    _cancelTimer();
+    state = const QrisPaymentState();
   }
 }
