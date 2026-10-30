@@ -2,6 +2,8 @@ package com.monodev.monopos
 
 import android.content.ComponentName
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import io.flutter.embedding.android.FlutterActivity
@@ -24,11 +26,26 @@ class MainActivity : FlutterActivity() {
                     "isConnected" -> result.success(DanaNotificationListenerService.isConnected)
 
                     "openPermissionSettings" -> {
-                        try {
-                            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                        if (openNotificationAccessSettings()) {
                             result.success(null)
-                        } catch (e: Exception) {
-                            result.error("OPEN_SETTINGS_FAILED", e.message, null)
+                        } else {
+                            result.error(
+                                "OPEN_SETTINGS_FAILED",
+                                "Pengaturan akses notifikasi tidak tersedia di perangkat ini",
+                                null,
+                            )
+                        }
+                    }
+
+                    "openAppDetails" -> {
+                        val intent = Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.parse("package:$packageName"),
+                        )
+                        if (tryStartActivity(intent)) {
+                            result.success(null)
+                        } else {
+                            result.error("OPEN_SETTINGS_FAILED", "Info aplikasi tidak bisa dibuka", null)
                         }
                     }
 
@@ -70,5 +87,46 @@ class MainActivity : FlutterActivity() {
                     DanaListenerBridge.eventSink = null
                 }
             })
+    }
+
+    /**
+     * Buka halaman akses notifikasi sedetail mungkin.
+     *
+     * Android 11+ mendukung intent langsung ke komponen listener Mono POS,
+     * sehingga pengguna tidak perlu mencari di daftar panjang. Beberapa ROM
+     * (mis. XOS/Infinix) menolak intent detail, jadi selalu ada fallback ke
+     * daftar listener lalu ke halaman info aplikasi.
+     */
+    private fun openNotificationAccessSettings(): Boolean {
+        val component = ComponentName(this, DanaNotificationListenerService::class.java)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val detailIntent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS).apply {
+                putExtra(
+                    Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+                    component.flattenToString(),
+                )
+            }
+
+            if (tryStartActivity(detailIntent)) return true
+        }
+
+        if (tryStartActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) return true
+
+        return tryStartActivity(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:$packageName"),
+            ),
+        )
+    }
+
+    private fun tryStartActivity(intent: Intent): Boolean {
+        return try {
+            startActivity(intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 }

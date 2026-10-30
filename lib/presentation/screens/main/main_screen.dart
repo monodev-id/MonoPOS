@@ -7,6 +7,7 @@ import '../../../core/themes/app_sizes.dart';
 import '../../../generated/app_localizations.dart';
 import '../../providers/main/main_notifier.dart';
 import '../splash/splash_screen.dart';
+import 'components/dana_permission_onboarding.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   final Widget child;
@@ -54,11 +55,9 @@ class _MainScreenState extends ConsumerState<MainScreen> with WidgetsBindingObse
       return const SplashScreen();
     }
 
-    if (isWide) {
-      return _WideLayout(child: widget.child);
-    }
-
-    return _NarrowLayout(child: widget.child);
+    return DanaPermissionOnboarding(
+      child: isWide ? _WideLayout(child: widget.child) : _NarrowLayout(child: widget.child),
+    );
   }
 }
 

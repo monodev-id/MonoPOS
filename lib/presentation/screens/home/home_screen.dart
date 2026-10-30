@@ -33,6 +33,7 @@ import 'components/barcode_scanner_screen.dart';
 import 'components/cart_panel_body.dart';
 import 'components/cart_panel_footer.dart';
 import 'components/cart_panel_header.dart';
+import 'components/dana_permission_banner.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -144,6 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         appBar: _AppBar(searchFieldController: searchFieldController),
         body: Column(
           children: [
+            const DanaPermissionBanner(),
             const _UpdateBanner(),
             Expanded(
               child: Row(
@@ -199,6 +201,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 appBar: _AppBar(searchFieldController: searchFieldController),
                 body: Column(
                   children: [
+                    const DanaPermissionBanner(),
                     const _UpdateBanner(),
                     Expanded(
                       child: _ProductGrid(

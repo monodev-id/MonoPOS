@@ -78,6 +78,17 @@ class DanaNotificationService {
     }
   }
 
+  /// Buka halaman Info Aplikasi (tempat menu "Allow restricted settings").
+  Future<void> openAppDetails() async {
+    try {
+      await _method.invokeMethod<void>('openAppDetails');
+    } on PlatformException {
+      // Diabaikan.
+    } on MissingPluginException {
+      // Platform selain Android.
+    }
+  }
+
   Future<List<DanaNotificationEvent>> getPendingEvents() async {
     try {
       final raw = await _method.invokeMethod<List<dynamic>>('getPendingEvents');

@@ -180,6 +180,36 @@ class DanaListenerNotifier extends Notifier<DanaListenerState> {
     );
   }
 
+  /// Sinkronkan status setelah aplikasi kembali aktif, mis. sepulang dari
+  /// halaman izin Android. Bila izin baru saja diberikan, service dipaksa
+  /// bind ulang lalu queue notifikasi lama diproses.
+  Future<void> syncAfterResume() async {
+    final hadPermission = state.isPermissionGranted;
+
+    await refreshStatus();
+
+    if (state.isPermissionGranted && !state.isServiceConnected) {
+      await _service.requestRebind();
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+      await refreshStatus();
+    }
+
+    if (!hadPermission && state.isPermissionGranted) {
+      await drainQueue();
+    }
+  }
+
+  Future<void> openPermissionSettings() => _service.openPermissionSettings();
+
+  Future<void> openAppDetails() => _service.openAppDetails();
+
+  /// Paksa service listener bind ulang (dipakai tombol "Muat ulang").
+  Future<void> rebindService() async {
+    await _service.requestRebind();
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    await refreshStatus();
+  }
+
   Future<void> drainQueue() async {
     if (_starting) return;
 

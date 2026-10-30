@@ -27,6 +27,11 @@ class Constants {
   static const String danaListenerPackages = 'dana_listener_packages';
   static const String danaLastListenerSync = 'dana_last_listener_sync';
 
+  // Prompt akses notifikasi (Notification Listener) saat aplikasi dibuka.
+  static const String danaListenerPromptShown = 'dana_listener_prompt_shown';
+  static const String danaListenerPromptSnoozedUntil = 'dana_listener_prompt_snoozed_until';
+  static const int danaListenerPromptSnoozeHours = 24;
+
   static const String danaProviderStatic = 'dana_static';
 
   static const int minSyncIntervalToleranceForCriticalInMinutes = 5;

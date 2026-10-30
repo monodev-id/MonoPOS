@@ -34,11 +34,13 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
     if (state != AppLifecycleState.resumed) return;
 
     // Listener mungkin belum siap (mis. DB belum selesai init), jadi aman
-    // untuk dipanggil ulang saat aplikasi kembali aktif.
+    // untuk dipanggil ulang saat aplikasi kembali aktif. Status izin juga
+    // disegarkan supaya perubahan dari halaman Settings langsung terpakai.
     final listener = ref.read(danaListenerProvider.notifier);
     final snapshot = ref.read(danaListenerProvider);
 
     if (snapshot.isStarted) {
+      listener.syncAfterResume();
       listener.drainQueue();
     } else {
       listener.ensureStarted();
