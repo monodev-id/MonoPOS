@@ -153,7 +153,8 @@ class QrisImageDecoder {
 
   /// Ubah payload mentah hasil scan menjadi QRIS statis yang siap disimpan.
   _QrisCandidate? _interpret(String raw) {
-    final normalized = raw.replaceAll(RegExp(r'\s+'), '').trim();
+    // Jangan hapus spasi: spasi adalah bagian sah dari nilai tag 59/60.
+    final normalized = sanitizeQrisInput(raw);
     if (normalized.isEmpty || !normalized.startsWith(qrisPayloadPrefix)) {
       return null;
     }

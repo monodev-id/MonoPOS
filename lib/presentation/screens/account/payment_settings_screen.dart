@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/services/qris/qris_normalizer.dart';
 import '../../../core/themes/app_sizes.dart';
 import '../../providers/account/payment_settings_notifier.dart';
 import '../../providers/account/payment_settings_state.dart';
@@ -83,9 +84,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       previous,
       next,
     ) {
-      final normalized = _qrisController.text
-          .replaceAll(RegExp(r'\s+'), '')
-          .trim();
+      final normalized = sanitizeQrisInput(_qrisController.text);
       if (normalized != next && _qrisController.text != next) {
         _qrisController.text = next;
       }

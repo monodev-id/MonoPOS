@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mono_pos/core/services/payment/qris_dart_decoder.dart';
 import 'package:mono_pos/core/services/qris/qris_merchant_info.dart';
+import 'package:mono_pos/core/services/qris/qris_normalizer.dart';
 import 'package:mono_pos/core/services/qris/qris_validator.dart';
 
 const _expectedPayload =
@@ -26,10 +27,13 @@ void main() {
     expect(result.width, 1136);
     expect(result.height, 1600);
 
-    // Payload hasil decode harus lolos validasi & terbaca merchant-nya.
-    expect(validateQris(result.payload!, requireStatic: true).isValid, isTrue);
+    // Payload hasil decode harus lolos sanitasi & validasi seperti di aplikasi.
+    final sanitized = sanitizeQrisInput(result.payload!);
+    expect(sanitized, _expectedPayload);
+    expect(sanitizeQrisInput(sanitized), sanitized);
+    expect(validateQris(sanitized, requireStatic: true).isValid, isTrue);
 
-    final info = QrisMerchantInfo.tryParse(result.payload!);
+    final info = QrisMerchantInfo.tryParse(sanitized);
     expect(info, isNotNull);
     expect(info!.merchantName, 'Kedai Dua Putri');
     expect(info.merchantCity, 'Kab. Padang Par');

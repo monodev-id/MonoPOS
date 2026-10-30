@@ -186,6 +186,38 @@ void main() {
     });
   });
 
+  group('sanitizeQrisInput', () {
+    test('mempertahankan spasi di nama merchant dan kota', () {
+      final sanitized = sanitizeQrisInput(_kedaiDuaPutriQris);
+
+      expect(sanitized, _kedaiDuaPutriQris);
+      expect(sanitized.contains('Kedai Dua Putri'), isTrue);
+      expect(sanitized.contains('Kab. Padang Par'), isTrue);
+      expect(validateQris(sanitized, requireStatic: true).isValid, isTrue);
+      expect(isCrcValid(sanitized), isTrue);
+    });
+
+    test('membuang newline, tab, BOM, dan zero-width space', () {
+      final dirty =
+          '\uFEFF${_kedaiDuaPutriQris.substring(0, 40)}\n\t'
+          '${_kedaiDuaPutriQris.substring(40)}\u200B';
+
+      expect(sanitizeQrisInput(dirty), _kedaiDuaPutriQris);
+      expect(
+        validateQris(sanitizeQrisInput(dirty), requireStatic: true).isValid,
+        isTrue,
+      );
+    });
+
+    test('menghapus spasi merusak CRC (regresi bug 45E7 -> 9421)', () {
+      final withoutSpaces = _kedaiDuaPutriQris.replaceAll(' ', '');
+      final body = withoutSpaces.substring(0, withoutSpaces.length - 4);
+
+      expect(calculateCrc16(body), '9421');
+      expect(validateQris(withoutSpaces).isValid, isFalse);
+    });
+  });
+
   group('toStaticQris', () {
     test('QRIS statis tetap sama setelah dinormalisasi', () {
       final normalized = toStaticQris(_kedaiDuaPutriQris);

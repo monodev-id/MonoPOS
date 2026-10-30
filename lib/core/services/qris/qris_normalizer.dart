@@ -19,6 +19,33 @@ class QrisNormalizeException implements Exception {
 const Set<String> _dynamicOnlyTags = {'54', '55', '56', '57', '63'};
 const String _crcPlaceholder = '6304';
 
+/// Karakter tak terlihat yang sering ikut saat menyalin payload dari web/chat.
+const Set<int> _invisibleCodePoints = {
+  0xFEFF, // BOM / zero-width no-break space
+  0x200B, // zero-width space
+  0x200C, // zero-width non-joiner
+  0x200D, // zero-width joiner
+  0x2060, // word joiner
+};
+
+/// Bersihkan input QRIS tanpa merusak isi payload.
+///
+/// **Spasi di dalam payload tidak boleh dihapus** karena merupakan bagian sah
+/// dari nilai tag (mis. nama merchant "Kedai Dua Putri" dan kota
+/// "Kab. Padang Par"). Yang dibuang hanya whitespace di tepi, karakter kontrol
+/// (baris baru/tab), dan karakter tak terlihat hasil copy-paste.
+String sanitizeQrisInput(String input) {
+  final buffer = StringBuffer();
+
+  for (final codePoint in input.runes) {
+    if (codePoint < 0x20 || codePoint == 0x7F) continue;
+    if (_invisibleCodePoints.contains(codePoint)) continue;
+    buffer.writeCharCode(codePoint);
+  }
+
+  return buffer.toString().trim();
+}
+
 /// Kembalikan QRIS statis hasil normalisasi.
 ///
 /// [qris] harus berupa payload TLV QRIS (boleh statis maupun dinamis).

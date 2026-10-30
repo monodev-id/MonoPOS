@@ -109,7 +109,7 @@ class PaymentSettingsNotifier
   }
 
   void applyQrisText(String value) {
-    final normalized = value.replaceAll(RegExp(r'\s+'), '').trim();
+    final normalized = sanitizeQrisInput(value);
     if (normalized.isEmpty) {
       state = state.copyWith(
         staticQris: '',
@@ -126,7 +126,7 @@ class PaymentSettingsNotifier
   }
 
   void _applyQris(String qris, {bool wasDynamic = false}) {
-    final normalized = qris.replaceAll(RegExp(r'\s+'), '').trim();
+    final normalized = sanitizeQrisInput(qris);
 
     // QRIS dinamis (tag 01 = 12 / ada nominal) dinormalisasi menjadi statis
     // supaya tetap bisa dipakai sebagai basis transaksi berikutnya.
