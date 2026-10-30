@@ -498,13 +498,17 @@ Banner + badge status koneksi (real-time dari PrinterManager) di layar printer s
 
 ### 8c. Pengaturan Pembayaran (DANA Bisnis QRIS)
 
-- Upload gambar QRIS statis / scan kamera / tempel payload; gambar hanya di-decode lalu dihapus,
-  yang disimpan hanya string QRIS (`dana_qris_static`). Preview QR + info merchant/NMID ditampilkan
+- Upload gambar QRIS / scan kamera / tempel payload / **tempel dari clipboard**; gambar hanya di-decode
+  lalu dihapus, yang disimpan hanya string QRIS (`dana_qris_static`). Preview QR + info merchant/NMID
+- Decode berlapis: MLKit native → fallback Dart (ZXing port) dengan resize maks. 2048 px, kontras,
+  invert, dan rotasi; pesan error menyebut penyebab spesifik
+- QRIS dinamis (tag 01 = 12 / ada nominal) otomatis dinormalisasi menjadi statis (tag 54/55/56/57
+  dibuang, tag 01 = 11, CRC dihitung ulang) sebelum disimpan
 - Kartu listener: status akses notifikasi, tombol **Buka Akses Notifikasi**, **Uji Listener**,
   riwayat notifikasi terakhir, dan **Bersihkan**
 - Preferensi: kode unik otomatis, listener notifikasi, suara/TTS, masa berlaku QRIS (5/10/15/30 menit)
 - Tombol **Simpan Pengaturan** eksplisit + `AppSuccessOverlay`; menyimpan juga menyalakan/mematikan listener
-- QRIS wajib valid & statis (tag 01 = 11, CRC benar); QRIS dinamis ditolak
+- QRIS yang disimpan wajib valid & statis (tag 01 = 11, CRC benar)
 
 ### 8d. Data Produk (Backup)
 

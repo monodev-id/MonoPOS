@@ -19,7 +19,8 @@ class QrisMerchantInfo {
     this.crcValid = false,
   });
 
-  bool get isEmpty => merchantName.isEmpty && nmid.isEmpty && merchantId.isEmpty;
+  bool get isEmpty =>
+      merchantName.isEmpty && nmid.isEmpty && merchantId.isEmpty;
 
   static QrisMerchantInfo? tryParse(String qris) {
     try {
@@ -44,9 +45,37 @@ class QrisMerchantInfo {
         final children = element.children;
         if (children == null || children.isEmpty) continue;
 
-        acquirer = children.where((c) => c.tag == '00').map((c) => c.value).firstOrNull ?? acquirer;
-        nmid = children.where((c) => c.tag == '02').map((c) => c.value).firstOrNull ?? '';
-        merchantId = children.where((c) => c.tag == '01').map((c) => c.value).firstOrNull ?? '';
+        // Acquirer diambil dari merchant account info pertama (biasanya tag 26).
+        // Tag 51 (ID.CO.QRIS.WWW) hanya template switch nasional.
+        if (acquirer.isEmpty) {
+          acquirer =
+              children
+                  .where((c) => c.tag == '00')
+                  .map((c) => c.value)
+                  .firstOrNull ??
+              '';
+        }
+
+        // NMID nasional selalu diawali "ID"; nilai lain (mis. nomor merchant
+        // internal acquirer) tidak dipakai.
+        final childNmid = children
+            .where((c) => c.tag == '02')
+            .map((c) => c.value)
+            .firstOrNull;
+        if (childNmid != null && childNmid.isNotEmpty) {
+          if (childNmid.startsWith('ID') || nmid.isEmpty) {
+            nmid = childNmid;
+          }
+        }
+
+        if (merchantId.isEmpty) {
+          merchantId =
+              children
+                  .where((c) => c.tag == '01')
+                  .map((c) => c.value)
+                  .firstOrNull ??
+              '';
+        }
       }
 
       return QrisMerchantInfo(

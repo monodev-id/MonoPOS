@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:barcode_widget/barcode_widget.dart' as bw;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -16,7 +17,8 @@ class PaymentSettingsScreen extends ConsumerStatefulWidget {
   const PaymentSettingsScreen({super.key});
 
   @override
-  ConsumerState<PaymentSettingsScreen> createState() => _PaymentSettingsScreenState();
+  ConsumerState<PaymentSettingsScreen> createState() =>
+      _PaymentSettingsScreenState();
 }
 
 class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
@@ -42,7 +44,9 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
     if (!mounted) return;
     final state = ref.read(paymentSettingsNotifierProvider);
 
-    if (state.qrisError != null && state.staticQris.isNotEmpty && !state.isQrisValid) {
+    if (state.qrisError != null &&
+        state.staticQris.isNotEmpty &&
+        !state.isQrisValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(state.qrisError!)),
       );
@@ -52,13 +56,36 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
     AppSuccessOverlay.show('Pengaturan pembayaran tersimpan');
   }
 
+  Future<void> _pasteFromClipboard() async {
+    final notifier = ref.read(paymentSettingsNotifierProvider.notifier);
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text?.trim() ?? '';
+
+    if (!mounted) return;
+
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clipboard kosong')),
+      );
+      return;
+    }
+
+    _qrisController.text = text;
+    notifier.applyQrisText(text);
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(paymentSettingsNotifierProvider);
     final notifier = ref.read(paymentSettingsNotifierProvider.notifier);
 
-    ref.listen(paymentSettingsNotifierProvider.select((s) => s.staticQris), (previous, next) {
-      final normalized = _qrisController.text.replaceAll(RegExp(r'\s+'), '').trim();
+    ref.listen(paymentSettingsNotifierProvider.select((s) => s.staticQris), (
+      previous,
+      next,
+    ) {
+      final normalized = _qrisController.text
+          .replaceAll(RegExp(r'\s+'), '')
+          .trim();
       if (normalized != next && _qrisController.text != next) {
         _qrisController.text = next;
       }
@@ -81,20 +108,31 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                   _QrisCard(
                     state: state,
                     isDecoding: state.isDecoding,
-                    onPickGallery: () => notifier.pickQrisImage(source: ImageSource.gallery),
-                    onPickCamera: () => notifier.pickQrisImage(source: ImageSource.camera),
+                    onPickGallery: () =>
+                        notifier.pickQrisImage(source: ImageSource.gallery),
+                    onPickCamera: () =>
+                        notifier.pickQrisImage(source: ImageSource.camera),
                     onClear: notifier.clearQris,
                   ),
                   const SizedBox(height: AppSizes.padding),
                   AppTextField(
                     controller: _qrisController,
                     labelText: 'Kode QRIS statis',
-                    hintText: 'Tempel kode QRIS dari DANA Bisnis bila upload gagal',
+                    hintText:
+                        'Tempel kode QRIS dari DANA Bisnis bila upload gagal',
                     minLines: 3,
                     maxLines: 5,
                     onChanged: notifier.applyQrisText,
                   ),
-                  const SizedBox(height: AppSizes.padding),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _pasteFromClipboard,
+                      icon: const Icon(Icons.content_paste_go, size: 18),
+                      label: const Text('Tempel dari clipboard'),
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.padding / 2),
                   _MerchantInfoCard(state: state),
                   const SizedBox(height: AppSizes.padding * 1.5),
                   const _SectionTitle(text: 'Listener Pembayaran DANA'),
@@ -110,14 +148,16 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
                   const SizedBox(height: AppSizes.padding / 2),
                   _SwitchTile(
                     title: 'Kode unik otomatis',
-                    subtitle: 'Tambahkan kode 1-99 pada nominal agar pembayaran bisa dicocokkan dengan tepat',
+                    subtitle:
+                        'Tambahkan kode 1-99 pada nominal agar pembayaran bisa dicocokkan dengan tepat',
                     value: state.uniqueCodeEnabled,
                     onChanged: notifier.onChangedUniqueCode,
                   ),
                   const SizedBox(height: AppSizes.padding / 2),
                   _SwitchTile(
                     title: 'Listener notifikasi',
-                    subtitle: 'Tandai transaksi lunas otomatis dari notifikasi aplikasi DANA',
+                    subtitle:
+                        'Tandai transaksi lunas otomatis dari notifikasi aplikasi DANA',
                     value: state.listenerEnabled,
                     onChanged: notifier.onChangedListenerEnabled,
                   ),
@@ -214,13 +254,19 @@ class _QrisCard extends StatelessWidget {
                         color: Colors.black,
                         backgroundColor: Colors.white,
                       )
-                    : const Icon(Icons.qr_code_2, size: 72, color: Colors.black45),
+                    : const Icon(
+                        Icons.qr_code_2,
+                        size: 72,
+                        color: Colors.black45,
+                      ),
               ),
             )
           else
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.padding * 1.5),
+              padding: const EdgeInsets.symmetric(
+                vertical: AppSizes.padding * 1.5,
+              ),
               decoration: BoxDecoration(
                 color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(AppSizes.radius),
@@ -228,7 +274,11 @@ class _QrisCard extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.upload_file_outlined, size: 42, color: scheme.outline),
+                  Icon(
+                    Icons.upload_file_outlined,
+                    size: 42,
+                    color: scheme.outline,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Upload gambar QRIS statis dari aplikasi DANA Bisnis',
@@ -243,6 +293,21 @@ class _QrisCard extends StatelessWidget {
             Text(
               state.qrisError!,
               style: TextStyle(fontSize: 12, color: scheme.error),
+            ),
+          ],
+          if (state.qrisNotice != null) ...[
+            const SizedBox(height: AppSizes.padding / 2),
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 14, color: scheme.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    state.qrisNotice!,
+                    style: TextStyle(fontSize: 12, color: scheme.primary),
+                  ),
+                ),
+              ],
             ),
           ],
           if (supportsPick) ...[
@@ -427,7 +492,9 @@ class _ListenerCard extends StatelessWidget {
               children: [
                 Text(
                   'Notifikasi terakhir',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 TextButton(
@@ -446,7 +513,10 @@ class _ListenerCard extends StatelessWidget {
                       notif.title.isEmpty ? notif.packageName : notif.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       notif.body,
@@ -502,7 +572,9 @@ class _SwitchTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -547,7 +619,9 @@ class _ExpiryTile extends StatelessWidget {
               children: [
                 Text(
                   'Masa berlaku QRIS',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -562,12 +636,20 @@ class _ExpiryTile extends StatelessWidget {
           DropdownButton<int>(
             value: value,
             underline: const SizedBox.shrink(),
-            items: const [
-              5,
-              10,
-              15,
-              30,
-            ].map((minutes) => DropdownMenuItem(value: minutes, child: Text('$minutes mnt'))).toList(),
+            items:
+                const [
+                      5,
+                      10,
+                      15,
+                      30,
+                    ]
+                    .map(
+                      (minutes) => DropdownMenuItem(
+                        value: minutes,
+                        child: Text('$minutes mnt'),
+                      ),
+                    )
+                    .toList(),
             onChanged: (minutes) {
               if (minutes != null) onChanged(minutes);
             },
@@ -612,7 +694,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 }

@@ -8,15 +8,18 @@ import '../../../core/constants/constants.dart';
 import '../../../core/services/payment/dana_notification_service.dart';
 import '../../../core/services/payment/qris_image_decoder.dart';
 import '../../../core/services/qris/qris_merchant_info.dart';
+import '../../../core/services/qris/qris_normalizer.dart';
 import '../../../core/services/qris/qris_validator.dart';
 import '../payment/dana_listener_notifier.dart';
 import 'payment_settings_state.dart';
 
-final paymentSettingsNotifierProvider = NotifierProvider.autoDispose<PaymentSettingsNotifier, PaymentSettingsState>(
-  PaymentSettingsNotifier.new,
-);
+final paymentSettingsNotifierProvider =
+    NotifierProvider.autoDispose<PaymentSettingsNotifier, PaymentSettingsState>(
+      PaymentSettingsNotifier.new,
+    );
 
-class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> {
+class PaymentSettingsNotifier
+    extends AutoDisposeNotifier<PaymentSettingsState> {
   String _originalQris = '';
   bool _originalTts = true;
   bool _originalUniqueCode = true;
@@ -35,7 +38,8 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
     final tts = service.isTtsEnabled;
     final uniqueCode = service.uniqueCodeEnabled;
     final expiry = service.expiryMinutes;
-    final listenerEnabled = prefs.getBool(Constants.danaListenerEnabled) ?? true;
+    final listenerEnabled =
+        prefs.getBool(Constants.danaListenerEnabled) ?? true;
 
     _originalQris = qris;
     _originalTts = tts;
@@ -69,12 +73,17 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
   }
 
   Future<void> pickQrisImage({required ImageSource source}) async {
-    state = state.copyWith(isDecoding: true, clearQrisError: true);
+    state = state.copyWith(
+      isDecoding: true,
+      clearQrisError: true,
+      clearQrisNotice: true,
+    );
 
     try {
       final picked = await ImagePicker().pickImage(
         source: source,
-        maxWidth: 1600,
+        maxWidth: 2400,
+        imageQuality: 100,
       );
 
       if (picked == null) {
@@ -92,7 +101,7 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
         return;
       }
 
-      _applyQris(result.payload!);
+      _applyQris(result.payload!, wasDynamic: result.wasDynamic);
       state = state.copyWith(isDecoding: false, clearQrisError: true);
     } catch (e) {
       state = state.copyWith(isDecoding: false, qrisError: e.toString());
@@ -102,7 +111,12 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
   void applyQrisText(String value) {
     final normalized = value.replaceAll(RegExp(r'\s+'), '').trim();
     if (normalized.isEmpty) {
-      state = state.copyWith(staticQris: '', isQrisValid: false, qrisError: 'QRIS masih kosong');
+      state = state.copyWith(
+        staticQris: '',
+        isQrisValid: false,
+        qrisError: 'QRIS masih kosong',
+        clearQrisNotice: true,
+      );
       _updateHasChanges();
       return;
     }
@@ -111,20 +125,35 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
     _updateHasChanges();
   }
 
-  void _applyQris(String qris) {
+  void _applyQris(String qris, {bool wasDynamic = false}) {
     final normalized = qris.replaceAll(RegExp(r'\s+'), '').trim();
-    final validation = validateQris(normalized, requireStatic: true);
-    final info = QrisMerchantInfo.tryParse(normalized);
+
+    // QRIS dinamis (tag 01 = 12 / ada nominal) dinormalisasi menjadi statis
+    // supaya tetap bisa dipakai sebagai basis transaksi berikutnya.
+    var candidate = normalized;
+    var dynamicDetected = wasDynamic;
+    final baseValidation = validateQris(normalized);
+    if (baseValidation.isValid && isDynamicQris(normalized)) {
+      candidate = toStaticQris(normalized);
+      dynamicDetected = true;
+    }
+
+    final validation = validateQris(candidate, requireStatic: true);
+    final info = QrisMerchantInfo.tryParse(candidate);
 
     state = state.copyWith(
-      staticQris: normalized,
+      staticQris: candidate,
       isQrisValid: validation.isValid,
       qrisError: validation.isValid ? null : _qrisErrorMessage(validation),
+      qrisNotice: validation.isValid && dynamicDetected
+          ? 'QRIS dinamis terdeteksi dan otomatis dijadikan statis.'
+          : null,
       merchantName: info?.merchantName ?? '',
       merchantCity: info?.merchantCity ?? '',
       nmid: info?.nmid ?? '',
       acquirer: info?.acquirer ?? '',
       clearQrisError: validation.isValid,
+      clearQrisNotice: !(validation.isValid && dynamicDetected),
     );
   }
 
@@ -137,7 +166,9 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
       acquirer: '',
       isQrisValid: false,
       qrisError: null,
+      qrisNotice: null,
       clearQrisError: true,
+      clearQrisNotice: true,
     );
     _updateHasChanges();
   }
@@ -197,7 +228,9 @@ class PaymentSettingsNotifier extends AutoDisposeNotifier<PaymentSettingsState> 
     await service.setExpiryMinutes(state.expiryMinutes);
 
     // Nyalakan/matikan listener sekaligus, tidak hanya menyimpan preferensi.
-    await ref.read(danaListenerProvider.notifier).setEnabled(state.listenerEnabled);
+    await ref
+        .read(danaListenerProvider.notifier)
+        .setEnabled(state.listenerEnabled);
     await refreshListener();
 
     // Samakan key lama supaya layar lain yang masih membacanya ikut berubah.

@@ -185,7 +185,7 @@ presentation
 - **Purchase/supplier modules**: Local-only repositories; purchase items snapshot product name/unit and store `baseUnitPrice` (HPP per base unit); stock/HPP recalculation lives in the local datasource transaction
 - **Shared dialogs**: Static class with private constructor and static `show()` method
 - **Service classes**: Static class with private constructor for utilities (e.g. `PrinterService`, `DeviceInfoService`)
-- **QRIS payments (DANA Bisnis)**: Static merchant QRIS is stored as a string in `SharedPreferences` and converted to a dynamic payload at checkout (`convertQris`, EMVCo TLV + CRC16). Only the payload string is persisted in `Transaction.paymentQR`; uploaded images are decoded locally and deleted. Incoming DANA notifications are captured by a native `NotificationListenerService`, queued durably, then matched to the pending transaction by `paymentExpectedAmount` (base amount + unique code) to set `paymentStatus = paid`.
+- **QRIS payments (DANA Bisnis)**: Static merchant QRIS is stored as a string in `SharedPreferences` and converted to a dynamic payload at checkout (`convertQris`, EMVCo TLV + CRC16). Only the payload string is persisted in `Transaction.paymentQR`; uploaded images are decoded locally (MLKit native, then a pure-Dart zxing2 fallback with resize/contrast/invert/rotate) and deleted; uploaded dynamic QRIS is normalized back to static before saving. Incoming DANA notifications are captured by a native `NotificationListenerService`, queued durably, then matched to the pending transaction by `paymentExpectedAmount` (base amount + unique code) to set `paymentStatus = paid`.
 
 ## Reference Docs
 

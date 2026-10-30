@@ -8,6 +8,7 @@ class PaymentSettingsState {
   final String acquirer;
   final bool isQrisValid;
   final String? qrisError;
+  final String? qrisNotice;
   final bool isLoaded;
   final bool isSaving;
   final bool isDecoding;
@@ -28,6 +29,7 @@ class PaymentSettingsState {
     this.acquirer = '',
     this.isQrisValid = false,
     this.qrisError,
+    this.qrisNotice,
     this.isLoaded = false,
     this.isSaving = false,
     this.isDecoding = false,
@@ -51,6 +53,7 @@ class PaymentSettingsState {
     String? acquirer,
     bool? isQrisValid,
     String? qrisError,
+    String? qrisNotice,
     bool? isLoaded,
     bool? isSaving,
     bool? isDecoding,
@@ -63,6 +66,7 @@ class PaymentSettingsState {
     List<DanaNotificationRecord>? recentNotifications,
     bool? hasChanges,
     bool clearQrisError = false,
+    bool clearQrisNotice = false,
   }) {
     return PaymentSettingsState(
       staticQris: staticQris ?? this.staticQris,
@@ -72,6 +76,7 @@ class PaymentSettingsState {
       acquirer: acquirer ?? this.acquirer,
       isQrisValid: isQrisValid ?? this.isQrisValid,
       qrisError: clearQrisError ? null : (qrisError ?? this.qrisError),
+      qrisNotice: clearQrisNotice ? null : (qrisNotice ?? this.qrisNotice),
       isLoaded: isLoaded ?? this.isLoaded,
       isSaving: isSaving ?? this.isSaving,
       isDecoding: isDecoding ?? this.isDecoding,
@@ -79,7 +84,8 @@ class PaymentSettingsState {
       uniqueCodeEnabled: uniqueCodeEnabled ?? this.uniqueCodeEnabled,
       expiryMinutes: expiryMinutes ?? this.expiryMinutes,
       listenerEnabled: listenerEnabled ?? this.listenerEnabled,
-      listenerPermissionGranted: listenerPermissionGranted ?? this.listenerPermissionGranted,
+      listenerPermissionGranted:
+          listenerPermissionGranted ?? this.listenerPermissionGranted,
       listenerConnected: listenerConnected ?? this.listenerConnected,
       recentNotifications: recentNotifications ?? this.recentNotifications,
       hasChanges: hasChanges ?? this.hasChanges,
