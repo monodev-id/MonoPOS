@@ -1,8 +1,10 @@
 # WORKFLOW Sistem POS - MonoPOS
 
-> Last synced with code: v1.3.14 (Oct 2026). Payment = **QRIS DANA Bisnis** statis → dinamis (Doku & KlikQRIS retired) with cart checkout
+> Last synced with code: v1.3.16 (Nov 2026). Payment = **QRIS DANA Bisnis** statis → dinamis (Doku & KlikQRIS retired) with cart checkout
 > and direct-nominal QRIS, confirmed by a native DANA notification listener. Supabase via runtime Settings,
 > admin-only routes enforced in `AppRoutes`. Supplier/purchase/HPP data is local-only.
+> AI Insight = heuristic offline (tanpa LLM) di `/account/insights`: tren omzet, terlaris, dead stock,
+> margin HPP, restock velocity, jam ramai, mix ecer/grosir & cash/QRIS.
 
 ## 1. Alur Autentikasi (Login / Logout)
 
@@ -470,6 +472,7 @@ Banner + badge status koneksi (real-time dari PrinterManager) di layar printer s
 │  │ 👥 Karyawan        → /account/employees │
 │  │ 🏪 Pengaturan Toko → /account/store  │ │
 │  │ 📊 Laporan Pendapatan → /account/rev  │ │
+│  │ 💡 AI Insight        → /account/insights │ │
 │  │ 🧑 Pelanggan       → /account/customers │
 │  │ 🏬 Supplier/Grosir → /account/suppliers │
 │  │ 📦 Pembelian       → /account/purchases │
@@ -573,6 +576,32 @@ Account → App Update → checkForUpdate() (GitHub Releases API)
 │  REVENUE DAY (/account/revenue/day/:date) │
 │  • Ringkasan hari + rincian cash/QRIS/other│
 │  • Daftar transaksi hari tersebut         │
+└──────────────────────────────────────────┘
+```
+
+## 9a. Alur AI Insight (Heuristic Offline)
+
+```
+┌──────────────────────────────────────────┐
+│     AI INSIGHT (/account/insights)        │
+│     (admin only, offline, tanpa LLM)      │
+│                                           │
+│  Filter periode 7/14/30 hari              │
+│    ↓                                      │
+│  AiInsightNotifier.loadInsights()          │
+│    ↓                                      │
+│  GetAiInsightsUsecase                      │
+│   → transaksi paid 2x periode + produk     │
+│    ↓                                      │
+│  InsightCalculator (pure Dart)             │
+│   • Tren 7 vs 7 hari sebelumnya            │
+│   • Terlaris top-3 (qty + omzet)           │
+│   • Restock: velocity → sisa hari (<7/14)  │
+│   • Dead stock ≥14 hari + margin HPP       │
+│   • Jam/hari ramai + mix ecer/grosir/QRIS  │
+│    ↓                                      │
+│  InsightSummaryCard + InsightCard list     │
+│  • Tap kartu → /products/product-detail/:id│
 └──────────────────────────────────────────┘
 ```
 
@@ -719,6 +748,7 @@ ShellRoute (Bottom Navigation - MainScreen):
     /account/app-update               → AppUpdateScreen (admin only)
     /account/revenue                  → RevenueScreen (admin only)
       /account/revenue/day/:date      → RevenueDayScreen (admin only)
+    /account/insights                 → AiInsightScreen (admin only, heuristic offline)
     /account/about                    → AboutScreen
     /account/customers                → CustomerScreen (+ customer-form)
     /account/employees                → EmployeesScreen (+ employee-form, admin only)
@@ -729,7 +759,7 @@ ShellRoute (Bottom Navigation - MainScreen):
 ```
 
 Admin-only paths (`AppRoutes._adminOnlyPaths`, kasir di-redirect ke `/home`):
-`/account/employees`, `/account/store-settings`, `/account/revenue`,
+`/account/employees`, `/account/store-settings`, `/account/revenue`, `/account/insights`,
 `/account/payment-settings`, `/account/product-data`, `/account/barcode-labels`,
 `/account/app-update`, `/account/suppliers`, `/account/purchases`,
 `/products/product-create`, `/products/product-edit`.

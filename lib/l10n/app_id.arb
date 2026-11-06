@@ -479,5 +479,111 @@
   "qris_markPaidConfirmMessage": "Lakukan ini hanya setelah Anda memastikan pembayaran masuk di aplikasi DANA.",
   "qris_printQr": "Cetak QR",
   "qris_paidTitle": "Pembayaran diterima",
-  "qris_paidMessage": "Transaksi sudah ditandai lunas."
+  "qris_paidMessage": "Transaksi sudah ditandai lunas.",
+
+  "insight_title": "Insight AI",
+  "insight_summary": "Ringkasan Performa",
+  "insight_noData": "Data belum cukup. Catat lebih banyak transaksi untuk membuka insight.",
+  "insight_trendValue": "Tren {value} vs 7 hari sebelumnya",
+  "@insight_trendValue": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "insight_avgTicket": "Rata-rata struk Rp {value}",
+  "@insight_avgTicket": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "insight_transactionsCount": "{count} transaksi",
+  "@insight_transactionsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "insight_productsCount": "{count} pcs terjual",
+  "@insight_productsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "insight_trendTitle": "Tren omzet",
+  "insight_trendMessage": "Omzet berubah {value} dibanding 7 hari sebelumnya.",
+  "insight_bestSellerTitle": "Terlaris: {name}",
+  "@insight_bestSellerTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "insight_bestSellerMessage": "Terjual {count} pcs dengan omzet Rp {revenue} pada periode ini.",
+  "@insight_bestSellerMessage": {
+    "placeholders": {
+      "count": {},
+      "revenue": {}
+    }
+  },
+  "insight_deadStockTitle": "Lambat laku: {name}",
+  "@insight_deadStockTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "insight_deadStockMessage": "Tidak laku {days} hari, sisa {stock} pcs. Pertimbangkan diskon atau bundel.",
+  "@insight_deadStockMessage": {
+    "placeholders": {
+      "days": {},
+      "stock": {}
+    }
+  },
+  "insight_marginTitle": "Peringatan margin: {name}",
+  "@insight_marginTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "insight_marginMissing": "HPP belum diisi, margin tidak bisa dihitung.",
+  "insight_marginLow": "Margin hanya {value}%. Tinjau harga ecer atau biaya supplier.",
+  "insight_restockTitle": "Segera restock: {name}",
+  "@insight_restockTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "insight_restockMessage": "Diperkirakan habis dalam {days} hari. Sisa {stock} pcs.",
+  "@insight_restockMessage": {
+    "placeholders": {
+      "days": {},
+      "stock": {}
+    }
+  },
+  "insight_peakTitle": "Jam ramai",
+  "insight_peakMessage": "Tersibuk jam {hour}:00 hari {day} ({count} transaksi).",
+  "@insight_peakMessage": {
+    "placeholders": {
+      "hour": {},
+      "day": {},
+      "count": {}
+    }
+  },
+  "insight_paymentTitle": "Peluang QRIS",
+  "insight_paymentMessage": "Hanya {value}% transaksi pakai QRIS. Tampilkan QR lebih jelas.",
+  "insight_priceMixTitle": "Ecer vs grosir",
+  "insight_priceMixMessage": "Ecer {retail}% vs grosir {grosir}% dari kuantitas.",
+  "@insight_priceMixMessage": {
+    "placeholders": {
+      "retail": {},
+      "grosir": {}
+    }
+  },
+  "insight_lowDataTitle": "Butuh lebih banyak data",
+  "insight_lowDataMessage": "Catat minimal 5 transaksi untuk membuka tren, produk terlaris, dan prediksi restock.",
+  "insight_viewProduct": "Lihat produk",
+  "insight_monday": "Senin",
+  "insight_tuesday": "Selasa",
+  "insight_wednesday": "Rabu",
+  "insight_thursday": "Kamis",
+  "insight_friday": "Jumat",
+  "insight_saturday": "Sabtu",
+  "insight_sunday": "Minggu"
 }

@@ -1084,4 +1084,141 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get qris_paidMessage => 'Transaksi sudah ditandai lunas.';
+
+  @override
+  String get insight_title => 'Insight AI';
+
+  @override
+  String get insight_summary => 'Ringkasan Performa';
+
+  @override
+  String get insight_noData =>
+      'Data belum cukup. Catat lebih banyak transaksi untuk membuka insight.';
+
+  @override
+  String insight_trendValue(Object value) {
+    return 'Tren $value vs 7 hari sebelumnya';
+  }
+
+  @override
+  String insight_avgTicket(Object value) {
+    return 'Rata-rata struk Rp $value';
+  }
+
+  @override
+  String insight_transactionsCount(Object count) {
+    return '$count transaksi';
+  }
+
+  @override
+  String insight_productsCount(Object count) {
+    return '$count pcs terjual';
+  }
+
+  @override
+  String get insight_trendTitle => 'Tren omzet';
+
+  @override
+  String insight_trendMessage(Object value) {
+    return 'Omzet berubah $value dibanding 7 hari sebelumnya.';
+  }
+
+  @override
+  String insight_bestSellerTitle(Object name) {
+    return 'Terlaris: $name';
+  }
+
+  @override
+  String insight_bestSellerMessage(Object count, Object revenue) {
+    return 'Terjual $count pcs dengan omzet Rp $revenue pada periode ini.';
+  }
+
+  @override
+  String insight_deadStockTitle(Object name) {
+    return 'Lambat laku: $name';
+  }
+
+  @override
+  String insight_deadStockMessage(Object days, Object stock) {
+    return 'Tidak laku $days hari, sisa $stock pcs. Pertimbangkan diskon atau bundel.';
+  }
+
+  @override
+  String insight_marginTitle(Object name) {
+    return 'Peringatan margin: $name';
+  }
+
+  @override
+  String get insight_marginMissing =>
+      'HPP belum diisi, margin tidak bisa dihitung.';
+
+  @override
+  String insight_marginLow(Object value) {
+    return 'Margin hanya $value%. Tinjau harga ecer atau biaya supplier.';
+  }
+
+  @override
+  String insight_restockTitle(Object name) {
+    return 'Segera restock: $name';
+  }
+
+  @override
+  String insight_restockMessage(Object days, Object stock) {
+    return 'Diperkirakan habis dalam $days hari. Sisa $stock pcs.';
+  }
+
+  @override
+  String get insight_peakTitle => 'Jam ramai';
+
+  @override
+  String insight_peakMessage(Object hour, Object day, Object count) {
+    return 'Tersibuk jam $hour:00 hari $day ($count transaksi).';
+  }
+
+  @override
+  String get insight_paymentTitle => 'Peluang QRIS';
+
+  @override
+  String insight_paymentMessage(Object value) {
+    return 'Hanya $value% transaksi pakai QRIS. Tampilkan QR lebih jelas.';
+  }
+
+  @override
+  String get insight_priceMixTitle => 'Ecer vs grosir';
+
+  @override
+  String insight_priceMixMessage(Object retail, Object grosir) {
+    return 'Ecer $retail% vs grosir $grosir% dari kuantitas.';
+  }
+
+  @override
+  String get insight_lowDataTitle => 'Butuh lebih banyak data';
+
+  @override
+  String get insight_lowDataMessage =>
+      'Catat minimal 5 transaksi untuk membuka tren, produk terlaris, dan prediksi restock.';
+
+  @override
+  String get insight_viewProduct => 'Lihat produk';
+
+  @override
+  String get insight_monday => 'Senin';
+
+  @override
+  String get insight_tuesday => 'Selasa';
+
+  @override
+  String get insight_wednesday => 'Rabu';
+
+  @override
+  String get insight_thursday => 'Kamis';
+
+  @override
+  String get insight_friday => 'Jumat';
+
+  @override
+  String get insight_saturday => 'Sabtu';
+
+  @override
+  String get insight_sunday => 'Minggu';
 }

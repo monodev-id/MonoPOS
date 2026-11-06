@@ -479,5 +479,111 @@
   "qris_markPaidConfirmMessage": "Only do this after you have verified the payment in the DANA app.",
   "qris_printQr": "Print QR",
   "qris_paidTitle": "Payment received",
-  "qris_paidMessage": "Transaction has been marked as paid."
+  "qris_paidMessage": "Transaction has been marked as paid.",
+
+  "insight_title": "AI Insights",
+  "insight_summary": "Performance Summary",
+  "insight_noData": "Not enough data yet. Record more transactions to unlock insights.",
+  "insight_trendValue": "Trend {value} vs previous 7 days",
+  "@insight_trendValue": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "insight_avgTicket": "Avg. ticket Rp {value}",
+  "@insight_avgTicket": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "insight_transactionsCount": "{count} transactions",
+  "@insight_transactionsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "insight_productsCount": "{count} items sold",
+  "@insight_productsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "insight_trendTitle": "Revenue trend",
+  "insight_trendMessage": "Revenue changed {value} compared to the previous 7 days.",
+  "insight_bestSellerTitle": "Bestseller: {name}",
+  "@insight_bestSellerTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "insight_bestSellerMessage": "Sold {count} pcs with Rp {revenue} revenue in this period.",
+  "@insight_bestSellerMessage": {
+    "placeholders": {
+      "count": {},
+      "revenue": {}
+    }
+  },
+  "insight_deadStockTitle": "Slow moving: {name}",
+  "@insight_deadStockTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "insight_deadStockMessage": "No sales for {days} days, {stock} pcs still in stock. Consider a discount or bundle.",
+  "@insight_deadStockMessage": {
+    "placeholders": {
+      "days": {},
+      "stock": {}
+    }
+  },
+  "insight_marginTitle": "Margin alert: {name}",
+  "@insight_marginTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "insight_marginMissing": "Cost price (HPP) is not set, margin cannot be calculated.",
+  "insight_marginLow": "Margin only {value}%. Review the retail price or supplier cost.",
+  "insight_restockTitle": "Restock soon: {name}",
+  "@insight_restockTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "insight_restockMessage": "Estimated to run out in {days} days. {stock} pcs left.",
+  "@insight_restockMessage": {
+    "placeholders": {
+      "days": {},
+      "stock": {}
+    }
+  },
+  "insight_peakTitle": "Peak sales time",
+  "insight_peakMessage": "Busiest at {hour}:00 on {day} ({count} transactions).",
+  "@insight_peakMessage": {
+    "placeholders": {
+      "hour": {},
+      "day": {},
+      "count": {}
+    }
+  },
+  "insight_paymentTitle": "QRIS opportunity",
+  "insight_paymentMessage": "Only {value}% of transactions use QRIS. Show the QR more prominently.",
+  "insight_priceMixTitle": "Retail vs wholesale",
+  "insight_priceMixMessage": "Retail {retail}% vs wholesale {grosir}% by quantity.",
+  "@insight_priceMixMessage": {
+    "placeholders": {
+      "retail": {},
+      "grosir": {}
+    }
+  },
+  "insight_lowDataTitle": "More data needed",
+  "insight_lowDataMessage": "Record at least 5 transactions to unlock trends, bestsellers, and restock predictions.",
+  "insight_viewProduct": "View product",
+  "insight_monday": "Monday",
+  "insight_tuesday": "Tuesday",
+  "insight_wednesday": "Wednesday",
+  "insight_thursday": "Thursday",
+  "insight_friday": "Friday",
+  "insight_saturday": "Saturday",
+  "insight_sunday": "Sunday"
 }

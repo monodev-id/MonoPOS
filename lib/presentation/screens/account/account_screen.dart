@@ -37,6 +37,7 @@ class AccountScreen extends StatelessWidget {
                 _EmployeeManagementButton(),
                 _StoreSettingsButton(),
                 _RevenueButton(),
+                _InsightButton(),
                 _CustomerButton(),
                 _SupplierButton(),
                 _PurchaseButton(),
@@ -223,6 +224,52 @@ class _RevenueButton extends ConsumerWidget {
         ),
         onTap: () {
           context.go('/account/revenue');
+        },
+      ),
+    );
+  }
+}
+
+class _InsightButton extends ConsumerWidget {
+  const _InsightButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(authNotifierProvider.select((s) => s.user?.role?.value == 'admin'));
+
+    if (!isAdmin) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSizes.padding),
+      child: AppButton(
+        buttonColor: Theme.of(context).colorScheme.surface,
+        borderColor: Theme.of(context).colorScheme.surfaceContainer,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.insights_outlined,
+                  size: 18,
+                ),
+                const SizedBox(width: AppSizes.padding / 1.5),
+                Text(
+                  AppLocalizations.of(context)!.insight_title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 18,
+            ),
+          ],
+        ),
+        onTap: () {
+          context.go('/account/insights');
         },
       ),
     );

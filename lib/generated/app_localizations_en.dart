@@ -1087,4 +1087,141 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qris_paidMessage => 'Transaction has been marked as paid.';
+
+  @override
+  String get insight_title => 'AI Insights';
+
+  @override
+  String get insight_summary => 'Performance Summary';
+
+  @override
+  String get insight_noData =>
+      'Not enough data yet. Record more transactions to unlock insights.';
+
+  @override
+  String insight_trendValue(Object value) {
+    return 'Trend $value vs previous 7 days';
+  }
+
+  @override
+  String insight_avgTicket(Object value) {
+    return 'Avg. ticket Rp $value';
+  }
+
+  @override
+  String insight_transactionsCount(Object count) {
+    return '$count transactions';
+  }
+
+  @override
+  String insight_productsCount(Object count) {
+    return '$count items sold';
+  }
+
+  @override
+  String get insight_trendTitle => 'Revenue trend';
+
+  @override
+  String insight_trendMessage(Object value) {
+    return 'Revenue changed $value compared to the previous 7 days.';
+  }
+
+  @override
+  String insight_bestSellerTitle(Object name) {
+    return 'Bestseller: $name';
+  }
+
+  @override
+  String insight_bestSellerMessage(Object count, Object revenue) {
+    return 'Sold $count pcs with Rp $revenue revenue in this period.';
+  }
+
+  @override
+  String insight_deadStockTitle(Object name) {
+    return 'Slow moving: $name';
+  }
+
+  @override
+  String insight_deadStockMessage(Object days, Object stock) {
+    return 'No sales for $days days, $stock pcs still in stock. Consider a discount or bundle.';
+  }
+
+  @override
+  String insight_marginTitle(Object name) {
+    return 'Margin alert: $name';
+  }
+
+  @override
+  String get insight_marginMissing =>
+      'Cost price (HPP) is not set, margin cannot be calculated.';
+
+  @override
+  String insight_marginLow(Object value) {
+    return 'Margin only $value%. Review the retail price or supplier cost.';
+  }
+
+  @override
+  String insight_restockTitle(Object name) {
+    return 'Restock soon: $name';
+  }
+
+  @override
+  String insight_restockMessage(Object days, Object stock) {
+    return 'Estimated to run out in $days days. $stock pcs left.';
+  }
+
+  @override
+  String get insight_peakTitle => 'Peak sales time';
+
+  @override
+  String insight_peakMessage(Object hour, Object day, Object count) {
+    return 'Busiest at $hour:00 on $day ($count transactions).';
+  }
+
+  @override
+  String get insight_paymentTitle => 'QRIS opportunity';
+
+  @override
+  String insight_paymentMessage(Object value) {
+    return 'Only $value% of transactions use QRIS. Show the QR more prominently.';
+  }
+
+  @override
+  String get insight_priceMixTitle => 'Retail vs wholesale';
+
+  @override
+  String insight_priceMixMessage(Object retail, Object grosir) {
+    return 'Retail $retail% vs wholesale $grosir% by quantity.';
+  }
+
+  @override
+  String get insight_lowDataTitle => 'More data needed';
+
+  @override
+  String get insight_lowDataMessage =>
+      'Record at least 5 transactions to unlock trends, bestsellers, and restock predictions.';
+
+  @override
+  String get insight_viewProduct => 'View product';
+
+  @override
+  String get insight_monday => 'Monday';
+
+  @override
+  String get insight_tuesday => 'Tuesday';
+
+  @override
+  String get insight_wednesday => 'Wednesday';
+
+  @override
+  String get insight_thursday => 'Thursday';
+
+  @override
+  String get insight_friday => 'Friday';
+
+  @override
+  String get insight_saturday => 'Saturday';
+
+  @override
+  String get insight_sunday => 'Sunday';
 }

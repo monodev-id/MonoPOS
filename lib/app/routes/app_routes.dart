@@ -8,6 +8,7 @@ import '../../presentation/screens/account/account_screen.dart';
 import '../../presentation/screens/account/app_update_screen.dart';
 import '../../presentation/screens/account/payment_settings_screen.dart';
 import '../../presentation/screens/account/product_data_screen.dart';
+import '../../presentation/screens/insights/ai_insight_screen.dart';
 
 import '../../presentation/screens/account/printer_settings_screen.dart';
 import '../../presentation/screens/account/product_barcode_label_screen.dart';
@@ -54,6 +55,7 @@ class AppRoutes {
     '/account/employees',
     '/account/store-settings',
     '/account/revenue',
+    '/account/insights',
     '/account/payment-settings',
     '/account/product-data',
     '/account/barcode-labels',
@@ -217,6 +219,7 @@ class AppRoutes {
         _productData(),
         _appUpdate(),
         _revenue(),
+        _insights(),
         _customers(),
         _employees(),
         _purchases(),
@@ -375,6 +378,15 @@ class AppRoutes {
         }
 
         return RevenueDayScreen(date: date);
+      },
+    );
+  }
+
+  GoRoute _insights() {
+    return GoRoute(
+      path: 'insights',
+      builder: (context, state) {
+        return const AiInsightScreen();
       },
     );
   }

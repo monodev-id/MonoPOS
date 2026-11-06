@@ -2089,6 +2089,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Transaction has been marked as paid.'**
   String get qris_paidMessage;
+
+  /// No description provided for @insight_title.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Insights'**
+  String get insight_title;
+
+  /// No description provided for @insight_summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance Summary'**
+  String get insight_summary;
+
+  /// No description provided for @insight_noData.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough data yet. Record more transactions to unlock insights.'**
+  String get insight_noData;
+
+  /// No description provided for @insight_trendValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend {value} vs previous 7 days'**
+  String insight_trendValue(Object value);
+
+  /// No description provided for @insight_avgTicket.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg. ticket Rp {value}'**
+  String insight_avgTicket(Object value);
+
+  /// No description provided for @insight_transactionsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} transactions'**
+  String insight_transactionsCount(Object count);
+
+  /// No description provided for @insight_productsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items sold'**
+  String insight_productsCount(Object count);
+
+  /// No description provided for @insight_trendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue trend'**
+  String get insight_trendTitle;
+
+  /// No description provided for @insight_trendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue changed {value} compared to the previous 7 days.'**
+  String insight_trendMessage(Object value);
+
+  /// No description provided for @insight_bestSellerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bestseller: {name}'**
+  String insight_bestSellerTitle(Object name);
+
+  /// No description provided for @insight_bestSellerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold {count} pcs with Rp {revenue} revenue in this period.'**
+  String insight_bestSellerMessage(Object count, Object revenue);
+
+  /// No description provided for @insight_deadStockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Slow moving: {name}'**
+  String insight_deadStockTitle(Object name);
+
+  /// No description provided for @insight_deadStockMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales for {days} days, {stock} pcs still in stock. Consider a discount or bundle.'**
+  String insight_deadStockMessage(Object days, Object stock);
+
+  /// No description provided for @insight_marginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin alert: {name}'**
+  String insight_marginTitle(Object name);
+
+  /// No description provided for @insight_marginMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost price (HPP) is not set, margin cannot be calculated.'**
+  String get insight_marginMissing;
+
+  /// No description provided for @insight_marginLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin only {value}%. Review the retail price or supplier cost.'**
+  String insight_marginLow(Object value);
+
+  /// No description provided for @insight_restockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock soon: {name}'**
+  String insight_restockTitle(Object name);
+
+  /// No description provided for @insight_restockMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated to run out in {days} days. {stock} pcs left.'**
+  String insight_restockMessage(Object days, Object stock);
+
+  /// No description provided for @insight_peakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Peak sales time'**
+  String get insight_peakTitle;
+
+  /// No description provided for @insight_peakMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Busiest at {hour}:00 on {day} ({count} transactions).'**
+  String insight_peakMessage(Object hour, Object day, Object count);
+
+  /// No description provided for @insight_paymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'QRIS opportunity'**
+  String get insight_paymentTitle;
+
+  /// No description provided for @insight_paymentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {value}% of transactions use QRIS. Show the QR more prominently.'**
+  String insight_paymentMessage(Object value);
+
+  /// No description provided for @insight_priceMixTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Retail vs wholesale'**
+  String get insight_priceMixTitle;
+
+  /// No description provided for @insight_priceMixMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Retail {retail}% vs wholesale {grosir}% by quantity.'**
+  String insight_priceMixMessage(Object retail, Object grosir);
+
+  /// No description provided for @insight_lowDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'More data needed'**
+  String get insight_lowDataTitle;
+
+  /// No description provided for @insight_lowDataMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Record at least 5 transactions to unlock trends, bestsellers, and restock predictions.'**
+  String get insight_lowDataMessage;
+
+  /// No description provided for @insight_viewProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'View product'**
+  String get insight_viewProduct;
+
+  /// No description provided for @insight_monday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get insight_monday;
+
+  /// No description provided for @insight_tuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get insight_tuesday;
+
+  /// No description provided for @insight_wednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get insight_wednesday;
+
+  /// No description provided for @insight_thursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get insight_thursday;
+
+  /// No description provided for @insight_friday.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get insight_friday;
+
+  /// No description provided for @insight_saturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get insight_saturday;
+
+  /// No description provided for @insight_sunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get insight_sunday;
 }
 
 class _AppLocalizationsDelegate
