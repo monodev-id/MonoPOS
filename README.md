@@ -3,13 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-orange)](./LICENSE)
 [![Made with Flutter](https://img.shields.io/badge/made%20with-Flutter-blue)](https://flutter.dev/)
 
-> **Current release:** `1.3.14` (`versionCode 31`).
+> **Rilis saat ini:** `1.3.17` (`versionCode 34`).
 
-> 🚀 This project is the base model of [Zirel POS](https://zirelpos.com/). If you want a ready-to-use, feature-complete POS app, you might want to check it out, it's free, no card required.
+> 🚀 Proyek ini adalah model dasar dari [Zirel POS](https://zirelpos.com/). Jika Anda ingin aplikasi POS yang siap pakai dan lengkap fiturnya, Anda bisa mencobanya — gratis, tanpa perlu kartu kredit.
 
-A Point of Sale (POS) application built with Flutter, demonstrating **Clean Architecture** principles and **offline-first** design patterns. This project serves as a learning resource and reference implementation for building Flutter apps with proper architecture and automatic data synchronization between local storage (SQLite) and a cloud backend (Supabase Postgres).
+Aplikasi Point of Sale (POS) berbasis Flutter yang menerapkan prinsip **Clean Architecture** dan pola **offline-first**. Proyek ini berfungsi sebagai bahan belajar dan implementasi referensi untuk membangun aplikasi Flutter dengan arsitektur yang rapi serta sinkronisasi data otomatis antara penyimpanan lokal (SQLite) dan backend cloud (Supabase Postgres).
 
-The app prioritizes local-first operations, storing all data in SQLite and automatically syncing with Supabase when online. When offline, all user actions (create, update, delete) are recorded as `QueuedActions` in the local database and automatically executed in sequence when internet connectivity is restored.
+Aplikasi mengutamakan operasi lokal: semua data disimpan di SQLite sebagai sumber kebenaran lalu didorong otomatis ke Supabase saat online. Ketika offline, seluruh aksi pengguna (create, update, delete) dicatat sebagai `QueuedActions` di database lokal dan dieksekusi berurutan secara otomatis saat koneksi internet kembali.
 
 <br/>
 <p align="left">
@@ -20,210 +20,220 @@ The app prioritizes local-first operations, storing all data in SQLite and autom
   <img src="docs/screenshoot_5.jpeg" alt="Image 2" height="350">
 </p>
 
-## Demo APK
+## APK Demo
 
-[Download Demo APK](https://github.com/monodev-id/MonoPOS/releases)
+[Unduh APK Demo](https://github.com/monodev-id/MonoPOS/releases)
 
-## Features
+## Fitur
 
-### Core Functionality
+### Fungsionalitas Inti
 
-- **Product Management**: Full CRUD operations for products with image upload support, multi-unit definitions, tiered (retail/grosir) pricing, manual HPP (`costPrice`), and barcode support
-- **Bundle-Based Tiered Pricing**: Per-unit quantity breaks (`ProductTieredPrice`) with live price preview in the add-to-cart dialog
-- **Product Data Backup**: JSON export/import of products + units + tiered prices with per-product breakdown, success overlay, and confirm-import dialog (admin only, `Account → Product Data`)
-- **Barcode Label Printing (Admin)**: Generate unique EAN-13 codes for products without barcodes, save them in bulk, and batch-print labels with per-product copy counts (`Account → Barcode Labels`); printing requires a connected printer
-- **Sales Transactions**: POS interface with cart management, per-item retail/grosir toggle, custom price input, and transaction history
-- **Quick Checkout Amounts**: `Uang Pas` / 50rb / 100rb shortcut buttons plus custom amount field in the checkout sheet
-- **Barcode Input**: Camera scanner (`mobile_scanner`) plus HID hardware-scanner listener; both look up the product in SQLite first and add the scanned product straight to the cart (+1 base unit) without opening a dialog
-- **Low-Stock Warning**: `AppLowStockDialog` blocks/adds with confirmation when stock is insufficient
-- **Thermal Receipt Printing**: Print transaction receipts via USB, Bluetooth, BLE, or network printers with configurable paper sizes (58mm, 72mm, 80mm); live connection banner + badge synced from `PrinterManager`, saved-printer auto-reconnect on startup/resume, and manual print from transaction detail (no auto-print)
-- **Payments (DANA Bisnis QRIS)**: Upload your static DANA Bisnis QRIS once in `Account → Payment Settings`; at checkout Mono POS converts it to a dynamic QRIS with the exact amount (EMVCo TLV + CRC16, ported from BITS-QRIS-Converter) and renders the payload directly. A native Android notification listener always watches DANA notifications and marks the matching `pending` transaction as `paid` automatically, with expiry countdown, unique code matching, manual "Tandai Lunas" fallback, and cash-register sound + TTS
-- **Direct QRIS**: Amount-first QRIS payment without adding products to the cart (`/payment/direct`), reachable from the Home and Transactions app bars; includes quick amounts, optional description/customer, merchant badge, and a configuration guard. The recorded transaction uses the scanned amount plus an auto-generated unique code
-- **Supplier & Purchase Management (Admin, local-only)**: Supplier/wholesaler directory plus multi-item purchase notes; shows/auto-fills the last purchase price per supplier, can add stock per note, and updates product HPP (`costPrice`) from the latest purchase. Deleting a note recalculates stock and HPP. Supplier/purchase data is not synced to Supabase yet
-- **Payment Sound & Voice**: Cash-register sound (`cashmasuk.mp3`) + Indonesian TTS announcement (`terbilang` amount) on successful QRIS payment, toggleable in payment settings
-- **Customer Management**: Customer directory with forms integrated into the sales flow
-- **Employee Management**: Role-based access control (admin / kasir) with employee accounts; admin-only routes and menus are hidden/redirected for kasir
-- **Revenue Reporting**: Daily revenue reports filtered by paid status with cash/QRIS/other breakdowns, product counts, per-day transaction detail, and all-user totals for admins
-- **App Update (Admin)**: Check GitHub releases, view changelog (Markdown), download progress, and install APK via `Account → App Update`
-- **Supabase Runtime Config**: `Account → Supabase Sync` dialog stores URL + anon key in `SharedPreferences` — no rebuild needed; restart applies the new connection
-- **User Authentication**: Supabase Auth with Google Sign-In and email/password
-- **Account & Store Management**: User profile, store name/address/receipt footer settings, and printer settings
-- **Localization**: Indonesian and English via `flutter_localizations` (ARB files)
-- **Adaptive UI**: Tablet/desktop breakpoints (`AppSizes.isTablet/isDesktop`), centered max-width dialogs, navigation rail on wide screens
+- **Manajemen Produk**: CRUD lengkap produk dengan dukungan gambar produk, definisi multi-satuan, harga bertingkat (ecer/grosir), HPP manual (`costPrice`), dan dukungan barcode
+- **Harga Bertingkat per Bundel**: pemecahan kuantitas per satuan (`ProductTieredPrice`) dengan pratinjau harga langsung di dialog tambah-ke-keranjang
+- **Backup Data Produk**: export/import JSON untuk produk + satuan + harga bertingkat, lengkap dengan rincian per produk, overlay sukses, dan dialog konfirmasi import (khusus admin, `Akun → Data Produk`)
+- **Cetak Label Barcode (Admin)**: generate kode EAN-13 unik untuk produk yang belum punya barcode, simpan sekaligus, lalu cetak label secara batch dengan jumlah salinan per produk (`Akun → Label Barcode`); pencetakan memerlukan printer yang terhubung
+- **Transaksi Penjualan**: antarmuka POS dengan manajemen keranjang, toggle ecer/grosir per item, input harga kustom, dan riwayat transaksi
+- **Nominal Cepat Checkout**: tombol pintas `Uang Pas` / 50rb / 100rb serta kolom nominal kustom di sheet checkout
+- **Input Barcode**: pemindai kamera (`mobile_scanner`) plus listener hardware scanner HID; keduanya mencari produk di SQLite terlebih dahulu lalu langsung menambahkan produk hasil pindai ke keranjang (+1 satuan dasar) tanpa membuka dialog
+- **Peringatan Stok Rendah**: `AppLowStockDialog` memblokir/mengonfirmasi ketika stok tidak mencukupi
+- **Cetak Struk Thermal**: cetak struk transaksi via printer USB, Bluetooth, BLE, atau jaringan dengan ukuran kertas yang bisa diatur (58mm, 72mm, 80mm); banner + badge status koneksi tersinkron dari `PrinterManager`, printer tersimpan otomatis reconnect saat startup/resume, dan cetak manual dari detail transaksi (tanpa auto-print)
+- **Pembayaran (QRIS DANA Bisnis)**: unggah QRIS statis DANA Bisnis Anda sekali di `Akun → Pengaturan Pembayaran`; saat checkout Mono POS mengubahnya menjadi QRIS dinamis dengan nominal yang tepat (EMVCo TLV + CRC16, hasil porting dari BITS-QRIS-Converter) lalu merender payload tersebut secara langsung. Listener notifikasi Android native selalu memantau notifikasi DANA dan otomatis menandai transaksi `pending` yang cocok sebagai `paid`, dengan hitung mundur kedaluwarsa, pencocokan kode unik, fallback manual "Tandai Lunas", serta suara kasir + TTS
+- **Onboarding Akses Notifikasi DANA**: Android tidak menyediakan dialog izin runtime untuk Notification Listener, jadi aplikasi menampilkan dialog sendiri setelah login (`Aktifkan Akses Notifikasi`) dengan pilihan `Nanti` (snooze 24 jam) atau `Buka Pengaturan`. Jika izin masih ditolak setelah kembali dari Settings, muncul panduan **Restricted Settings** dengan tombol `Buka Info Aplikasi`. Selama izin belum ada atau service belum tersambung, banner pengingat persisten tampil di Beranda; status di-refresh, service di-rebind, dan antrean notifikasi diproses ulang setiap aplikasi resume
+- **QRIS Langsung**: pembayaran QRIS nominal-first tanpa menambah produk ke keranjang (`/payment/direct`), dapat diakses dari app bar Beranda dan Transaksi; mencakup nominal cepat, deskripsi/pelanggan opsional, badge merchant, dan penjagaan konfigurasi. Transaksi yang tercatat memakai nominal hasil pindai ditambah kode unik otomatis
+- **Insight Bisnis (Admin, di perangkat)**: layar `Akun → Insight AI` (`/account/insights`) menghitung insight langsung di perangkat dari transaksi `paid` + data produk — **tanpa panggilan jaringan dan tanpa LLM**. Filter periode 7/14/30 hari, kartu ringkasan performa (omzet, jumlah transaksi, pcs terjual, rata-rata struk, tren 7 hari, porsi ecer, porsi QRIS), lalu kartu insight yang diurutkan berdasarkan severity: tren omzet, produk terlaris, lambat laku (14 hari), margin rendah (<10%), prediksi restock (7/14 hari), jam ramai, peluang pembayaran QRIS, dan komposisi ecer vs grosir. Tersedia tombol `Lihat produk`, serta penjaga data minim (minimal 5 transaksi / 10 pcs) sebelum insight ditampilkan
+- **Manajemen Supplier & Pembelian (Admin, lokal saja)**: direktori supplier/grosir plus nota pembelian multi-item; menampilkan/mengisi otomatis harga beli terakhir per supplier, bisa menambah stok per nota, dan memperbarui HPP produk (`costPrice`) dari pembelian terbaru. Menghapus nota menghitung ulang stok dan HPP. Data supplier/pembelian belum disinkronkan ke Supabase
+- **Suara & Voice Pembayaran**: suara kasir (`cashmasuk.mp3`) + pengumuman TTS bahasa Indonesia (nominal terbilang) saat pembayaran QRIS berhasil, dapat diaktifkan/dinonaktifkan di pengaturan pembayaran
+- **Manajemen Pelanggan**: direktori pelanggan dengan formulir yang terintegrasi ke alur penjualan
+- **Manajemen Karyawan**: kontrol akses berbasis peran (admin / kasir) dengan akun karyawan; route dan menu khusus admin disembunyikan/dialihkan untuk kasir
+- **Laporan Pendapatan**: laporan pendapatan harian yang difilter berdasarkan status lunas, dengan rincian tunai/QRIS/lainnya, jumlah produk, detail transaksi per hari, dan total semua pengguna untuk admin
+- **Pembaruan Aplikasi (Admin)**: cek rilis GitHub, lihat changelog (Markdown), progres unduhan, dan instal APK via `Akun → Pembaruan Aplikasi`
+- **Konfigurasi Supabase Runtime**: dialog `Akun → Supabase Sync` menyimpan URL + anon key di `SharedPreferences` — tanpa perlu rebuild; restart menerapkan koneksi baru
+- **Autentikasi Pengguna**: Supabase Auth dengan Google Sign-In dan email/password
+- **Akun & Manajemen Toko**: profil pengguna, pengaturan nama/alamat toko, footer struk, dan pengaturan printer
+- **Lokalisasi**: bahasa Indonesia dan Inggris via `flutter_localizations` (file ARB)
+- **UI Adaptif**: breakpoint tablet/desktop (`AppSizes.isTablet/isDesktop`), dialog max-width terpusat, navigation rail pada layar lebar
 
-### Technical Implementation
+### Implementasi Teknis
 
-- **Offline-First Architecture**: Works seamlessly without internet connection
-- **Automatic Data Sync**: SQLite ↔ Supabase (Postgres) bidirectional synchronization
-- **Queued Actions**: Automatic retry mechanism for offline operations (create, update, delete)
-- **Clean Architecture**: Separation between presentation, domain, and data layers
-- **State Management**: Riverpod for safer, more testable state management
-- **Dependency Injection**: Centralized DI setup for better code organization
-- **Cloud Backend**: Supabase (Postgres + Auth + Storage) replacing Firebase/Firestore
-- **Object Storage**: Product images and receipts stored via S3-compatible storage
-- **Local-Only Domain Modules**: Suppliers and purchases use the same clean-architecture flow (datasource → repository → usecase → notifier) but write only to SQLite for now
-- **Barcode Labels**: EAN-13 generation via `BarcodeGenerator` and label rendering with `barcode_widget`
-- **App Update Service**: GitHub Releases API + APK download/install (`open_filex`, `package_info_plus`)
-- **Audio Feedback**: `flutter_tts` (id-ID/en-US) + `audioplayers` for payment confirmation
-- **Unit Testing**: Tests for datasources, repositories, and use cases
-- **Material Design 3**: Material Design 3 with Dark & Light theme switching support
-- **Customizable Theming**: Adjustable colors and typography
-- **Multi-Platform**: Supports Android, iOS, Windows, macOS, and Linux
-- **Error Handling**: User-friendly error messages and states
-- **Reusable Widgets**: Custom UI components for consistent design
+- **Arsitektur Offline-First**: berjalan tanpa koneksi internet
+- **Sinkronisasi Data Otomatis**: SQLite → Supabase (Postgres) satu arah; SQLite tetap menjadi sumber kebenaran, Supabase adalah mirror hasil sinkronisasi
+- **Queued Actions**: mekanisme retry otomatis untuk operasi offline (create, update, delete), diputar ulang berurutan dengan `isCritical ASC, createdAt ASC`
+- **Clean Architecture**: pemisahan lapisan presentation, domain, dan data
+- **State Management**: Riverpod untuk manajemen state yang lebih aman dan mudah diuji
+- **Dependency Injection**: setup DI terpusat agar kode lebih terorganisir
+- **Backend Cloud**: Supabase (Postgres + Auth) menggantikan Firebase/Firestore
+- **Layanan Domain QRIS**: paket `core/services/qris/` berisi `qris_converter` (statis → dinamis), `qris_normalizer` (membuang nominal/biaya lama dan mengubah QRIS dinamis hasil unggahan menjadi statis), `qris_validator`, serta helper `qris_tlv`, `qris_crc16`, dan `qris_merchant_info`
+- **Pemrosesan Gambar Lokal**: gambar produk dipilih/di-crop di perangkat dan di-cache di penyimpanan aplikasi; QRIS yang diunggah didekode di perangkat (MLKit dengan fallback `zxing2`/decoder Dart) lalu file gambarnya dihapus — hanya string payload yang disimpan
+- **InsightCalculator**: kalkulator insight berupa static class yang deterministik dan teruji unit (`insight_calculator_test.dart`), membaca transaksi + produk langsung dari repository tanpa layanan eksternal
+- **Modul Domain Lokal Saja**: supplier dan pembelian memakai alur clean-architecture yang sama (datasource → repository → usecase → notifier) tetapi hanya menulis ke SQLite untuk saat ini; HPP produk (`costPrice`) dan metadata pembayaran DANA juga disimpan lokal
+- **Label Barcode**: pembuatan EAN-13 via `BarcodeGenerator` dan render label dengan `barcode_widget`
+- **App Update Service**: GitHub Releases API + unduh/instal APK (`open_filex`, `package_info_plus`)
+- **Audio Feedback**: `flutter_tts` (id-ID/en-US) + `audioplayers` untuk konfirmasi pembayaran
+- **Unit Testing**: tes untuk datasource, repository, dan use case (termasuk kalkulator insight, konversi/normalisasi QRIS, dan kebijakan prompt izin DANA)
+- **Material Design 3**: Material Design 3 dengan dukungan pergantian tema Gelap & Terang
+- **Tema yang Dapat Dikustomisasi**: warna dan tipografi yang bisa diatur
+- **Multi-Platform**: mendukung Android, iOS, Windows, macOS, dan Linux
+- **Penanganan Error**: pesan error dan state yang ramah pengguna
+- **Widget Reusable**: komponen UI kustom untuk desain yang konsisten
 
-## Architecture
+## Arsitektur
 
-<img src="docs/architecture.png" alt="Architecture">
+<img src="docs/architecture.png" alt="Arsitektur">
 
-## Project Structure
+## Struktur Proyek
 
 ```
 mono_pos/
 ├── lib/
-│   ├── app/                          # Application setup and configuration
+│   ├── app/                          # Setup dan konfigurasi aplikasi
 │   │   ├── di/                       # Dependency injection
-│   │   ├── error/                    # Error handling
-│   │   └── routes/                   # App routing and navigation
+│   │   ├── error/                    # Penanganan error
+│   │   └── routes/                   # Routing dan navigasi aplikasi
 │   │
-│   ├── core/                         # Core utilities and shared resources
-│   │   ├── assets/                   # Asset management
-│   │   ├── common/                   # Common utilities (Result wrapper)
-│   │   ├── constants/                # App constants
-│   │   ├── extensions/               # Dart extensions
-│   │   ├── locale/                   # Localization helpers
-│   │   ├── services/                 # Core services
-│   │   │   ├── connectivity/         # Network connectivity checking
-│   │   │   ├── database/             # Local database service (sqflite)
-│   │   │   ├── info/                 # Device info service
-│   │   │   ├── logger/               # Error logging service
-│   │   │   ├── payment/              # DANA QRIS (static→dynamic) + notification listener
-│   │   │   ├── printer/              # Thermal printer service + saved-printer reconnect
-│   │   │   ├── storage/              # S3-compatible object storage
-│   │   │   ├── supabase/             # Supabase client config/service + runtime credentials
-│   │   │   ├── sync/                 # Sync / queued-action processing
-│   │   │   ├── tts/                  # TTS voice + cash-register sound
-│   │   │   └── update/               # GitHub release check + APK installer
-│   │   ├── themes/                   # App theming (colors, sizes, themes)
-│   │   ├── usecase/                  # Base usecase interface
-│   │   └── utilities/                # Helper utilities (formatters, loggers, etc.)
+│   ├── core/                         # Utilitas inti dan resource bersama
+│   │   ├── assets/                   # Manajemen aset
+│   │   ├── common/                   # Utilitas umum (wrapper Result)
+│   │   ├── constants/                # Konstanta aplikasi
+│   │   ├── extensions/               # Ekstensi Dart
+│   │   ├── locale/                   # Helper lokalisasi
+│   │   ├── services/                 # Layanan inti
+│   │   │   ├── connectivity/         # Pengecekan konektivitas jaringan
+│   │   │   ├── database/             # Layanan database lokal (sqflite)
+│   │   │   ├── info/                 # Layanan info perangkat
+│   │   │   ├── insight/              # Kalkulator insight bisnis di perangkat
+│   │   │   ├── logger/               # Layanan logging error
+│   │   │   ├── payment/              # Layanan DANA (parser, store, listener, decoder QRIS)
+│   │   │   ├── printer/              # Layanan printer thermal
+│   │   │   ├── qris/                 # Konversi, normalisasi, validasi QRIS (TLV + CRC16)
+│   │   │   ├── supabase/             # Konfigurasi klien Supabase + kredensial runtime
+│   │   │   ├── sync/                 # Sinkronisasi / pemrosesan queued action
+│   │   │   ├── tts/                  # Voice TTS + suara kasir
+│   │   │   └── update/               # Cek rilis GitHub + installer APK
+│   │   ├── themes/                   # Tema aplikasi (warna, ukuran, tema)
+│   │   ├── usecase/                  # Interface usecase dasar
+│   │   └── utilities/                # Utilitas pembantu (formatter, logger, dll.)
 │   │
-│   ├── data/                         # Data layer
-│   │   ├── datasources/              # Data sources
-│   │   │   ├── interfaces/           # Datasource interfaces (auth, product, transaction, purchase, supplier, app-update, ...)
-│   │   │   ├── local/                # Local datasources (sqflite; products, transactions, customers, suppliers, purchases, queue)
-│   │   │   └── remote/               # Remote datasources (Supabase, Auth, Storage, AppUpdate/GitHub)
-│   │   ├── models/                   # Data models with JSON serialization (incl. purchase, purchase_item, supplier, app_update)
-│   │   └── repositories/             # Repository implementations (incl. purchase, supplier, app_update)
+│   ├── data/                         # Lapisan data
+│   │   ├── datasources/              # Sumber data
+│   │   │   ├── interfaces/           # Interface datasource (auth, product, transaction, purchase, supplier, app-update, ...)
+│   │   │   ├── local/                # Datasource lokal (sqflite; produk, transaksi, pelanggan, supplier, pembelian, queue)
+│   │   │   └── remote/               # Datasource remote (Supabase, Auth, AppUpdate/GitHub)
+│   │   ├── models/                   # Model data dengan serialisasi JSON (termasuk purchase, purchase_item, supplier, app_update)
+│   │   └── repositories/             # Implementasi repository (termasuk purchase, supplier, app_update)
 │   │
-│   ├── domain/                       # Domain layer (Business logic)
-│   │   ├── entities/                 # Business entities (incl. purchase, purchase_item, supplier, app_update)
-│   │   ├── repositories/             # Repository interfaces (incl. purchase, supplier, app_update)
-│   │   └── usecases/                 # Use cases (incl. purchase, supplier, app_update)
+│   ├── domain/                       # Lapisan domain (logika bisnis)
+│   │   ├── entities/                 # Entity bisnis (termasuk purchase, purchase_item, supplier, app_update, ai_insight)
+│   │   ├── repositories/             # Interface repository (termasuk purchase, supplier, app_update)
+│   │   └── usecases/                 # Use case (termasuk purchase, supplier, app_update, insight)
 │   │
-│   ├── presentation/                 # Presentation layer (UI)
-│   │   ├── providers/                # State management (Riverpod)
-│   │   │   ├── account/              # Account, store, printer, payment, product-data, barcode-label & app-update state
-│   │   │   ├── auth/                 # Authentication state
-│   │   │   ├── customer/             # Customer management state
-│   │   │   ├── employees/            # Employee / RBAC state
-│   │   │   ├── home/                 # Home screen state (cart, barcode scan)
-│   │   │   ├── language/             # Localization state
-│   │   │   ├── main/                 # Main navigation state
-│   │   │   ├── payment/              # QRIS payment state + DANA listener
-│   │   │   ├── products/             # Products management state (+ purchase info)
-│   │   │   ├── purchases/            # Purchase list, form, and detail state
-│   │   │   ├── revenue/              # Revenue reporting + day-detail state
-│   │   │   ├── splash/               # Splash state
-│   │   │   ├── suppliers/            # Supplier list/form state
-│   │   │   ├── theme/                # Theme state
-│   │   │   └── transactions/         # Transactions state
-│   │   ├── screens/                  # UI screens
-│   │   │   ├── account/              # Account, store/printer/payment settings, product-data, barcode-labels, app-update, About
-│   │   │   ├── auth/                 # Authentication screens
-│   │   │   ├── customer/             # Customer screens
-│   │   │   ├── employees/            # Employee management screens
-│   │   │   ├── error/                # Error screens
-│   │   │   ├── home/                 # Home/POS screen (+ barcode scanner, HID listener, cart panel)
-│   │   │   ├── main/                 # Main navigation screen
-│   │   │   ├── payment/              # QRIS payment screen + direct QRIS screen
-│   │   │   ├── products/             # Product management screens (+ purchase info)
-│   │   │   ├── purchases/            # Purchase list/form/detail screens
-│   │   │   ├── revenue/              # Revenue report + per-day detail screens
-│   │   │   ├── splash/               # Splash screen
-│   │   │   ├── suppliers/            # Supplier list/form screens
-│   │   │   └── transactions/         # Transaction history screens
-│   │   └── widgets/                  # Reusable UI components (`app_*`: button, dialog, text field,
+│   ├── presentation/                 # Lapisan presentation (UI)
+│   │   ├── providers/                # Manajemen state (Riverpod)
+│   │   │   ├── account/              # State akun, toko, printer, pembayaran, data produk, label barcode & pembaruan aplikasi
+│   │   │   ├── auth/                 # State autentikasi
+│   │   │   ├── customer/             # State manajemen pelanggan
+│   │   │   ├── employees/            # State karyawan / RBAC
+│   │   │   ├── home/                 # State layar Beranda (keranjang, pindai barcode)
+│   │   │   ├── insights/             # State insight bisnis (AI insight notifier + state)
+│   │   │   ├── language/             # State lokalisasi
+│   │   │   ├── main/                 # State navigasi utama
+│   │   │   ├── payment/              # State pembayaran QRIS + listener DANA + kebijakan prompt izin
+│   │   │   ├── products/             # State manajemen produk (+ info pembelian)
+│   │   │   ├── purchases/            # State list, form, dan detail pembelian
+│   │   │   ├── revenue/              # State laporan pendapatan + detail harian
+│   │   │   ├── splash/               # State splash
+│   │   │   ├── suppliers/            # State list/form supplier
+│   │   │   ├── theme/                # State tema
+│   │   │   └── transactions/         # State transaksi
+│   │   ├── screens/                  # Layar UI
+│   │   │   ├── account/              # Akun, pengaturan toko/printer/pembayaran, data produk, label barcode, pembaruan aplikasi, Tentang
+│   │   │   ├── auth/                 # Layar autentikasi
+│   │   │   ├── customer/             # Layar pelanggan
+│   │   │   ├── employees/            # Layar manajemen karyawan
+│   │   │   ├── error/                # Layar error
+│   │   │   ├── home/                 # Layar Beranda/POS (+ pemindai barcode, listener HID, panel keranjang, banner izin DANA)
+│   │   │   ├── insights/             # Layar Insight AI + komponen kartu insight & ringkasan
+│   │   │   ├── main/                 # Layar navigasi utama (+ onboarding izin DANA)
+│   │   │   ├── payment/              # Layar pembayaran QRIS + QRIS langsung
+│   │   │   ├── products/             # Layar manajemen produk (+ info pembelian)
+│   │   │   ├── purchases/            # Layar list/form/detail pembelian
+│   │   │   ├── revenue/              # Layar laporan pendapatan + detail harian
+│   │   │   ├── splash/               # Layar splash
+│   │   │   ├── suppliers/            # Layar list/form supplier
+│   │   │   └── transactions/         # Layar riwayat transaksi
+│   │   └── widgets/                  # Komponen UI reusable (`app_*`: button, dialog, text field,
 │   │                                  # success overlay, low-stock dialog, price-type toggle, ...)
 │   │
-│   ├── l10n/                         # Localization ARB files (app_en, app_id)
-│   ├── generated/                    # Generated localization code (flutter gen-l10n)
-│   └── main.dart                     # App entry point
+│   ├── l10n/                         # File ARB lokalisasi (app_en, app_id)
+│   ├── generated/                    # Kode lokalisasi hasil generate (flutter gen-l10n)
+│   └── main.dart                     # Entry point aplikasi
 │
-├── test/                             # Unit and widget tests
-│   ├── core/services/                # Service tests
-│   ├── data/                         # Data layer tests
-│   │   ├── datasources/              # Datasource tests (local + remote)
-│   │   ├── models/                   # Model tests
-│   │   └── repositories/             # Repository tests
-│   ├── domain/                       # Entity + usecase tests
-│   ├── presentation/                 # Provider, screen, and widget tests
-│   │   ├── providers/                # Notifier tests (incl. home cart, purchase form)
-│   │   └── screens/                  # Screen/widget tests
+├── test/                             # Unit dan widget test
+│   ├── core/
+│   │   ├── services/                 # Tes layanan (connectivity, database, info, logger, payment, qris)
+│   │   └── utilities/                # Tes utilitas
+│   ├── data/                         # Tes lapisan data
+│   │   ├── datasources/              # Tes datasource (local + remote)
+│   │   ├── models/                   # Tes model
+│   │   └── repositories/             # Tes repository
+│   ├── domain/                       # Tes entity + usecase
+│   ├── presentation/                 # Tes provider, layar, dan widget
+│   │   ├── providers/                # Tes notifier (termasuk home cart, payment, purchase form)
+│   │   └── screens/                  # Tes layar/widget (auth/sign_in, purchases)
+│   ├── fixtures/                     # Fixture pengujian (mis. gambar QRIS)
 │   └── ...
 │
-├── assets/                           # Static assets
-├── android/                          # Android platform files
-├── ios/                              # iOS platform files
-├── linux/                            # Linux platform files
-├── macos/                            # macOS platform files
-├── web/                              # Web platform files
-├── windows/                          # Windows platform files
-├── cloudflare/                       # Payment webhook workers (klikqris-notify, doku-notify archive)
-├── supabase/                         # Supabase config & edge functions
+├── assets/                           # Aset statis
+├── android/                          # File platform Android
+├── ios/                              # File platform iOS
+├── linux/                            # File platform Linux
+├── macos/                            # File platform macOS
+├── web/                              # File platform Web
+├── windows/                          # File platform Windows
+├── cloudflare/                       # Worker webhook pembayaran lama (referensi saja, sudah tidak dipakai)
+├── supabase/                         # Konfigurasi Supabase & edge function
 │
-├── analysis_options.yaml             # Dart analyzer configuration
-├── pubspec.yaml                      # Package dependencies
-└── README.md                         # Project documentation
+├── analysis_options.yaml             # Konfigurasi analyzer Dart
+├── pubspec.yaml                      # Dependensi package
+└── README.md                         # Dokumentasi proyek
 ```
 
-## Getting Started
+## Memulai
 
-### Prerequisites
+### Prasyarat
 
 - [Flutter](https://flutter.dev/docs/get-started/install)
 - [Dart](https://dart.dev/get-dart)
-- A [Supabase](https://supabase.com/) project for the cloud backend
+- Proyek [Supabase](https://supabase.com/) untuk backend cloud
 
-### Installation
+### Instalasi
 
-1. **Clone the repository:**
+1. **Clone repository:**
 
    ```sh
    git clone https://github.com/monodev-id/MonoPOS.git
    cd MonoPOS
    ```
 
-2. **Install dependencies:**
+2. **Pasang dependensi:**
 
    ```sh
    flutter pub get
    ```
 
-3. **Set up Supabase:**
-   - Create a new project on [Supabase](https://supabase.com/).
-   - The local SQLite schema (see [`DATABASE.md`](DATABASE.md)) mirrors the remote Postgres tables. Create matching tables in your Supabase project (see `docs/supabase/schema.sql`), or let the sync layer populate them after first run.
-   - Enable the **Google** auth provider and configure the OAuth redirect/callback.
-   - (Optional) Configure Row Level Security so that rows are scoped to the authenticated user.
+3. **Siapkan Supabase:**
+   - Buat proyek baru di [Supabase](https://supabase.com/).
+   - Skema SQLite lokal (lihat [`DATABASE.md`](DATABASE.md)) mencerminkan tabel Postgres remote. Buat tabel yang sesuai di proyek Supabase Anda (lihat `docs/supabase/schema.sql`), atau biarkan lapisan sync mengisinya setelah run pertama.
+   - Aktifkan penyedia auth **Google** dan konfigurasikan redirect/callback OAuth.
+   - (Opsional) Konfigurasikan Row Level Security agar baris dibatasi ke pengguna yang terautentikasi.
 
-   > **Recommended (runtime config):** after installing the app, open **Account → Supabase Sync**,
-   > enter the project URL + anon/publishable key, tap Save, then restart the app. No rebuild needed —
-   > one binary can serve many stores.
+   > **Disarankan (konfigurasi runtime):** setelah aplikasi terpasang, buka **Akun → Supabase Sync**,
+   > masukkan URL proyek + anon/publishable key, tekan Simpan, lalu restart aplikasi. Tidak perlu rebuild —
+   > satu binary dapat melayani banyak toko.
 
-4. **(Optional) Build-time `config.json`**
+4. **(Opsional) `config.json` saat build**
 
-   For pre-baked builds you can still pass backend configuration via `--dart-define-from-file`.
-   Create a `config.json` in the project root (see `config.example.json`):
+   Untuk build yang sudah dibekali konfigurasi, Anda tetap bisa mengirim konfigurasi backend via `--dart-define-from-file`.
+   Buat `config.json` di root proyek (contoh di `config.example.json`):
 
    ```json
    {
@@ -233,79 +243,89 @@ mono_pos/
    }
    ```
 
-   | Key | Description |
+   | Key | Deskripsi |
    | --- | --- |
-   | `SUPABASE_URL` | URL of your Supabase project |
-   | `SUPABASE_PUBLISHABLE_KEY` | Supabase anon/publishable key (legacy alias: `SUPABASE_ANON_KEY`) |
-   | `SUPABASE_SECRET_KEY` | Optional service-role key for privileged server tasks |
-   | `GOOGLE_SERVER_CLIENT_ID` | Web client ID from the Google Sign-In provider in Supabase |
+   | `SUPABASE_URL` | URL proyek Supabase Anda |
+   | `SUPABASE_PUBLISHABLE_KEY` | Anon/publishable key Supabase (alias lama: `SUPABASE_ANON_KEY`) |
+   | `SUPABASE_SECRET_KEY` | Service-role key opsional untuk tugas server yang istimewa |
+   | `GOOGLE_SERVER_CLIENT_ID` | Web client ID dari penyedia Google Sign-In di Supabase |
 
-   If `Supabase` is not configured, the app still runs fully offline — sync and remote features are disabled automatically.
-   Runtime credentials entered in the app take precedence over build-time values.
+   Jika `Supabase` belum dikonfigurasi, aplikasi tetap berjalan penuh secara offline — fitur sync dan remote dinonaktifkan otomatis.
+   Kredensial runtime yang dimasukkan di aplikasi diprioritaskan di atas nilai saat build.
 
-5. **Run the application:**
+5. **Jalankan aplikasi:**
 
    ```sh
    flutter run
-   # or with pre-baked config:
+   # atau dengan konfigurasi yang sudah dibekali:
    flutter run --dart-define-from-file config.json
    ```
 
-### Test
+### Pengujian
 
-To test the application, run the following command:
+Untuk menguji aplikasi, jalankan perintah berikut:
 
 ```sh
 flutter test --coverage
 ```
 
-To view the test coverage you can use `genhtml` or [test_cov_console](https://pub.dev/packages/test_cov_console)
+Untuk melihat cakupan pengujian Anda bisa menggunakan `genhtml` atau [test_cov_console](https://pub.dev/packages/test_cov_console)
 
-## Payments (DANA Bisnis QRIS)
+## Pembayaran (QRIS DANA Bisnis)
 
-Mono POS uses a **static DANA Bisnis merchant QRIS** that is converted into a **dynamic QRIS** at checkout. There is no payment API, webhook, or polling: the merchant QRIS string is the source of truth and an Android `NotificationListenerService` reads DANA payment notifications to confirm payments.
+Mono POS memakai **QRIS statis merchant DANA Bisnis** yang dikonversi menjadi **QRIS dinamis** saat checkout. Tidak ada payment API, webhook, atau polling: string QRIS merchant adalah sumber kebenaran dan `NotificationListenerService` Android membaca notifikasi pembayaran DANA untuk mengonfirmasi pembayaran.
 
 Setup:
 
-1. Open `Account → Payment Settings` (admin).
-2. Upload a screenshot of the static DANA Bisnis QRIS, scan it with the camera, or paste the QRIS payload. The image is decoded on-device and deleted; only the payload string is stored in `SharedPreferences`.
-3. Validate the merchant info (name, city, NMID) shown by the app and save.
+1. Buka `Akun → Pengaturan Pembayaran` (admin).
+2. Unggah tangkapan layar QRIS statis DANA Bisnis, pindai dengan kamera, atau tempel payload QRIS. Gambar didekode di perangkat lalu dihapus; hanya string payload yang disimpan di `SharedPreferences`.
+3. Validasi info merchant (nama, kota, NMID) yang ditampilkan aplikasi lalu simpan.
 
-Two flows share the same screen (`/payment/qris`):
+Dua alur berbagi layar yang sama (`/payment/qris`):
 
-- **Cart checkout** — builds the transaction from the cart, then converts the static QRIS with `amount = total + unique code` before saving, so no half-created transaction or stock deduction is left behind if the QRIS is invalid.
-- **Direct QRIS** — open `/payment/direct`, enter an amount (plus optional description/customer), and create a `qris` transaction without touching product stock.
+- **Checkout keranjang** — transaksi dibangun dari keranjang, lalu QRIS statis dikonversi dengan `nominal = total + kode unik` sebelum disimpan, sehingga tidak ada transaksi setengah jadi atau pengurangan stok yang tertinggal jika QRIS tidak valid.
+- **QRIS langsung** — buka `/payment/direct`, masukkan nominal (plus deskripsi/pelanggan opsional), dan buat transaksi `qris` tanpa menyentuh stok produk.
 
-Common flow:
+### Akses notifikasi
 
-1. At checkout the app allocates a unique code (1–99, fallback 100–999) for the amount, converts the static QRIS to a dynamic payload, saves the transaction as `pending`, and shows the QR (rendered from the payload, not an image).
-2. The customer scans and pays with any QRIS-compatible app.
-3. DANA posts a notification; the native listener queues it durably and Flutter parses the amount. When exactly one `pending` transaction matches `paymentExpectedAmount`, it is marked `paid`, the app plays the cash-register sound and announces the amount via Indonesian TTS.
-4. `Cek Pembayaran` drains the notification queue on demand; `Tandai Lunas` is available as a manual fallback.
-5. When the countdown ends the transaction becomes `expired`; cancelling deletes the transaction and restores the reserved stock. Payments that arrive late (up to 60 minutes) still match expired transactions.
+Android tidak memiliki dialog izin runtime untuk Notification Listener, sehingga aplikasi mengelolanya sendiri:
 
-Payment preferences (`dana_qris_static`, `dana_unique_code_enabled`, `dana_expiry_minutes`, `dana_tts_enabled`, `dana_listener_enabled`) are stored locally. Notification access must be granted from the listener card (`Buka Akses Notifikasi`). DANA packages listened to: `id.dana` and `id.dana.kasir`.
+- Setelah login, dialog `Aktifkan Akses Notifikasi` muncul sekali per sesi bila listener aktif tetapi izin belum diberikan.
+- Tombol `Nanti` menyimpan snooze **24 jam**; tombol `Buka Pengaturan` melakukan deep-link ke detail listener (Android 11+) dengan fallback ke daftar listener dan info aplikasi.
+- Jika izin masih diblokir setelah kembali dari Settings, muncul panduan **Restricted Settings** dengan tombol `Buka Info Aplikasi`.
+- Banner pengingat persisten di Beranda tampil selama izin belum ada atau service belum tersambung.
+- Setiap aplikasi resume, status izin di-refresh, service di-rebind, dan antrean notifikasi diproses ulang.
 
-> **Local-only data:** supplier, purchase, product HPP (`costPrice`), DANA payment metadata, and the `PaymentNotification` table are stored in SQLite only. Sync strips them before writing to Supabase.
+Alur umum:
 
-> **Legacy:** Doku SNAP and KlikQRIS are retired — see [`DOKU_PAYMENT_GATEWAY.md`](DOKU_PAYMENT_GATEWAY.md). Their services/providers may still exist for reference; do not build new features on them.
+1. Saat checkout aplikasi mengalokasikan kode unik (1–99, fallback 100–999) untuk nominal, mengonversi QRIS statis menjadi payload dinamis, menyimpan transaksi sebagai `pending`, lalu menampilkan QR (dirender dari payload, bukan gambar).
+2. Pelanggan memindai dan membayar dengan aplikasi apa pun yang mendukung QRIS.
+3. DANA mengirim notifikasi; listener native mengantrekannya secara durable dan Flutter mem-parse nominalnya. Ketika tepat satu transaksi `pending` cocok dengan `paymentExpectedAmount`, transaksi ditandai `paid`, aplikasi memutar suara kasir dan mengumumkan nominal via TTS bahasa Indonesia.
+4. `Cek Pembayaran` menguras antrean notifikasi sesuai permintaan; `Tandai Lunas` tersedia sebagai fallback manual.
+5. Saat hitung mundur berakhir, transaksi menjadi `expired`; membatalkan akan menghapus transaksi dan mengembalikan stok yang direservasi. Pembayaran yang datang terlambat (hingga 60 menit) tetap dicocokkan dengan transaksi kedaluwarsa.
 
-## AI Agent Guidelines
+Preferensi pembayaran (`dana_qris_static`, `dana_unique_code_enabled`, `dana_expiry_minutes`, `dana_tts_enabled`, `dana_listener_enabled`) disimpan secara lokal. Akses notifikasi harus diberikan dari kartu listener (`Buka Akses Notifikasi`). Paket DANA yang dipantau: `id.dana` dan `id.dana.kasir`.
 
-This project includes documentation files designed for AI coding agents (e.g., Claude Code) to keep code consistent when modifying the project:
+> **Data lokal saja:** supplier, pembelian, HPP produk (`costPrice`), metadata pembayaran DANA, dan tabel `PaymentNotification` hanya disimpan di SQLite. Lapisan sync membuangnya sebelum menulis ke Supabase.
 
-- [`CLAUDE.md`](CLAUDE.md) — Project conventions (architecture, naming, code style)
-- [`UI.md`](UI.md) — UI reference (layouts, components, design specs)
-- [`DATABASE.md`](DATABASE.md) — Database schema reference (tables, columns)
-- [`WORKFLOW.md`](WORKFLOW.md) — Git workflow (commits, branches, PRs)
-- [`WORKFLOW_SYSTEM.md`](WORKFLOW_SYSTEM.md) — Workflow/sync system reference
-- [`SYNC.md`](SYNC.md) — Offline-first sync architecture
-- [`DOKU_PAYMENT_GATEWAY.md`](DOKU_PAYMENT_GATEWAY.md) — Deprecated (Doku SNAP and KlikQRIS retired; QRIS now uses DANA Bisnis)
+> **Legacy:** Doku SNAP dan KlikQRIS sudah tidak dipakai — lihat [`DOKU_PAYMENT_GATEWAY.md`](DOKU_PAYMENT_GATEWAY.md). Service/provider-nya mungkin masih ada sebagai referensi; jangan membangun fitur baru di atasnya.
 
-## Contributing
+## Panduan Agen AI
 
-Contributions are welcome! Please open an issue or submit a pull request for any bugs, feature requests, or improvements.
+Proyek ini menyertakan file dokumentasi yang dirancang agar agen coding AI (misalnya Claude Code) tetap konsisten saat memodifikasi proyek:
 
-## License
+- [`CLAUDE.md`](CLAUDE.md) — Konvensi proyek (arsitektur, penamaan, gaya kode)
+- [`UI.md`](UI.md) — Referensi UI (layout, komponen, spesifikasi desain)
+- [`DATABASE.md`](DATABASE.md) — Referensi skema database (tabel, kolom)
+- [`WORKFLOW.md`](WORKFLOW.md) — Alur kerja Git (commit, branch, PR)
+- [`WORKFLOW_SYSTEM.md`](WORKFLOW_SYSTEM.md) — Referensi alur kerja/sistem sync
+- [`SYNC.md`](SYNC.md) — Arsitektur sync offline-first
+- [`DOKU_PAYMENT_GATEWAY.md`](DOKU_PAYMENT_GATEWAY.md) — Deprecated (Doku SNAP dan KlikQRIS tidak dipakai; QRIS kini memakai DANA Bisnis)
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Kontribusi
+
+Kontribusi sangat diterima! Silakan buka issue atau kirim pull request untuk bug, permintaan fitur, atau perbaikan.
+
+## Lisensi
+
+Proyek ini dilisensikan di bawah MIT License - lihat file [LICENSE](LICENSE) untuk detailnya.
